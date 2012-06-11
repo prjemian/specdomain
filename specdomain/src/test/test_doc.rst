@@ -8,7 +8,7 @@ If all links are valid, test is done successfully.
 A Real SPEC Macro
 ======================
 
-This is the first example: :spec:macro:`lp`
+This is the first example (from source code inline the .rst file): :spec:macro:`lp`
 
 .. and also the variable :spec:variable:`A2Rp0`
 
@@ -42,12 +42,16 @@ This is the first example: :spec:macro:`lp`
 Global(spec module's contents)
 ================================
 
+Test references to ``specdomain`` objects at the global level:
+
 .. spec:function:: function_out_of_module
 
 .. spec:module:: test_module
 
 Single Module 'test_module'
 ===========================
+
+Test references to ``specdomain`` objects on an individual basis using inline code:
 
 .. spec:function:: module_function(Identifier)
 

@@ -1,0 +1,602 @@
+
+# $Id$
+
+#==============================================================================
+#%+H* common/move
+#     ===========
+#
+# NAME
+#   move.mac
+#
+# SUMMARY
+#   Commands to move motors.
+#
+# DESCRIPTION
+#   Collection of helpful move commands for synchronized motor movements or
+#   reciprocal space moves.
+#
+# AUTHOR
+#   C. M. Schlepuetz (CS, cschlep)
+#
+# CREATION DATE
+#   2005/06/06
+#
+# COPYRIGHT
+#   Copyright 2006-2011 by the above authors (see AUTHOR/AUTHORS)
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see http://www.gnu.org/licenses/.
+#
+# VERSION
+#   $Date: 2011-06-29 12:21:58 -0400 (Wed, 29 Jun 2011) $
+#   $Author: cschlep $
+#   $URL: file:///data/svn/software/spec/trunk/common/move.mac $
+#   $Revision: 28 $
+#
+# DEPENDENCIES
+#   - none
+#
+# HISTORY
+#   2005/06/06 (CS):
+#   - created first version of this file
+#
+#   2010/07/23 (CS):
+#   - added SVN keywords
+#   - removed all non-general definitions (particular to a certain instrument)
+#
+#   2011/04/19 (CS):
+#   - added "multi-move" commands, which allow to move multiple motors in one
+#     command (based on the standard mv command structure):
+#     * mmv      # multi-move
+#     * ummv     # updated multi-move
+#     * mmvr     # relative multi-move
+#     * ummvr    # updated relative multi-move
+#     * _mmv     # low-level multi-move command
+#     * _mmvr    # low-level relative multi-move command
+#     * uwmm     # updated display of motor positions
+#
+#   2011/12/21 (CS):
+#   - reformatted code documentation to work with ROBODoc
+#%-
+#==============================================================================
+
+
+#==============================================================================
+# Define some global variables
+# ----------------------------
+
+  # Save the name of this macro file.
+  global  MOVE_MAC
+          MOVE_MAC = DOFILE
+
+#==============================================================================
+# This macro file contains the following commands:
+#==============================================================================
+
+#------------------------------------------------------------------------------
+#%+M* move/move_help
+#     ==============
+#
+# SUMMARY
+#   Generates the help text.
+#
+# NOTE
+#   This help text is obtained by displaying the file move_mac.txt, which
+#   should reside in the same directory as move.mac. If the file does not
+#   exist, a generic help text is shown.
+#%-
+
+def helpmove 'move_help'
+def movehelp 'move_help'
+
+def move_help '{
+#   =========
+
+  unix (sprintf ("dirname %s", MOVE_MAC), _1)
+  ll = length (_1)
+  if (substr (_1, ll, 1) == "\n") _1 = substr (_1, 1, (ll - 1))
+  file = sprintf ("%s/move_mac.txt", _1)
+  if (file_info (file, "-e")) {
+    unix (sprintf ("cat %s", file))
+  }
+  else {
+    printf ("\n  Macros available in file move.mac ($$Revision: 28 $$):")
+    printf ("\n                           ========\n")
+    printf ("\n    mmv         - move multiple motors at once")
+    printf ("\n    ummv        - multi-move showing updated positions")
+    printf ("\n    mmvr        - relative move of multiple motors at once")
+    printf ("\n    ummvr       - relative multi-move showing updated pos.")
+    printf ("\n    mvhkl       - like \'br\' but displays angles first")
+    printf ("\n    umvhkl      - like \'ubr\' but displays angles first")
+    printf ("\n    rtw         - reciprocal space tweak (like \'tw\')")
+  }
+}'
+
+
+
+#------------------------------------------------------------------------------
+#%+M* move/mmv
+#     ========
+#
+# SUMMARY
+#   Multi-move command, moves multiple motors at once
+#
+# USAGE
+#   > mmv <mot1> <pos1> <mot2> <pos2> ...
+#
+# EXAMPLE
+#   > mmv del 10 nu 5 phi 90
+#%-
+
+def mmv '_mmv $*; move_poll'
+#   ===
+
+
+#------------------------------------------------------------------------------
+#%+M* move/ummv
+#     =========
+#
+# SUMMARY
+#   Multi-move command, moves multiple motors at once and displays updated
+#   motor positions at regular intervals until move has finished.
+#
+# USAGE
+#   > ummv <mot1> <pos1> <mot2> <pos2> ...
+#
+# EXAMPLE
+#   > ummv del 10 nu 5 phi 90
+#%-
+
+def ummv '_mmv $*; uwmm $*'
+#   ====
+
+
+#------------------------------------------------------------------------------
+#%+M* move/mmvr
+#     =========
+#
+# SUMMARY
+#   Relative multi-move command
+#
+# DESCRIPTION
+#   Moves multiple motors at once by a relative amount
+#
+# USAGE
+#   > mmvr <mot1> <dist1> <mot2> <dist2> ...
+#
+# EXAMPLE
+#   > mmvr del -1 nu -2 phi 3
+#%-
+
+def mmvr '_mmvr $*; move_poll'
+#   ====
+
+
+#------------------------------------------------------------------------------
+#%+M* move/ummvr
+#     ==========
+#
+# SUMMARY
+#   Relative multi-move command
+#
+# DESCRIPTION
+#   Moves multiple motors at once by a relative amount and displays updated
+#   motor positions at regular intervals until move has finished.
+#
+#  USAGE
+#    > ummvr <mot1> <dist1> <mot2> <dist2> ...
+#
+#  EXAMPLE
+#    > ummvr del -1 nu -2 phi 3
+#%-
+
+def ummvr '_mmvr $*; uwmm $*'
+#   =====
+
+
+#------------------------------------------------------------------------------
+#%+M* move/mvhkl
+#     ==========
+#
+# SUMMARY
+#   Reciprocal space move with user confirmation
+#
+# DESCRIPTION
+#   Modified version of br which displays the angle positions of the requested
+#   hkl-position first and asks for the users confirmation to move there before
+#   the movement is started.
+#
+# USAGE
+#   > mvhkl <H> <K> <L>
+#
+# EXAMPLE
+#   > mvhkl 3 1 2
+#%-
+
+def mvhkl '{
+#   =====
+
+  local old_A, possible, ok, s
+
+  getangles
+  old_A = A
+
+  if ($# != 3) {
+    print "\aUsage:"
+    print "            mvhkl <H> <K> <L>"
+    exit
+  }
+
+  H = $1; K = $2; L = $3
+
+  # calcA returns 0 for success, -1 for unobtainable reflection
+  possible = !(-(calcA))
+
+  if(possible) {
+    for (i=0;i<_numgeo;i++) {
+        s = motor_name(mA[i])
+        printf ("%7s = %9.4f --> %9.4f\n", s, old_A[mA[i]],  A[mA[i]])
+    }
+    ok = yesno ("Move to these values? ", 1)
+    if (ok) {
+      br $1 $2 $3
+    } else{
+      print "Move cancelled."
+      exit
+    }
+  }
+}'
+
+
+#------------------------------------------------------------------------------
+#%+M* move/umvhkl
+#     ===========
+#
+# SUMMARY
+#   updated reciprocal space move with user confirmation
+#
+# DESCRIPTION
+#   Modified version of ubr which displays the angle positions of the
+#   requested hkl-position first and asks for the users confirmation to move
+#   there before the movement is started.
+#
+# USAGE
+#   > umvhkl <H> <K> <L>
+#%-
+
+def umvhkl '{
+#   ======
+
+  local old_A, possible, ok, s
+
+  getangles
+  old_A = A
+
+  if ($# != 3) {
+    print "\aUsage:"
+    print "            mvhkl <H> <K> <L>"
+    print "   or       mvhkl <H> <K> <L> auto"
+    exit
+  }
+
+  H = $1; K = $2; L = $3
+
+  # calcA returns 0 for success, -1 for unobtainable reflection
+  possible = !(-(calcA))
+
+  if(possible) {
+    for (i=0;i<_numgeo;i++) {
+        s = motor_name(mA[i])
+        printf ("%7s = %9.4f --> %9.4f\n", s, old_A[mA[i]],  A[mA[i]])
+    }
+    ok = yesno ("Move to these values? ", 1)
+    if (ok) {
+      ubr $1 $2 $3
+    } else {
+      print "Move cancelled."
+      exit
+    }
+  }
+}'
+
+
+#------------------------------------------------------------------------------
+#%+M* move/rtw
+#     ========
+#
+# SUMMARY
+#   Reciprocal space tweak
+#
+# DESCRIPTION
+#   rtw works just like the normal tw command for individual motors, but tweaks
+#   in the reciprocal space coordinates H, K, L.
+#
+# USAGE
+#   > rtw <coord1> [<coord2> ...] <delta1> [<delta2> ...] [<count_time>]
+#   where <coordN> = "H", "K", or "L"
+#
+# EXAMPLE
+#   > rtw H K 0.1 0.2
+#   simultaneously tweaks H in steps of +0.1 and K in steps of +0.2
+#%-
+
+def  rtw'{
+#    ====
+
+  local   i, n, m[], dh, dk, dl, p[], t, ct, dir, d0, done, d[],c[],Q_mne[]
+
+  Q_mne[0] = "H"
+  Q_mne[1] = "K"
+  Q_mne[2] = "L"
+
+  n = split("$*", m)
+  if ((n < 2) || (n > 7)) {
+    print "Usage:  rtw coord1 [coord2 ...] delta1 [delta2 ...] [count_time]"
+    print "  where coord = H, K, or L"
+    exit
+  }
+
+  # check if count_time was given
+  if (n&1){
+          ct = m[n-1]
+  }
+
+  n = int(n/2)
+  dh = 0; dk = 0; dl = 0;
+  for (i = 0; i < n; i++) {
+    if (m[i] == "h" || m[i] == "H"){
+      d[i] = m[n+i]
+      c[i] = 0
+      dh = d[i]
+    } else if (m[i] == "k" || m[i] == "K"){
+      d[i] = m[n+i]
+      c[i] = 1
+      dk = d[i]
+    } else if (m[i] == "l" || m[i] == "L"){
+      d[i] = m[n+i]
+      c[i] = 2
+      dl = d[i]
+    } else{
+      printf("Bad coordinate for tweak:  %s.\n", m[i])
+      exit
+    }
+  }
+
+  get_angles
+  rt = "get_angles; printf(\"\n\")\n"
+  for (i = 0; i < n; i++) {
+    p[i] = Q[c[i]]
+    rt = rt sprintf("printf(\"Tweaked %s from %g to %%g\n\",Q[%d])\n",\
+    Q_mne[c[i]], p[i], c[i])
+  }
+  cdef("cleanup_once", rt, "rtweak")
+
+  print "Indicate direction with + (or p) or - (or n) or enter"
+  print "new step size.  Type something else (or ^C) to quit.\n\n"
+
+  t = "+"
+  dir = 1
+  for (;;) {
+    waitmove; get_angles; calcHKL
+    if (ct) {
+      if (!set_sim(-1) && _sleep)
+        do_sleep _sleep
+      count_em ct;
+      if (!TW_UPDATE) {
+        waitcount
+        done = 1
+      } else
+          done = 0
+      for (;;) {
+        get_counts
+        if (dh != 0){
+          printf("H = %.4f ",H)
+        }
+        if (dk != 0){
+          printf("K = %.4f ",K)
+        }
+        if (dl != 0){
+          printf("L = %.4f ",L)
+        }
+        if (ct < 0)
+            printf("%s = %g, ", cnt_mne(sec), S[sec])
+        else if (MON >= 0)
+            printf("%s = %g, ", cnt_mne(MON), S[MON])
+        printf("%s = %g, ", cnt_mne(DET), S[det])
+        tty_cntl("ce")
+        if (done)
+            break
+        sleep(UPDATE)
+        printf("\r")
+        done = !chk_count
+      }
+    } else {
+        if (dh != 0){
+          printf("H = %.4f ",H)
+        }
+        if (dk != 0){
+          printf("K = %.4f ",K)
+        }
+        if (dl != 0){
+          printf("L = %.4f ",L)
+        }
+    }
+
+    if (TW_BEEP) beep
+    t = getval("which way", t)
+    if (t+0 != 0) {
+     d0 = fabs(t / d[0])
+     for (i = 0; i < n; i++)
+         d[i] *= d0
+     t = t<0? "-":"+"
+    }
+    if (t == "+" || t == "p")
+            dir = 1
+    else if (t == "-" || t == "n")
+            dir = -1
+    else
+            break
+    for (i = 0; i < n; i++){
+            Q[c[i]] += dir * d[i]
+    }
+    calcA
+    calcHKL
+    move_em
+    if (!TW_UPDATE) {
+      waitmove
+    } else for (done = 0;;) {
+      get_angles
+      for (i = 0; i < n; i++)
+          printf("%s = %.3f, ", Q_mne[c[i]], Q[c[i]])
+      tty_cntl("ce")
+      printf("\r")
+      if (done)
+          break
+      sleep(UPDATE)
+      done = !chk_move
+    }
+  }
+
+  cdef("cleanup_once", "", "rtweak", "delete")
+  for (i = 0, rt = "\n"; i < n; i++)
+    rt = rt sprintf("Tweaked %s from %g to %g\n", \
+            Q_mne[c[i]], p[i], Q[c[i]])
+  printf(rt)
+}'
+
+
+#==============================================================================
+# Internal macros
+#==============================================================================
+
+#------------------------------------------------------------------------------
+#%+iM* move/_mmv
+#
+# SUMMARY
+#   Low-level multi-move command
+#
+# DESCRIPTION
+#   This is the equivalent to the _mv command for single motor moves.
+#
+#%-
+
+def _mmv '{
+#   ====
+
+  local _ntokens, _tokens
+
+  _ntokens = split("$*", _tokens)
+
+  if (_ntokens&1){
+          eprint "Wrong number of arguments!"
+          eprint " Usage:  (u)mmv <mot1> <pos1> <mot2> <pos2> ..."
+          exit
+  }
+
+  for(_ii=0; _ii<_ntokens; _ii=_ii+2){
+    eval(sprintf("_check0 %s", _tokens[_ii]))
+  }
+  waitmove; get_angles;
+  for(_ii=0; _ii<_ntokens; _ii=_ii+2){
+    if(motor_num(_tokens[_ii]) < 0) {exit}
+    A[motor_num(_tokens[_ii])] = _tokens[_ii+1]
+  }
+  ifp{
+    fprintf(PRINTER,"\nmmv ")
+    for(_ii=0; _ii<_ntokens; _ii=_ii+2){
+      fprintf(PRINTER,"%s %g", _tokens[_ii], A[motor_num(_tokens[_ii+1])])
+    }
+    fprintf(PRINTER,"\n")
+  }
+  move_em
+}'
+
+
+#------------------------------------------------------------------------------
+#%+iM* move/_mmvr
+#      ==========
+#
+# SUMMARY
+#   Low-level relative multi-move command
+#
+# DESCRIPTION
+#   This is the equivalent to the _mvr command for single motor moves.
+#%-
+
+def _mmvr '{
+#   =====
+
+  local _ntokens, _tokens
+
+  _ntokens = split("$*", _tokens)
+
+  if (_ntokens&1){
+          eprint "Wrong number of arguments!"
+          eprint " Usage:  (u)mmvr <mot1> <dist1> <mot2> <dist2> ..."
+          exit
+  }
+
+  for(_ii=0; _ii<_ntokens; _ii=_ii+2){
+    eval(sprintf("_check0 %s", _tokens[_ii]))
+  }
+  waitmove; get_angles;
+  for(_ii=0; _ii<_ntokens; _ii=_ii+2){
+    if(motor_num(_tokens[_ii]) < 0) {exit}
+    A[motor_num(_tokens[_ii])] += _tokens[_ii+1]
+  }
+  ifp{
+    fprintf(PRINTER,"\nmmv ")
+    for(_ii=0; _ii<_ntokens; _ii=_ii+2){
+      fprintf(PRINTER,"%s %g", _tokens[_ii], A[motor_num(_tokens[_ii+1])])
+    }
+    fprintf(PRINTER,"\n")
+  }
+  move_em
+}'
+
+
+#------------------------------------------------------------------------------
+#%+iM* move/uwmm
+#      =========
+#
+# SUMMARY
+#   Low-level macro to show updated positions during motor movements.
+#
+# DESCRIPTION
+#   This is the equivalent to the uwm command for single motor moves.
+#%-
+
+def uwmm '{
+#   ====
+
+  local _ntokens, _tokens, _str
+
+  _ntokens = split("$*", _tokens)
+
+  if (_ntokens&1){
+          eprint "Wrong number of arguments!"
+          eprint " Usage:  uwmm <mot1> <pos1> <mot2> <pos2>...<motN> <posN>"
+          exit
+  }
+
+  _str = ""
+  for(_ii=0; _ii<_ntokens; _ii=_ii+2){
+    _str += _tokens[_ii]
+  }
+  _update(_str)
+}'
+
+
+#==============================================================================
+# End of $Id$
+#==============================================================================
