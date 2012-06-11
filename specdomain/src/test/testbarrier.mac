@@ -1,6 +1,24 @@
 
 # $Id$
-# from Christian Schlepuetz (formatted for RoboDoc)
+# sample file to test sphinx documentation of SPEC macro files
+
+#%
+# This file contains SPEC macro fragments to test various 
+# parts of the SPHINX documentation builder.
+
+###############################################################################
+#        User macros to configure spec with the Image Server program
+###############################################################################
+
+def ccdhelp '
+    printf("\nUser macros for the BCDA ccd package\n")
+    printf("\t%c%sccdsetup\n",27,"[1m")
+    # ...
+'
+
+local A2Rp0
+      A2Rp0 = 15.759			;#  A2Rp center
+
 
 #==============================================================================
 #%
@@ -168,17 +186,63 @@ def sh_help '{
     printf("\n")
     printf("  sh_help      - creates this help text\n")
     printf("  shop         - opens the fast shutter\n")
-    printf("  shcl         - closes the fast shutter\n")
-    printf("  shon         - activate automatic shutter opening and closing\n")
-    printf("  shoff        - turn automatic shutter opening and closing off\n")
-    printf("  sh_status    - display whether the shutter is open or closed\n")
-    printf("  sh_show      - display shutter configuration and status\n")
-    printf("  sh_setup     - modify the shutter configuration\n")
     printf("\n")
   }
 }'
 
 # there is more in shutter.mac
+
+#==============================================================================
+
+def _ascan ''
+
+kohzuMove_PV = "32ida:KohzuPutBO"
+Und_Delay = 0.1
+
+def kohzuE_cmd(mne,key,p1) '{
+     if (key == "set_position") {
+      return
+     }
+}'
+
+def show_und'
+   printf("\n%40.40s","Curent Undulator Status")
+'
+
+  # cleanup macro for ^C usage
+  rdef _cleanup3 \'resetUSAXS\'
+  rdef _cleanup3 \'\'
+     cdef("Fheader", fheader,  "UCOL", 0x20)
+     rdef Flabel \'""\'
+
+#==============================================================================
+
+global kohzu_PV kohzuMV_PV UND_PV Und_Off UNDE_TRACK_ON
+global       kohzuStop_PV kohzuMode_PV      kohzuMove_PV
+global CCD_PREFIX            # EPICS PV for CCD server
+global CCD_OVERHEAD_SECS        # readout time
+global CCD_OVERHEAD_SECS_MEASURED   # measured readout time
+
+    global @A_name[] @B_name[]
+       unglobal @A_name
+       unglobal @B_name
+global CCD_DARK_NUM CCDDARK CCD_THROW
+global MULTI_IMGS # useful 8-ID's imm fileformat; currently not used
+
+constant TWO_PI 6.283
+local _newspaper
+
+#==============================================================================
+
+# TODO: need some good test cases for arrays.
+# But this is not the highest priority.
+
+#[[extern] shared] [type] array var[cols]
+#    Declares a one-dimensional data array.
+#
+#[[extern] shared] [type] array var[rows][cols]
+#    Declares a two-dimensional data array.
+
 
 #==============================================================================
 # End of $Id$

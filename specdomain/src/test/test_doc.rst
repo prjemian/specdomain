@@ -16,25 +16,14 @@ This is the first example (from source code inline the .rst file): :spec:macro:`
 
 ::
 
-	#===============================================================
-	# file lp.mac
-	# Written by X. Jiao 06/02/2005 Version 1.0
-	#
-	# Generic SPEC macros
-	#
-	# used to send the output of spec commands to the printer
-	#============================================================== 
-	def lp '
-		close("/var/tmp/foo1")
-		unix("rm -f /var/tmp/foo1")
-		on("/var/tmp/foo1")
-		fprintf("/var/tmp/foo1","\n$*\n%s\n",date())
-		$*
-		off("/var/tmp/foo1")
-		u a2ps -f7 /var/tmp/foo1 |lpr
-	        u rm /var/tmp/foo1
-		printf("$* has been sent to printer\n")
-		
+	###############################################################################
+	#        User macros to configure spec with the Image Server program
+	###############################################################################
+	
+	def ccdhelp '
+	    printf("\nUser macros for the BCDA ccd package\n")
+	    printf("\t%c%sccdsetup\n",27,"[1m")
+	    # ...
 	'
 	
 	A2Rp0 = 15.759			;#  A2Rp center
