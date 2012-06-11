@@ -48,6 +48,11 @@ spec_macro_sig_re = re.compile(
           ([A-Z]\w+) $           # thing name
           ''', re.VERBOSE)
 
+spec_global_sig_re = re.compile(
+    r'''^ ([\w.]*:)?             # module name
+          ([A-Z]\w+) $           # thing name
+          ''', re.VERBOSE)
+
 
 spec_var_sig_re = re.compile(
     r'''^ ([\w.]*:)?             # module name
@@ -62,6 +67,70 @@ spec_record_sig_re = re.compile(
 
 
 spec_paramlist_re = re.compile(r'([\[\],])')  # split at '[', ']' and ','
+
+
+
+#### re parts that recognize the start of a macro definition (def or rdef)
+# # ^
+# # [\s]*
+# # [r]?
+# # def
+# # [\s]+
+# # ([a-zA-Z_][\w]*)
+# #
+#### re parts that recognize the start of a chained macro definition (cdef)
+# # ^
+# # [\s]*
+# # cdef
+# # \(
+#
+# def _ascan ''
+#
+# kohzuMove_PV = "32ida:KohzuPutBO"
+# Und_Delay = 0.1
+#
+# def kohzuE_cmd(mne,key,p1) '{
+#      if (key == "set_position") {
+#       return
+#      }
+# }'
+#
+# def show_und'
+#    printf("\n%40.40s","Curent Undulator Status")
+# '
+#
+#   # cleanup macro for ^C usage
+#   rdef _cleanup3 \'resetUSAXS\'
+#   rdef _cleanup3 \'\'
+#      cdef("Fheader", fheader,  "UCOL", 0x20)
+#      rdef Flabel \'""\'
+
+
+#### re parts that recognize a global variable declaration
+# ^                                    # start of line
+# ([\s]*)                              # optional preceding white space
+# global                               # "global" declaration
+# ([\s]+[@]?[a-zA-Z_][\w]*(\[\])?)+    # one or more variable names
+# ([\s]+#.*)*                          # optional comment
+# $                                    # end of line
+
+# global  BCDA_GM[]
+# 
+#    global    billy[]
+#    global    9billy[]
+#    global    _billy[]
+# 
+# global kohzu_PV kohzuMV_PV UND_PV Und_Off UNDE_TRACK_ON
+# global       kohzuStop_PV kohzuMode_PV      kohzuMove_PV
+# global CCD_PREFIX            # EPICS PV for CCD server
+# global CCD_OVERHEAD_SECS        # readout time
+# global CCD_OVERHEAD_SECS_MEASURED   # measured readout time
+# 
+#     global @A_name[] @B_name[]
+#        unglobal @A_name
+#        unglobal @B_name
+# global CCD_DARK_NUM CCDDARK CCD_THROW
+# global MULTI_IMGS # useful 8-ID's imm fileformat; currently not used
 
 
 class SpecObject(ObjectDescription):
@@ -179,6 +248,8 @@ class SpecObject(ObjectDescription):
             return _('%s (SPEC function)') % name
         elif self.objtype == 'macro':
             return _('%s (SPEC macro)') % name
+        elif self.objtype == 'global':
+            return _('%s (SPEC global)') % name
         elif self.objtype == 'record':
             return _('%s (SPEC record)') % name
         else:
@@ -386,6 +457,7 @@ class SpecDomain(Domain):
     object_types = {
         'function': ObjType(l_('function'), 'func'),
         'macro':    ObjType(l_('macro'),    'macro'),
+        'global':   ObjType(l_('global'),   'global'),
         'record':   ObjType(l_('record'),   'record'),
         'module':   ObjType(l_('module'),   'mod'),
         'variable': ObjType(l_('variable'), 'var'),
@@ -396,11 +468,13 @@ class SpecDomain(Domain):
         'record':        SpecObject,
         'module':        SpecModule,
         'variable':      SpecVariable,
+        'global':        SpecVariable,
         'currentmodule': SpecCurrentModule,
     }
     roles = {
         'func' :  SpecXRefRole(),
         'macro':  SpecXRefRole(),
+        'global': SpecXRefRole(),
         'record': SpecXRefRole(),
         'mod':    SpecXRefRole(),
     }
@@ -408,6 +482,7 @@ class SpecDomain(Domain):
         'objects': {},    # fullname -> docname, objtype
         'functions' : {}, # fullname -> arity -> (targetname, docname)
         'modules': {},    # modname -> docname, synopsis, platform, deprecated
+        'globals': {},    # ??????????
     }
     indices = [
         SpecModuleIndex,

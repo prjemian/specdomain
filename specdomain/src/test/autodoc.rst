@@ -18,8 +18,8 @@ A similar task in Python might use this SPHINX code::
 Now for the SPEC macro
 
 .. note:: tba
-
+.. awk language support requires Pygments 1.5+
 .. literalinclude:: newuser.mac
 	:language: guess
 	:linenos:
-
+	

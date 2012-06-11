@@ -206,7 +206,7 @@ def kohzuE_cmd(mne,key,p1) '{
 }'
 
 def show_und'
-   printf("\n%40.40s","Curent Undulator Status")
+   printf("\n%40.40s","Current Undulator Status")
 '
 
   # cleanup macro for ^C usage
