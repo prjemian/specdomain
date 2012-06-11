@@ -10,6 +10,12 @@ Useful reading
 * http://sphinx.pocoo.org/ext/appapi.html#domain-api
 * http://sphinx.pocoo.org/ext/tutorial.html
 * https://bitbucket.org/birkenfeld/sphinx-contrib/
+* http://sphinx.pocoo.org/ext/appapi.html#sphinx.domains.Domain
+
+.. note:: Per ``src/refs/sphinx-contrib/README``,
+	*Use "make-ext.py" to set up your extension subdirectory.*
+	
+	There is also a useful comment about using ``ez_setup.py``.
 
 
 Regular Expression Parts to Recognize ...
