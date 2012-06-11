@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    sphinxcontrib.specfdomain
+    sphinxcontrib.specdomain
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     SPEC domain.
