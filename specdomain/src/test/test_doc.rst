@@ -1,3 +1,5 @@
+.. $Id$
+
 ===============
 Acceptance Test
 ===============
@@ -42,6 +44,8 @@ This is the first example (from source code inline the .rst file): :spec:macro:`
 Global(spec module's contents)
 ================================
 
+.. note:: What should this look like?
+
 Test references to ``specdomain`` objects at the global level:
 
 .. spec:function:: function_out_of_module
@@ -50,6 +54,8 @@ Test references to ``specdomain`` objects at the global level:
 
 Single Module 'test_module'
 ===========================
+
+.. note:: What should this look like?
 
 Test references to ``specdomain`` objects on an individual basis using inline code:
 
@@ -121,3 +127,4 @@ Test Case - Access With Module Name in Other Module
 .. :spec:macro:`test_module:HostName`
 
 :spec:record:`test_module:#user_address`
+

@@ -1,584 +1,696 @@
 
 # $Id$
-# from Christian Schlepuetz (formatted for RoboDoc)
+# from ESRF (http://www.esrf.eu/blissdb/macros/getsource.py?macname=attributes.mac)
 
-#==============================================================================
-#%+H* common/shutter
-#     ==============
+#%TITLE% ATTRIBUTES.MAC
+#%NAME% ATTRIBUTES.MAC - TANGO attribute macro counters.
 #
-# NAME
-#   shutter.mac
+#%DESCRIPTION%
+#     The macro set offers the possibility to set-up a TANGO attribute
+#     as macro motor or as macro counter.
+#      Only read/write TANGO attributes can be used as macro motor.
+#     The macro motor controller defined is called "attr_mot" and
+#     The macro counter controller defined is called "attr_ct".
 #
-# SUMMARY
-#   Commands to control a fast photon shutter.
+#%SETUP%
+#Motor and Counter Device Configuration (Not CAMAC)
+# ...
+#SCALERS        DEVICE   ADDR  <>MODE  NUM                                 <>TYPE
+#    YES                         POLL    1                         Software Timer
+#    YES        attr_c      -            2                          Macro Counter
 #
-# DESCRIPTION
-#   The macro causes the fast photon shutter to be opened immediately prior to
-#   any count command, and closed again upon its completion. A configurable
-#   delay time assures that the shutter is fully open before issuing the
-#   count command.
-#   The photon shutter is controlled via an EPICS binary output channel, and
-#   the shutter status is optionally monitored via a binary input channel (in
-#   which case the delay time is not used, but the monitor signal is used to
-#   check for completion of the opening process).
+# take care to set the NUM field to the good number of macro_counters you need.
 #
-# AUTHOR
-#   Christian M. Schlepuetz (CS, cschlep)
+#%EXAMPLE%
+#%DL%
 #
-# CREATION DATE
-#   2004/11/06
 #
-# COPYRIGHT
-#   Copyright 2006-2011 by the above authors (see AUTHOR/AUTHORS)
+#%DT%  attr_mot_setup tilt id14/eh3-motor/mono_tile/Position %DD%
+#    Set-up the TANGO attribute macro motor with the mnemonic "tilt"
 #
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
+#%DT%  attr_ct_setup det id14/pindiode/eh3/Intensity %DD%
+#    Set-up the TANGO attribute macro counter with the mnemonic "det"
 #
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
+#%XDL%
 #
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see http://www.gnu.org/licenses/.
-#
-# VERSION
-#   $Date: 2010-11-04 19:06:06 -0400 (Thu, 04 Nov 2010) $
-#   $Author: cschlep $
-#   $URL: file:///data/svn/software/spec/trunk/common/shutter.mac $
-#   $Revision: 17 $
-#
-# DEPENDENCIES
-#   Chained macro definitions affected by this macro:
-#   - user_precount
-#   - user_getcounts
-#   - cleanup_always
-#
-# HISTORY
-#   2004/11/06 (CS):
-#   - modified the first original version to comply with naming and format
-#     conventions
-#   - implemented help-file support and wrote help texts.
-#
-#   2010/03/30 (CS):
-#   - added the following global variables to make macro more easily portable:
-#
-#     SHUTTER_CONTROL_PV      # EPICS PV name for the shutter control (bo)
-#     SHUTTER_CONTROL_OPEN    # EPICS control value for open shutter
-#     SHUTTER_CONTROL_CLOSED  # EPICS control value for closed shutter
-#     SHUTTER_STATUS_PV       # EPICE PV name for the shutter status (bi)
-#     SHUTTER_STATUS_OPEN     # EPICS status value for open shutter
-#     SHUTTER_STATUS_CLOSED   # EPICS status value for closed shutter
-#     SHUTTER_IS_ON           # flag for automatic shutter control
-#     SHUTTER_SLEEP_TIME      # SPEC sleep time after opening shutter
-#
-#   2010/07/23 (CS):
-#   - added SVN keywords (replacing CVS keywords)
-#
-#   2011/12/19 (CS):
-#   - reformatted code documentation to work with ROBODoc
-#   - added shutter_setup with following internal macros:
-#     * _shutter_print_setup
-#     * _shutter_set_option
-#     * _clear_screen
-#   - replaced SHUTTER_STATUS* with SHUTTER_MONITOR*
-#   - replaced global variables _OPEN with _OPEN_VAL and
-#     _CLOSED with _CLOSED_VAL
-#
-#%-
-#==============================================================================
-
-#==============================================================================
-# Define some global variables
-# ----------------------------
-
-    global SHUTTER_MAC
-           SHUTTER_MAC = DOFILE
-
-    # EPICS PV of the binary output which controls the shutter
-    #
-    global SHUTTER_CONTROL_PV
-           SHUTTER_CONTROL_PV = "X04SA-ES3-SC:FPS"
-
-    global SHUTTER_CONTROL_OPEN_VAL
-           SHUTTER_CONTROL_OPEN_VAL = "On"
-
-    global SHUTTER_CONTROL_CLOSED_VAL
-           SHUTTER_CONTROL_CLOSED_VAL = "Off"
-
-    # EPICS PV of the binary input which monitors the state of the shutter
-    # if SHUTTER_MONITOR_PV = "", no monitoring is performed
-    #
-    global SHUTTER_MONITOR_PV
-           SHUTTER_MONITOR_PV = ""
-
-    global SHUTTER_MONITOR_OPEN_VAL
-           SHUTTER_MONITOR_OPEN_VAL = "open"
-
-    global SHUTTER_MONITOR_CLOSED_VAL
-           SHUTTER_MONITOR_CLOSED_VAL = "closed"
-
-    global SHUTTER_IS_ON
-           SHUTTER_IS_ON = 0
-
-    global SHUTTER_SLEEP_TIME
-           SHUTTER_SLEEP_TIME = 0.1
+#%END%
 
 
-#==============================================================================
-# This macro file contains the following commands:
-#==============================================================================
+# General parameters for attributes macros.
+global ATTR_PAR[]
+#ATTR_PAR["tango_aware"]
+ATTR_PAR["mot_error"] = "ATTR : WARNING, error on reading attribute macro motor."
+ATTR_PAR["ct_error"]  = "ATTR : WARNING, error on reading attribute macro counter."
 
-#------------------------------------------------------------------------------
-#%+M* shutter/sh_help, shutter_help
-#     ===============
-#
-# SUMMARY
-#   Displays the shutter help text.
-#
-# USAGE
-#   > sh_help
-#
-# NOTE
-#   The help text is generated by simply displaying the text file
-#   shutter_mac.txt, which should reside in the same directory as shutter.mac.
-#   If the file does not exist, a generic help text is shown.
-#%-
 
-def shutter_help 'sh_help'
+# Macro-COUNTERS parameters.
+global ATTR_CT
+list_test ATTR_CT
+# ATTR_CT[mne]["dev_name"]
+# ATTR_CT[mne]["attr_name"]
 
-def sh_help '{
-#   =======
 
-  unix (sprintf ("dirname %s", SHUTTER_MAC), _1)
-  ll = length (_1)
-  if (substr (_1, ll, 1) == "\n") _1 = substr (_1, 1, (ll - 1))
-  file = sprintf ("%s/shutter_mac.txt", _1)
-  if (file_info (file, "-e")) {
-    unix (sprintf ("cat %s", file))
-  } else {
-    printf("\n  Macros available in file shutter.mac:\n")
-    printf(  "                           ===========\n")
-    printf("\n")
-    printf("  sh_help      - creates this help text\n")
-    printf("  shop         - opens the fast shutter\n")
-    printf("  shcl         - closes the fast shutter\n")
-    printf("  shon         - activate automatic shutter opening and closing\n")
-    printf("  shoff        - turn automatic shutter opening and closing off\n")
-    printf("  sh_status    - display whether the shutter is open or closed\n")
-    printf("  sh_show      - display shutter configuration and status\n")
-    printf("  sh_setup     - modify the shutter configuration\n")
-    printf("\n")
-  }
+# Macro-MOTORS parameters.
+global ATTR_MOT
+list_test ATTR_MOT
+# ATTR_MOT[mne]["dev_name"]
+# ATTR_MOT[mne]["attr_name"]
+
+global ESRF_ERR
+
+
+######################################################################
+##############################           #############################
+##############################  General  #############################
+##############################           #############################
+######################################################################
+
+#%UU%
+#%MDESC%
+#    Removes everythings about attributes.mac
+def attr_unsetup '{
+    unglobal ATTR_MOT
+    unglobal ATTR_CT
+    unglobal ATTR_PAR
+
+    # no cdef ?
 }'
 
 
-#------------------------------------------------------------------------------
-#%+M* shutter/shop, shutter_open
-#     ============
+#%UU%
+#%MDESC%
+#    Displays information about counters managed by attributes macros.
+def attr_show '{
+    attr_ct_show
+    print ""
+    attr_mot_show
+}'
+
+######################################################################
+##########################                  ##########################
+##########################  Macro counters  ##########################
+##########################                  ##########################
+######################################################################
+
+#%UU% <mne> <dev> <attribute>   |  <mne> <dev/attribute>
+#%MDESC%
+# Configures counter <mne> to read <attribute> of tango device <dev>.
 #
-# USAGE
-#   > shop
+# example:    attr_ct_setup  bpm2x  id22eh2/bpmccd/1   X
+#          or attr_ct_setup  bpm2x  id22eh2/bpmccd/1/X
 #
-# SUMMARY
-#   Open the fast photon shutter
-#%-
+# example2: attr_ct_setup sstate sys/Database/2   State
+#           attr_ct_setup toto   id22/refillsim/1/Refill_time
+#
+def attr_ct_setup '{
+    global ATTR_PAR
+    global ATTR_CT
 
-def shutter_open 'shop'
+    local _args_strings  _mne  _nbarg
 
-def shop'{
-#   ====
+    _nbarg = $#
 
-    epics_put (SHUTTER_CONTROL_PV, SHUTTER_CONTROL_OPEN_VAL)
-    if (SHUTTER_MONITOR_PV == ""){
-        sleep(SHUTTER_SLEEP_TIME)
-    } else {
-        while(epics_get(SHUTTER_MONITOR_PV) != SHUTTER_MONITOR_OPEN_VAL){
-            sleep(0.01)
-        }
+    _mne = "$1"
+
+    list_test ATTR_CT
+    list_test ATTR_PAR
+
+    list_add(ATTR_CT, _mne)
+
+    # Checks if you spec version can use "tango_get".
+    # ??? what happens in case of an old SPEC ???
+    # test on VERSION ???
+    if (tango_io("sys/Database/2", "State") != -1){
+        ATTR_PAR["tango_aware"] = 1
     }
-}'
-
-
-#------------------------------------------------------------------------------
-#%+M* shutter/shcl, shutter_close
-#     ============
-#
-# USAGE
-#   > shcl
-#
-# SUMMARY
-#   Close the fast photon shutter
-#%-
-
-def shutter_close 'shcl'
-
-def shcl'{
-#   ====
-
-    epics_put (SHUTTER_CONTROL_PV, SHUTTER_CONTROL_CLOSED_VAL)
-    if (SHUTTER_MONITOR_PV != ""){
-        while(epics_get(SHUTTER_MONITOR_PV) != SHUTTER_MONITOR_CLOSED_VAL){
-            sleep(0.01)
-        }
-    }
-}'
-
-
-#------------------------------------------------------------------------------
-#%+M* shutter/shon, shutter_on
-#     ============
-#
-# SUMMARY
-#   Activate automatic shutter opening and closing.
-#
-# DESCRIPTION
-#   If automatic shutter control is enabled, the shutter is opened just before
-#   an actual count command is executed and immediately closed again thereafter
-#   to prevent unnecessary sample and detector irradiation.
-#
-# USAGE
-#   > shon [<flag>]
-#
-#   When called with no <flag> argument, shon enables automatic shutter
-#   control. <flag> can be one of the following
-#     flag = 1 --> enable automatic shutter control (default)
-#     flag = 0 --> disable automatic shutter control
-#
-# NOTES
-#   When automatic shutter control is enabled, the fast photon shutter is
-#   always closed in a case of any error (this includes also Ctrl-C
-#   interrupts).
-#%-
-
-def shutter_on 'shon'
-
-def shon '{
-#   ====
-
-  if($# == 0){
-    _status = 1
-  } else if($# == 1){
-    _status = $1
-  } else {
-    printf("Error: wrong number of arguments in \'shon\'. Exiting...\n")
-    printf("Usage:\n")
-    printf("  shon <flag>\n")
-    printf("flag = 1 --> enable\n")
-    printf("flag = 0 --> disable\n")
-    exit
-  }
-
-  if(_status){
-
-    SHUTTER_IS_ON = 1
-
-    # add to user_precount (opening) and user_getcounts (closing)
-    cdef("user_precount","shop; ","aaa_shutter_user_precount_key",0x10)
-    cdef("user_getcounts","shcl; ","zzz_shutter_user_getcounts_key",0x20)
-
-    # add shcl to cleanup_always to close in case of errors
-    cdef("cleanup_always","shcl; ","aaa_shutter_cleanup_key",0x10)
-    printf("Automatic shutter opening is ON\n")
-  } else {
-
-    SHUTTER_IS_ON = 0
-
-    # remove from user_precount and getcounts
-    cdef("user_precount","","aaa_shutter_user_precount_key","delete")
-    cdef("user_getcounts","","zzz_shutter_user_getcounts_key","delete")
-    cdef("cleanup_always","","aaa_shutter_cleanup_key","delete")
-    printf("Automatic shutter opening is OFF\n")
-  }
-
-}'
-
-
-#------------------------------------------------------------------------------
-#%+M* shutter/shoff, shutter_off
-#     =============
-#
-# USAGE
-#   > shoff
-#
-# SUMMARY
-#   Turn automatic shutter opening and closing OFF.
-#%-
-
-def shutter_off 'shoff'
-
-def shoff '{
-#   ======
-
-  shon 0
-
-}'
-
-
-#------------------------------------------------------------------------------
-#%+M* shutter/sh_show, shutter_show
-#     ===============
-#
-# USAGE
-#   > sh_show
-#
-# SUMMARY
-#   Display the fast photon shutter setup and status
-#
-# OUTPUT
-#   This is a sample output:
-#
-#   Shutter setup:
-#
-#   1) Shutter control PV name                     : X04SA-ES3-SC:FPS
-#   2) Control PV value for shutter OPEN           : On
-#   3) Control PV value for shutter CLOSED         : Off
-#   4) Shutter monitor PV name ("" if none)        :
-#   5) Monitor PV value for shutter OPEN           : open
-#   6) Monitor PV value for shutter CLOSED         : closed
-#   7) Shutter delay time                          : 0.10 sec
-#   8) Auto shutter enable(1) / disable(0)         : 0
-#
-#   Shutter is OPEN
-#   Automatic shutter opening is ON
-#%-
-
-def shutter_show 'sh_show'
-
-def sh_show'{
-#   =======
-
-  _shutter_print_setup
-  sh_status
-
-}'
-
-
-#------------------------------------------------------------------------------
-#%+M* shutter/sh_status, shutter_status
-#     =================
-#
-# USAGE
-#   > sh_status
-#
-# SUMMARY
-#   Display the fast photon shutter status (OPEN or CLOSED)
-#
-# OUTPUT
-#   This is a sample output:
-#
-#   Shutter is OPEN
-#   Automatic shutter opening is ON
-#%-
-
-def shutter_status 'sh_status'
-
-def sh_status'{
-#   =========
-
-    if (SHUTTER_MONITOR_PV != ""){
-        if (epics_get(SHUTTER_MONITOR_PV)==SHUTTER_MONITOR_OPEN_VAL){
-          printf("Shutter is OPEN\n")
-        } else {
-          printf("Shutter is CLOSED\n")
-        }
-    } else {
-        if (epics_get(SHUTTER_CONTROL_PV)==SHUTTER_CONTROL_OPEN_VAL){
-          printf("Shutter is OPEN\n")
-        } else {
-          printf("Shutter is CLOSED\n")
-        }
+    else {
+        ATTR_PAR["tango_aware"] = 0
     }
 
-    if (SHUTTER_IS_ON == 1){
-      printf("Automatic shutter opening is ON\n")
-    } else {
-      printf("Automatic shutter opening is OFF\n")
+    # Parses arguments to extract device and attribute names.
+    # 2 or 3 arguments ?
+    if (_nbarg == 2){
+        # print "2 parameters given."
+        _args_strings[0] = 0
+        split ("$2", _args_strings, "/")
+
+        list_setpar(ATTR_CT, _mne, "dev_name",                     \
+                 sprintf("%s/%s/%s", _args_strings[0],          \
+                         _args_strings[1], _args_strings[2]))
+
+        list_setpar(ATTR_CT, _mne, "attr_name", _args_strings[3])
+    }
+    else if (_nbarg == 3){
+        # print "3 parameters given."
+        list_setpar(ATTR_CT, _mne, "dev_name", "$2")
+        list_setpar(ATTR_CT, _mne, "attr_name", "$3")
+    }
+    else {
+        print "error : $0 requires 2 or 3 arguments."
+        print "usage -> $0  <mne> <device> <attribute>"
+        print "      or $0  <mne> <device/attribute>"
+        exit
+    }
+
+    # Informative message.
+    printf("Configuring counter ")
+    tty_cntl("md")
+    printf ("%s", "$1")
+    tty_cntl("me")
+    printf (" to reflect attribute ")
+    tty_cntl("md")
+    printf ("%s", ATTR_CT["$1"]["attr_name"])
+    tty_cntl("me")
+    printf (" of device ")
+    tty_cntl("md")
+    printf ("%s", ATTR_CT["$1"]["dev_name"])
+    tty_cntl("me")
+    print "."
+
+    if (cnt_num(_mne) < 0){
+        printf("Warning: counter \"%s\" is not defined\n", _mne)
     }
 
 }'
 
+#%UU% <mne>
+#%MDESC%
+#    Removes reading of attribute linked to <mne> counter.
+#    ex: attr_ct_unsetup sstate
+def attr_ct_unsetup '{
+    local nb_param
 
-#------------------------------------------------------------------------------
-#%+M* shutter/sh_setup, shutter_setup
-#     ================
-#
-# USAGE
-#   > sh_setup
-#
-#   Then modify the dialog options
-#
-# SUMMARY
-#   Modify the shutter configuration.
-#%-
+    nb_param =$#
 
-def shutter_setup 'sh_setup'
+    if (nb_param < 1){
+        print "usage : $0 <counter_mnemonic>"
+    }
+    else{
+        list_remove(ATTR_CT, "$1")
+    }
+}'
 
-def sh_setup '{
-#   ========
+#%UU%
+#%MDESC%
+#    Removes reading of all attributes.
+def attr_ct_unsetup_all '{
+    unglobal ATTR_CT
+}'
 
-    local _setup_numitems, _setup_option, _tmp_option, _str1
 
-    # total number of setup items
-    _setup_numitems = 8
+#%UU%
+#%MDESC%
+#    Displays informations about macro counters.
+def attr_ct_show '{
+    local _mne
 
-    _clear_screen
+    print "-------=== macro counters ===------------"
+    print "mnemonic         device       attribute  "
+    print "-----------------------------------------"
 
-    _setup_option = 0
-    _tmp_option = -1
-    while (_tmp_option) {
-        _tmp_option = -1
-        while (_tmp_option < 0 || _tmp_option > _setup_numitems){
-            _shutter_print_setup
-            _str1 = sprintf("Enter 1-%d to change the parameters, 0 to quit",\
-              _setup_numitems)
-            _tmp_option = getval(_str1, _setup_option)
-            if(index(_tmp_option, "q") == 1 || index(_tmp_option, "Q") == 1){
-              _tmp_option = 0
+    for (i=0; i< list_n(ATTR_CT); i++){
+        _mne = ATTR_CT[i+1]
+        print ATTR_CT[i+1]"      " ATTR_CT[_mne]["dev_name"]"     "\
+            ATTR_CT[_mne]["attr_name"]
+    }
+    print "-----------------------------------------"
+
+}'
+
+
+#%IU%
+#%MDESC%
+#    Main function for macro counter.
+def attr_ct_cmd(cntnum, what, p1, p2) '{
+    global ATTR_CT
+    local _cntr _dev _attr
+
+    _cntr_mne = cnt_mne(cntnum)
+
+    # print "_cntr_mne=" _cntr_mne " \t what=" what
+
+    # "counts" read the attribute value as counter
+    # parameters: none
+    if (cntnum == ".."){
+        # for key applying to all counters
+        #print "--"
+    }
+    else{
+        if (what == "counts") {
+            # print "what == \"counts\""
+            local _ans _num  _dev _attr
+
+            # Tests if _cntr_mne is really an attr_ct macro counter.
+            if (list_check(ATTR_CT, _cntr_mne)){
+                _dev  = list_getpar(ATTR_CT, _cntr_mne, "dev_name")
+                _attr = list_getpar(ATTR_CT, _cntr_mne, "attr_name")
+
+                if(ATTR_PAR["tango_aware"]){
+
+                    _ans = tango_get(_dev, _attr)
+
+                    if (TANGO_ERR){
+                        tty_cntl("md")
+                        print "\n" ATTR_CT_ERROR " " _cntr_mne
+                        printf ("TANGO_ERR_MSG = \"%s\" \n\n", TANGO_ERR)
+                        print TANGO_ERR_STACK
+                        tty_cntl("me")
+                        exit
+                    }
+                }
+                else{
+                    # print "esrf_io() VERSION"
+                    # esrf_io version.
+                    local _target
+                    ESRF_ERR = -1
+
+                    _target = _dev "/" _attr
+                    _ans    = esrf_io (_target, "DevRead")
+
+                    if (ESRF_ERR) {
+                        tty_cntl("md")
+                        print "\n" ATTR_CT_ERROR " " _cntr_mne " <- " _target "\n"
+                        print "\n" ESRF_ERR_MSG "\n\n"
+                        tty_cntl("me")
+                    }
+                }
+
+                return (_ans)
+            }
+            else{
+                #  print "Counter \"" _cntr_mne "\" not set up in ATTR_CT."
+                return (-1)
             }
         }
-        _setup_option = _tmp_option
-        if (_setup_option != 0){
-            _shutter_set_option _setup_option
+    }
+}'
+
+
+# def ct '{
+#    _cols = 0
+#    p "1"
+#    waitmove
+#    p "2"
+#    count_em $*
+#    p "3"
+#    rdef cleanup \'
+#         undef cleanup
+#         onp; show_cnts; offp
+#         user_handlecounts
+#    \'
+#    p "4"
+#    waitcount
+#    p "5"
+#    undef cleanup
+#    p "6"
+#    onp; show_cnts; offp
+#    p "7"
+#    user_handlecounts
+#    p "8"
+# }'
+#
+# 374.CYRIL> ct
+# 1
+# 2
+# what == "counts"
+# what == "counts"
+# 3
+# 4
+# what == "counts"
+# what == "counts"
+# 5
+# 6
+# what == "counts"
+# what == "counts"
+# 
+# Thu Jan 22 17:09:38 2009
+# 
+#      Seconds = 1.003
+#      Monitor = 0 (0/s)
+#     Detector = 0 (0/s)
+#         toto = -1 (-0.997009/s)
+#       sstate = 0 (0/s)
+# 7
+# 8
+# 
+# 375.CYRIL> what == "counts"
+# what == "counts"
+# 
+# 
+# 375.CYRIL>
+
+
+
+
+######################################################################
+###########################                ###########################
+###########################  Macro motors  ###########################
+###########################                ###########################
+######################################################################
+
+##%UU% <mne> <dev> <attribute>   |  <mne> <dev/attribute>
+#%MDESC%
+# Configures counter <mne> to read <attribute> of tango device <dev>.
+#
+# example:    attr_mot_setup  at1  id22eh2/machin/1   X
+#          or attr_mot_setup  at2  id22eh2/machin/1/X
+#
+# example 2  attr_mot_setup rft1  id22/refillsim/1  Refill_time
+#         or attr_mot_setup rft1  id22/refillsim/1/Refill_time
+#
+def attr_mot_setup '{
+    local _fields  _dev_name   _nbarg
+    local _args_strings  _mne
+
+    # Checks if you spec version can use "tango_put/tango_get".
+    # ??? what happens in case of an old SPEC ???
+    # test on VERSION ???
+    if (tango_io("sys/Database/2", "State") != -1){
+        ATTR_PAR["tango_aware"] = 1
+    }
+    else {
+        ATTR_PAR["tango_aware"] = 0
+    }
+
+    _mne = "$1"
+
+    list_test ATTR_MOT
+    list_test ATTR_PAR
+
+    list_add(ATTR_MOT, _mne)
+
+    _nbarg = $#
+
+
+    # Parses arguments to extract device and attribute names.
+    # 2 or 3 arguments ?
+    if (_nbarg == 2){
+        # print "2 parameters given."
+        _args_strings[0] = 0
+        split ("$2", _args_strings, "/")
+
+        list_setpar(ATTR_MOT, _mne, "dev_name",                     \
+                 sprintf("%s/%s/%s", _args_strings[0],          \
+                         _args_strings[1], _args_strings[2]))
+
+        list_setpar(ATTR_MOT, _mne, "attr_name", _args_strings[3])
+    }
+    else if (_nbarg == 3){
+        # print "3 parameters given."
+        list_setpar(ATTR_MOT, _mne, "dev_name", "$2")
+        list_setpar(ATTR_MOT, _mne, "attr_name", "$3")
+    }
+    else {
+        print "error : $0 requires 2 or 3 arguments."
+        print "usage -> $0  <mne> <device> <attribute>"
+        print "      or $0  <mne> <device/attribute>"
+        exit
+    }
+
+
+    # Informative message.
+    printf("Configuring macro motor ")
+    tty_cntl("md")
+    printf ("%s", "$1")
+    tty_cntl("me")
+    printf (" to reflect attribute ")
+    tty_cntl("md")
+    printf ("%s", ATTR_MOT["$1"]["attr_name"])
+    tty_cntl("me")
+    printf (" of device ")
+    tty_cntl("md")
+    printf ("%s", ATTR_MOT["$1"]["dev_name"])
+    tty_cntl("me")
+    print "."
+
+    if (motor_num(_mne) < 0){
+        printf("Warning: motor \"%s\" is not defined\n", _mne)
+    }
+}'
+
+
+
+#%UU% <mne>
+#%MDESC%
+#    Removes reading of attribute linked to <mne> motor.
+#    ex: attr_mot_unsetup at1
+def attr_mot_unsetup '{
+    local _nb_param
+
+    _nb_param =$#
+
+    if (_nb_param < 1){
+        print "usage : $0 <motor_mnemonic>"
+    }
+    else{
+        list_remove(ATTR_MOT, "$1")
+    }
+}'
+
+#%UU%
+#%MDESC%
+#    Removes reading of all attributes.
+def attr_mot_unsetup_all '{
+    unglobal ATTR_MOT
+}'
+
+#%UU%
+#%MDESC%
+#    Displays informations about attributes macro motors.
+def attr_mot_show '{
+    local _mne
+
+    print "--------==== macro motors ====-----------"
+    print "mnemonic         device       attribute  "
+    print "-----------------------------------------"
+
+    for (i=0; i< list_n(ATTR_MOT); i++){
+        _mne = ATTR_MOT[i+1]
+        print ATTR_MOT[i+1]"      " ATTR_MOT[_mne]["dev_name"]"     "   \
+            ATTR_MOT[_mne]["attr_name"]
+    }
+    print "-----------------------------------------"
+
+}'
+
+
+#%IU%
+#%MDESC%
+#
+def attr_mot_cmd(motnum, what, p1, p2) '{
+
+    local _mot_mne  _dev  _attr
+
+    _mot_mne = motor_mne(motnum)
+
+    # Tests if _mot_mne is really an attr_ macro motor.
+    if (list_check(ATTR_MOT, _mot_mne)){
+        _dev    = list_getpar(ATTR_MOT, _mot_mne, "dev_name")
+        _attr   = list_getpar(ATTR_MOT, _mot_mne, "attr_name")
+        _target = _dev "/" _attr
+    }
+    else{
+        #  print "Motor \"" _mot_mne "\" not set up in ATTR_MOT."
+        return (-1)
+    }
+
+
+
+    if(motnum == ".."){
+        # key applying to all motors
+        # print "--"
+    }
+
+    #-------------------------------------
+    # "position" must return dial position (in integer steps)
+    # parameters: none
+    if (what == "position") {
+        local _pos
+
+        if(ATTR_PAR["tango_aware"]){
+            _pos = tango_get(_dev, _attr)
+
+            if (TANGO_ERR){
+                tty_cntl("md")
+                print "\n" ATTR_MOT_ERROR " " _mot_mne  " " _dev  "/"  _attr
+                printf ("TANGO_ERR_MSG = \"%s\" \n\n", TANGO_ERR)
+                print TANGO_ERR_STACK
+                tty_cntl("me")
+                exit
+            }
         }
-        _setup_option = (_tmp_option + 1)%(_setup_numitems + 1)
+        else{
+            _pos = esrf_io (_target, "DevRead")
+
+            if (ESRF_ERR) {
+                tty_cntl("md")
+                print "\n" ATTR_MOT_ERROR " " _mot_mne " <- " _target "\n"
+                print "\n" ESRF_ERR_MSG "\n\n"
+                tty_cntl("me")
+            }
+        }
+        return (_pos)
+    }
+
+    #-------------------------------------
+    # "get_status" called during the motion, must return a bit mask
+    # bits meaning: 0 if motor idle
+    #               2 if motor moving
+    #               4 if negative limit on
+    #               8 if positive limit on
+    # parameters:   none
+    if (what == "get_status"){
+        local _state
+        local _ret
+
+        if(ATTR_PAR["tango_aware"]){
+            _state = tango_io(_dev, "State")
+
+            if (TANGO_ERR){
+                tty_cntl("md")
+                print "\n" ATTR_MOT_ERROR " " _mot_mne  " " _dev  "/"  _attr
+                printf ("TANGO_ERR_MSG = \"%s\" \n\n", TANGO_ERR)
+                print TANGO_ERR_STACK
+                tty_cntl("me")
+                exit
+            }
+        }
+        else{
+            ESRF_ERR = -1
+            _state = esrf_io (_target, "DevState")
+
+            if (ESRF_ERR){
+                tty_cntl("md")
+                print "\n" MOT_ERROR " " _mot_mne "\n"
+                print "\n" ESRF_ERR_MSG"\n\n"
+                tty_cntl("me")
+            }
+        }
+
+        #
+        # DEVMOVING
+        #
+        if (_state == 9) {
+            _ret |= 2
+            return _ret
+        }
+        #
+        # DEVFAULT
+        #
+        if (_state == 23) {
+            local _status
+
+            print ""
+
+            if(ATTR_PAR["tango_aware"]){
+                _status = tango_io(_dev, "DevStatus")
+            }
+            else{
+                ESRF_ERR = -1
+                print esrf_io (_target, "DevStatus")
+            }
+
+            print "Status= " _status
+
+            print ""
+            return 0
+        }
+
+        return 0
+    }
+
+    #-------------------------------------
+    # "start_one"
+    # parameters: p2 is relative motion, p1 is absolute requested position
+    if (what == "start_one") {
+        if(ATTR_PAR["tango_aware"]){
+
+            tango_put(_dev, _attr, p1)
+
+            if (TANGO_ERR){
+                tty_cntl("md")
+                print "\n" ATTR_MOT_ERROR " " _mot_mne  " " _dev  "/"  _attr
+                printf ("TANGO_ERR_MSG = \"%s\" \n\n", TANGO_ERR)
+                print TANGO_ERR_STACK
+                tty_cntl("me")
+                exit
+            }
+        }
+        else{
+            ESRF_ERR = -1
+
+            esrf_io (_target, "DevWrite", p1)
+            if (ESRF_ERR) {
+                tty_cntl("md")
+                print "\n" MOT_ERROR " " _mot_mne "\n"
+                print "\n" ESRF_ERR_MSG"\n\n"
+                tty_cntl("me")
+            }
+        }
+    }
+
+    #-------------------------------------
+    # "set_position" called on "set_dial motor newpos"
+    # parameters: p1 is the new position (in steps)
+    #
+    if (what == "set_position") {
+        if(ATTR_PAR["tango_aware"]){
+            tango_put(_dev, _attr, p1)
+
+            if (TANGO_ERR){
+                tty_cntl("md")
+                print "\n" ATTR_MOT_ERROR " " _mot_mne  " " _dev  "/"  _attr
+                printf ("TANGO_ERR_MSG = \"%s\" \n\n", TANGO_ERR)
+                print TANGO_ERR_STACK
+                tty_cntl("me")
+                exit
+            }
+        }
+        else{
+            ESRF_ERR = -1
+
+            esrf_io (_target, "DevWrite", p1)
+
+            if (ESRF_ERR) {
+                tty_cntl("md")
+                print "\n" MOT_ERROR " " _mot_mne "\n"
+                print "\n" ESRF_ERR_MSG"\n\n"
+                tty_cntl("me")
+            }
+        }
+    }
+
+    #-------------------------------------
+    # "abort_one" called on <Ctrl-C>
+    #
+    if (what == "abort_one") {
+        if(ATTR_PAR["tango_aware"]){
+            tango_put(_dev, "DevAbort")
+
+            if (TANGO_ERR){
+                tty_cntl("md")
+                print "\n" ATTR_MOT_ERROR " " _mot_mne  " " _dev  "/"  _attr
+                printf ("TANGO_ERR_MSG = \"%s\" \n\n", TANGO_ERR)
+                print TANGO_ERR_STACK
+                tty_cntl("me")
+                exit
+            }
+        }
+        else{
+            ESRF_ERR = -1
+            esrf_io (_target, "DevAbort")
+            if (ESRF_ERR) {
+                tty_cntl("md")
+                print "\n" MOT_ERROR " " _mot_mne "\n"
+                print "\n" ESRF_ERR_MSG"\n\n"
+                tty_cntl("me")
+            }
+        }
     }
 }'
 
 
-#==============================================================================
-# Internal macros
-#==============================================================================
+#%MACROS%
+#%IMACROS%
+#%AUTHOR%
 
-#------------------------------------------------------------------------------
-#%+iM* shutter/_shutter_print_setup
-#      ============================
-#
-# SUMMARY
-#   Prints the configuration options and current values to screen
-#
-# NOTE
-#   The option numbers must be kept in sync between _shutter_set_option and
-#   _shutter_print_setup
-#%-
-
-def _shutter_print_setup '{
-#   ====================
-
-    tty_cntl("ho")  # home cursor on left upper corner of screen
-    tty_cntl("cd")  # clear the rest of the screen
-
-    tty_cntl("so")  # highlight font
-    printf("Shutter setup:\n")
-    tty_cntl("se")  # turn off font highlighting
-
-    printf("\n 1) Shutter control PV name              \t: %s", \
-      SHUTTER_CONTROL_PV)
-    printf("\n 2) Control PV value for shutter OPEN    \t: %s", \
-      SHUTTER_CONTROL_OPEN_VAL)
-    printf("\n 3) Control PV value for shutter CLOSED  \t: %s", \
-      SHUTTER_CONTROL_CLOSED_VAL)
-    printf("\n 4) Shutter monitor PV name (\"\" if none) \t: %s", \
-      SHUTTER_MONITOR_PV)
-    printf("\n 5) Monitor PV value for shutter OPEN    \t: %s", \
-      SHUTTER_MONITOR_OPEN_VAL)
-    printf("\n 6) Monitor PV value for shutter CLOSED  \t: %s", \
-      SHUTTER_MONITOR_CLOSED_VAL)
-    printf("\n 7) Shutter delay time                   \t: %.2f sec", \
-      SHUTTER_SLEEP_TIME)
-    printf("\n 8) Auto shutter enable(1) / disable(0)  \t: %d", \
-      SHUTTER_IS_ON)
-    printf("\n\n")
-}'
-
-#------------------------------------------------------------------------------
-#%+iM* shutter/_shutter_set_option
-#      ===========================
-#
-# SUMMARY
-#   Sets a new value for a given option
-#
-# DESCRIPTION
-#   Sets a new value for a given option from the options menu that was created
-#   with the _shutter_print_setup command.
-#
-# NOTE
-#   The option numbers must be kept in sync between _shutter_set_option and
-#   _shutter_print_setup
-#%-
-
-def _shutter_set_option '{
-#   ===================
-
-    if ($1==1) {
-        SHUTTER_CONTROL_PV = getsval("Enter shutter control PV name",\
-            SHUTTER_CONTROL_PV)
-    } else if ($1==2) {
-        SHUTTER_CONTROL_OPEN_VAL = \
-            getsval("Control PV value for shutter OPEN",\
-            SHUTTER_CONTROL_OPEN_VAL)
-    } else if ($1==3) {
-        SHUTTER_CONTROL_CLOSED_VAL = \
-            getsval("Control PV value for shutter CLOSED",\
-            SHUTTER_CONTROL_CLOSED_VAL)
-    } else if ($1==4) {
-        _str = "Enter shutter monitor PV name"\
-               "(leave blank if shutter is not actively monitored)"
-        SHUTTER_MONITOR_PV = \
-            getsval(_str, SHUTTER_MONITOR_PV)
-    } else if ($1==5) {
-        SHUTTER_MONITOR_OPEN_VAL = \
-            getsval("Monitor PV value for shutter OPEN",\
-            SHUTTER_MONITOR_OPEN_VAL)
-    } else if ($1==6) {
-        SHUTTER_MONITOR_CLOSED_VAL = \
-            getsval("Monitor PV value for shutter CLOSED",\
-            SHUTTER_MONITOR_CLOSED_VAL)
-    } else if ($1==7) {
-        SHUTTER_SLEEP_TIME = getsval("Enter shutter delay time [seconds]",\
-            SHUTTER_SLEEP_TIME)
-    } else if ($1==8) {
-        _status = yesno("Enable the automatic shutter control?",\
-            SHUTTER_IS_ON)
-        shon _status
-    }
-}'
-
-#------------------------------------------------------------------------------
-#%+iM* shutter/_clear_screen
-#      =====================
-#
-# SUMMARY
-#   Clears the terminal screen
-#
-# DESCRIPTION
-#   Clears the screen without losing the screen history or messing up the
-#   scrolling capabilities (this has been a problem for certain terminals)
-#   by blanking out the entire height of the screen and returning the cursor to
-#   the top left corner.
-#%-
-
-def _clear_screen '{
-#   =============
-
-  # update the ROWS and COLS variables in case the terminal has been resized
-  tty_cntl("resized?")
-
-  # print as many newlines as there are ROWS in terminal
-  cl_text = ""
-  for (i=0;i<ROWS;i++){
-    cl_text = cl_text "\n"
-  }
-  printf(cl_text)
-
-  # move back to the top of the screen and clear to end of the screen
-  tty_move(0,0)
-  tty_cntl("cd")
-
-}'
-
-#==============================================================================
-# End of $Id$
-#==============================================================================

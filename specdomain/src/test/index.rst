@@ -1,4 +1,4 @@
-.. $Id: $
+.. $Id$
 
 Welcome to sphinxcontrib-specdomain-acceptancetest's documentation!
 ===================================================================
@@ -9,6 +9,7 @@ Contents:
    :maxdepth: 2
 
    test_doc
+   autodoc
    
 Indices and tables
 ==================
