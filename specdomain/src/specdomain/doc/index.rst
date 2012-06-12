@@ -10,7 +10,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   objectives
    reference
+   changes
+   license
 
 * :ref:`genindex`
 * :ref:`search`
@@ -19,15 +22,3 @@ Authors
 =========
 
 .. include:: ../AUTHORS
-
-ChangeLog
-=========
-
-.. include:: ../CHANGES
-
-
-License
-=======
-
-.. literalinclude:: ../LICENSE
-    :linenos:

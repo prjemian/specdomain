@@ -391,28 +391,28 @@ class SpecDomain(Domain):
     name = 'spec'
     label = 'SPEC'
     object_types = {
-        'function': ObjType(l_('function'), 'func'),
-        'macro':    ObjType(l_('macro'),    'macro'),
-        'global':   ObjType(l_('global'),   'global'),
-        'record':   ObjType(l_('record'),   'record'),
-        'module':   ObjType(l_('module'),   'mod'),
-        'variable': ObjType(l_('variable'), 'var'),
+        'def':      ObjType(l_('def'),      'def'),
+        'rdef':     ObjType(l_('rdef'),     'rdef'),
+        'cdef':     ObjType(l_('cdef'),     'cdef'),
+        #'record':   ObjType(l_('record'),   'record'),
+        #'module':   ObjType(l_('module'),   'mod'),
+        #'variable': ObjType(l_('variable'), 'var'),
     }
     directives = {
-        'function':      SpecObject,
-        'macro':         SpecObject,
-        'record':        SpecObject,
-        'module':        SpecModule,
-        'variable':      SpecVariable,
-        'global':        SpecVariable,
-        'currentmodule': SpecCurrentModule,
+        'def':      SpecObject,
+        'rdef':     SpecObject,
+        'cdef':     SpecObject,
+        #'module':        SpecModule,
+        #'variable':      SpecVariable,
+        #'global':        SpecVariable,
+        #'currentmodule': SpecCurrentModule,
     }
     roles = {
-        'func' :  SpecXRefRole(),
-        'macro':  SpecXRefRole(),
-        'global': SpecXRefRole(),
-        'record': SpecXRefRole(),
-        'mod':    SpecXRefRole(),
+        'def' :     SpecXRefRole(),
+        'rdef':     SpecXRefRole(),
+        'cdef':     SpecXRefRole(),
+        #'record': SpecXRefRole(),
+        #'mod':    SpecXRefRole(),
     }
     initial_data = {
         'objects': {},    # fullname -> docname, objtype
