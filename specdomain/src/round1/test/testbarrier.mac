@@ -2,7 +2,7 @@
 # $Id$
 # sample file to test sphinx documentation of SPEC macro files
 
-#%
+#**
 # This file contains SPEC macro fragments to test various 
 # parts of the SPHINX documentation builder.
 
@@ -21,7 +21,7 @@ local A2Rp0
 
 
 #==============================================================================
-#%
+#**
 # common/shutter
 # ==============
 # 
@@ -154,7 +154,7 @@ local A2Rp0
 #==============================================================================
 
 #------------------------------------------------------------------------------
-#%
+#**
 # shutter/sh_help, shutter_help
 # =============================
 #
