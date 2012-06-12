@@ -14,26 +14,26 @@
 # http://sphinx.pocoo.org/ext/appapi.html
 
 
-import re
-import string
+import re                                               #@UnusedImport
+import string                                           #@UnusedImport
 
-from docutils import nodes
-from docutils.parsers.rst import directives
+from docutils import nodes                              #@UnusedImport
+from docutils.parsers.rst import directives             #@UnusedImport
 
-from sphinx import addnodes
-from sphinx.roles import XRefRole
-from sphinx.locale import l_, _
-from sphinx.directives import ObjectDescription
-from sphinx.domains import Domain, ObjType, Index
-from sphinx.util.compat import Directive
-from sphinx.util.nodes import make_refnode
-from sphinx.util.docfields import Field, TypedField
+from sphinx import addnodes                             #@UnusedImport
+from sphinx.roles import XRefRole                       #@UnusedImport
+from sphinx.locale import l_, _                         #@UnusedImport
+from sphinx.directives import ObjectDescription         #@UnusedImport
+from sphinx.domains import Domain, ObjType, Index       #@UnusedImport
+from sphinx.util.compat import Directive                #@UnusedImport
+from sphinx.util.nodes import make_refnode              #@UnusedImport
+from sphinx.util.docfields import Field, TypedField     #@UnusedImport
 
 
 class SpecDomain(Domain):
     """SPEC language domain."""
     name = 'spec'
-    label = 'SPEC'
+    label = 'SPEC, http://www.certif.com'
 
 
 # http://sphinx.pocoo.org/ext/tutorial.html#the-setup-function
