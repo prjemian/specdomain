@@ -13,6 +13,9 @@ import sys
 
 
 def force_rebuild_all():
+    '''
+    Delete the *doctrees* subdirectory.
+    '''
     if os.path.exists('_build/doctrees'):
         garbage_list = [
             '_build/doctrees/environment.pickle',
