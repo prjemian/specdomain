@@ -12,7 +12,7 @@
 # http://sphinx.pocoo.org/ext/appapi.html
 
 import re
-import string
+import string                                       #@UnusedImport
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -34,12 +34,18 @@ wsplit_re = re.compile(r'(\W+)')
 # http://www.greenend.org.uk/rjk/tech/regexp.html
 
 # REs for SPEC signatures
+#spec_func_sig_re = re.compile(
+#    r'''^ ([\w.]*:)?             # module name
+#          (\w+)  \s*             # thing name
+#          (?: \((.*)\)           # optional: arguments
+#           (?:\s* -> \s* (.*))?  #           return annotation
+#          )? $                   # and nothing more
+#          ''', re.VERBOSE)
+
 spec_func_sig_re = re.compile(
-    r'''^ ([\w.]*:)?             # module name
-          (\w+)  \s*             # thing name
-          (?: \((.*)\)           # optional: arguments
-           (?:\s* -> \s* (.*))?  #           return annotation
-          )? $                   # and nothing more
+    r'''^ ([a-zA-Z_]\w*)         # macro name
+          ((\s+\S+)*)            # optional: arguments
+          $                      # and nothing more
           ''', re.VERBOSE)
 
 
@@ -91,13 +97,6 @@ class SpecObject(ObjectDescription):
     def needs_arglist(self):
         return self.objtype == 'function'
 
-    def handle_signature(self, sig, signode):
-        if sig.startswith('#'):
-            return self._handle_record_signature(sig, signode)
-        elif sig[0].isupper():
-            return self._handle_macro_signature(sig, signode)
-        return self._handle_function_signature(sig, signode)
-
     def _resolve_module_name(self, signode, modname, name):
         # determine module name, as well as full name
         env_modname = self.options.get(
@@ -114,6 +113,13 @@ class SpecObject(ObjectDescription):
         signode += addnodes.desc_addname(name_prefix, name_prefix)
         signode += addnodes.desc_name(name, name)
         return fullname
+
+    def handle_signature(self, sig, signode):
+        if sig.startswith('#'):
+            return self._handle_record_signature(sig, signode)
+        elif sig[0].isupper():
+            return self._handle_macro_signature(sig, signode)
+        return self._handle_function_signature(sig, signode)
 
     def _handle_record_signature(self, sig, signode):
         m = spec_record_sig_re.match(sig)
@@ -133,7 +139,9 @@ class SpecObject(ObjectDescription):
         m = spec_func_sig_re.match(sig)
         if m is None:
             raise ValueError
-        modname, name, arglist, retann = m.groups()
+        #modname, name, arglist, retann = m.groups()
+        name, arglist, retann = m.groups()
+        modname = 'spec:def:'         # FIXME:
 
         fullname = self._resolve_module_name(signode, modname, name)
 
