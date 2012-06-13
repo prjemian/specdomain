@@ -19,5 +19,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`search`
 
+.. * :ref:`modindex`
+
 *documentation built*: 
 |today|

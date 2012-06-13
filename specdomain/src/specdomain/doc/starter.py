@@ -12,20 +12,22 @@ import sphinx
 import sys
 
 
-def force_rebuild_all():
+def force_rebuild_all(parent = '_build'):
     '''
     Delete the *doctrees* subdirectory.
+    
+    :param str parent: path to *build* subdirectory (either ``build`` or ``_build``)
     '''
-    if os.path.exists('_build/doctrees'):
+    if os.path.exists(parent):
         garbage_list = [
-            '_build/doctrees/environment.pickle',
-            '_build/doctrees/index.doctree',
-            '_build/doctrees/test_doc.doctree',
+            parent+'/doctrees/environment.pickle',
+            parent+'/doctrees/index.doctree',
+            parent+'/doctrees/test_doc.doctree',
         ]
         for item in garbage_list:
             if os.path.exists(item):
                 os.remove(item)
-        os.rmdir('_build/doctrees')
+        os.rmdir(parent+'/doctrees')
 
 
 if __name__ == '__main__':

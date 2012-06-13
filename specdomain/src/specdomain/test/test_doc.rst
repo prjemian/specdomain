@@ -19,7 +19,7 @@ have entries in an Index.
 SPEC Macros
 ^^^^^^^^^^^
 
-.. spec:def:: example_defined_macro [arg1 [arg2 [...]]]
+.. spec:def:: example_defined_macro arg1 arg2 arg3
 
    :param arg1: anything
    :type  arg1: str
