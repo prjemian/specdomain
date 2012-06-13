@@ -72,6 +72,8 @@ spec_record_sig_re = re.compile(
           ''', re.VERBOSE)
 
 
+spec_macroparamlist_re = re.compile(r'((\s+\S+)*)')  # split at whitespace
+
 spec_paramlist_re = re.compile(r'([\[\],])')  # split at '[', ']' and ','
 
 
@@ -114,7 +116,7 @@ class SpecObject(ObjectDescription):
         signode += addnodes.desc_name(name, name)
         return fullname
 
-    def handle_signature(self, sig, signode):
+    def handle_signature(self, sig, signode):   # TODO: this logic will have to be changed
         if sig.startswith('#'):
             return self._handle_record_signature(sig, signode)
         elif sig[0].isupper():
@@ -141,7 +143,7 @@ class SpecObject(ObjectDescription):
             raise ValueError
         #modname, name, arglist, retann = m.groups()
         name, arglist, retann = m.groups()
-        modname = 'spec:def:'         # FIXME:
+        modname = signode.parent['desctype'] + ":"
 
         fullname = self._resolve_module_name(signode, modname, name)
 
