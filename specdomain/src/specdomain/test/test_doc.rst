@@ -19,18 +19,20 @@ have entries in an Index.
 SPEC Macros
 ^^^^^^^^^^^
 
-.. spec:def:: example_defined_macro arg1 arg2 arg3
+.. spec:def:: no_args_macro
+
+.. spec:def:: def_macro arg1 arg2 arg3
 
    :param arg1: anything
    :type  arg1: str
    :param arg2: another thing
 
-.. spec:rdef:: example_runtime_defined_macro content
+.. spec:rdef:: rdef_macro content
 
    :param content: SPEC code (single or multi-line but typically a single macro)
    :type  content: str
 
-.. spec:cdef:: example_chained_macro(identifier, content, placement)
+.. spec:cdef:: cdef_macro(identifier, content, placement)
 
    :param identifier: one-word name for this macro chain
    :type  identifier: str
@@ -49,10 +51,15 @@ SPEC Variables
 Python example
 ^^^^^^^^^^^^^^
 
-.. py:function:: the_time(t = None)
+.. py:function:: python_function(t = None)
 
    :param t: time_t object or None (defaults to ``now()``)
    :type  t: str
+
+ReST example
+^^^^^^^^^^^^^^
+
+.. rst:directive:: rst_directive
 
 
 Roles
@@ -64,9 +71,9 @@ Each of these items should produce a valid link.
 SPEC Macros
 ^^^^^^^^^^^
 
-* macro definition: :spec:def:`example_defined_macro`
-* runtime-defined macro definition: :spec:rdef:`example_runtime_defined_macro`
-* chained macro definition: :spec:cdef:`example_chained_macro`
+* macro definition: :spec:def:`def_macro`
+* runtime-defined macro definition: :spec:rdef:`rdef_macro`
+* chained macro definition: :spec:cdef:`cdef_macro`
 
 SPEC Variables
 ^^^^^^^^^^^^^^
@@ -78,4 +85,4 @@ SPEC Variables
 Python example
 ^^^^^^^^^^^^^^
 
-See the python method :py:func:`the_time()` (defined above)
+See the python method :py:func:`python_function()` (defined above)
