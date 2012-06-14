@@ -27,34 +27,65 @@ from sphinx.util.nodes import make_refnode              #@UnusedImport
 from sphinx.util.docfields import Field, TypedField     #@UnusedImport
 
 
+spec_macro_sig_re = re.compile(
+    r'''^ ([a-zA-Z_]\w*)         # macro name
+          ''', re.VERBOSE)
+
+
 class SpecObject(ObjectDescription):
     """
     Description of a SPEC object (macro definition or variable).
     """
 
+    def add_target_and_index(self, name, sig, signode):
+        targetname = '%s-%s' % (self.objtype, name)
+        signode['ids'].append(targetname)
+        self.state.document.note_explicit_target(signode)
+        indextext = self._get_index_text(name)
+        if indextext:
+            self.indexnode['entries'].append(('single', indextext,
+                                              targetname, ''))
+
+    def _get_index_text(self, name):
+        macro_types = {
+            'def':  '%s (SPEC macro)',
+            'rdef': '%s (SPEC run-time macro)',
+            'cdef': '%s (SPEC chained macro)',
+        }
+        if self.objtype in macro_types:
+            return _(macro_types[self.objtype]) % name
+        else:
+            return ''
+
     def handle_signature(self, sig, signode):
-        # TODO: must be able to match these
-        # def macro_name
-        # def macro_name()
-        # def macro_name(arg1, arg2)
-        name, args = sig.strip().split()    
+        # Must be able to match these (without preceding def or rdef)
+        #     def macro_name
+        #     def macro_name()
+        #     def macro_name(arg1, arg2)
+        #     rdef macro_name
+        #     cdef(macro_name, content, groupname, flags)
+        m = spec_macro_sig_re.match(sig)
+        if m is None:
+            raise ValueError
+        arglist = sig.strip().split()
+        if len(arglist) == 0:
+            raise ValueError
+        if sig.startswith('cdef'):
+            special = sig.lstrip('cdef')
+        name = arglist[0]
         signode += addnodes.desc_name(name, name)
+        if len(arglist) > 1:
+            args = sig.lstrip(name).strip()
         if len(args) > 0:
             signode += addnodes.desc_addname(args, args)
         return name
 
-    def _get_index_text(self, name):    # TODO: needs to be checked
-        if self.objtype == 'def':
-            return _('%s (SPEC macro)') % name
-        elif self.objtype == 'rdef':
-            return _('%s (SPEC macro)') % name
-        elif self.objtype == 'cdef':
-            return _('%s (SPEC global)') % name
-        else:
-            return ''
-
 
 class SpecXRefRole(XRefRole):    # TODO: needs to be checked
+    """ """
+    
+    # TODO: output is not properly formatted yet
+    # TODO: output does not yet provide link to directive instance
 
     def process_link(self, env, refnode, has_explicit_title, title, target):
         refnode['spec:def'] = env.temp_data.get('spec:def')
@@ -71,6 +102,7 @@ class SpecXRefRole(XRefRole):    # TODO: needs to be checked
         return title, target
 
     def result_nodes(self, document, env, node, is_ref):
+        # this code adds index entries for each role instance
         if not is_ref:
             return [node], []
         varname = node['reftarget']
@@ -87,6 +119,7 @@ class SpecXRefRole(XRefRole):    # TODO: needs to be checked
 
 class SpecDomain(Domain):
     """SPEC language domain."""
+    
     name = 'spec'
     label = 'SPEC, http://www.certif.com'
     object_types = {    # type of object that a domain can document

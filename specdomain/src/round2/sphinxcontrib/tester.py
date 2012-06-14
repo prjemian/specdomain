@@ -31,3 +31,13 @@ for phrase in test_group.split("\n"):
     else:
         name, args, last = m.groups()
         print name, args.strip().split()
+
+spec_macro_sig_re = re.compile(
+    r'''^ ([a-zA-Z_]\w*)         # macro name
+          ''', re.VERBOSE)
+
+sig = u'cdef(macro_name, content, groupname, flags)'
+m = spec_macro_sig_re.match(sig)
+print m.groups()
+print args
+

@@ -19,27 +19,22 @@ have entries in an Index.
 SPEC Macros
 ^^^^^^^^^^^
 
-.. spec:def:: no_args_macro
+.. spec:def:: def_macro content
 
-.. spec:def:: def_macro arg1 arg2 arg3
+   :param str arg: list of arguments is optional
 
-   :param arg1: anything
-   :type  arg1: str
-   :param arg2: another thing
+   This is a standard SPEC macro definition.
 
 .. spec:rdef:: rdef_macro content
 
-   :param content: SPEC code (single or multi-line but typically a single macro)
-   :type  content: str
+   This is a SPEC macro definition with symbols that are evaluated only at run-time.
 
-.. spec:cdef:: cdef_macro(identifier, content, placement)
+.. spec:cdef:: cdef(macro_name, [content, groupname, [flags]])
 
-   :param identifier: one-word name for this macro chain
-   :type  identifier: str
-   :param content: SPEC code to be inserted (typically a single macro)
-   :type  content: str
-   :param placement: see the manual
-   :type  placement: str
+   :param str macro_name: one-word name (quoted string) for this macro chain
+   :param str content: SPEC code to be inserted (typically a single macro)
+   :param str groupname: name of organizational group
+   :param str flags: see the manual
 
 SPEC Variables
 ^^^^^^^^^^^^^^
@@ -66,14 +61,15 @@ Roles
 =====
 
 A *role* refers to a *directive* (makes a link to a *directive* defined elsewhere).
-Each of these items should produce a valid link.
+Each of these items should produce a valid link.  Additionally, every call to a 
+*role* should produce an index entry.
 
 SPEC Macros
 ^^^^^^^^^^^
 
 * macro definition: :spec:def:`def_macro`
 * runtime-defined macro definition: :spec:rdef:`rdef_macro`
-* chained macro definition: :spec:cdef:`cdef_macro`
+* chained macro definition: :spec:cdef:`cdef(macro_name, content, groupname, flags)`
 
 SPEC Variables
 ^^^^^^^^^^^^^^
