@@ -21,7 +21,8 @@ SPEC Macros
 
 .. spec:def:: def_macro content
 
-   :param str arg: list of arguments is optional
+   :param arg: list of arguments is optional
+   :type arg: str
 
    This is a standard SPEC macro definition.
 
@@ -39,12 +40,65 @@ SPEC Macros
    :param str content: SPEC code to be inserted (typically a single macro)
    :param str cdef_part: name for this part of the chained macro
    :param str flags: see the manual
+   
+SPEC cdef macro definitions
+++++++++++++++++++++++++++++++++
+
+.. TODO: pull this subsection once this part is made to work
+
+There are several different signatures for SPEC's ``cdef`` macro definition.
+Here are some examples pulled from the ``SPEC.D`` directory.
+
+.. note::  At present, the argument list from ``cdef`` macro definitions
+   is not being parsed or handled.  This will be fixed in a future revision.
+   
+.. literalinclude:: cdef-examples.mac
+   :linenos:
+   :language: guess
 
 SPEC Variables
 ^^^^^^^^^^^^^^
 
-* global variable declaration: 
-* local variable declaration: 
+These are some representative variable declarations in SPEC macro source files::
+
+	global  BCDA_GM[]
+	
+	   global    theta[]
+	   global    2theta[]  # this will not be found
+	   global    _motor[]
+	
+	global kohzu_PV kohzuMV_PV UND_PV Und_Off UNDE_TRACK_ON
+	global       kohzuStop_PV kohzuMode_PV      kohzuMove_PV
+	    global CCD_OVERHEAD_SECS_MEASURED   # measured readout time
+	
+	    global @A_name[] @B_name[]
+	       unglobal @A_name
+	       unglobal @B_name
+
+Variables in Directives
++++++++++++++++++++++++
+
+global variable declaration: 
+
+.. spec:global:: A[]
+
+   ``A[]`` contains the values of all motors
+
+local variable declaration:  
+
+.. spec:local:: i
+
+   ``i`` is a local loop counter
+
+array variable declaration: 
+
+	tba
+
+Variables in Roles
++++++++++++++++++++++++
+
+* global variable declaration: :spec:global:`A[]`
+* local variable declaration:  :spec:local:`i`
 * array variable declaration: 
 
 Python example
@@ -54,11 +108,6 @@ Python example
 
    :param t: time_t object or None (defaults to ``now()``)
    :type  t: str
-
-ReST example
-^^^^^^^^^^^^^^
-
-.. rst:directive:: rst_directive
 
 
 Roles

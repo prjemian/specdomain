@@ -30,13 +30,13 @@ from sphinx.util.docfields import Field, TypedField     #@UnusedImport
 match_all                   = '.*'
 non_greedy_filler           = match_all+'?'
 double_quote_string_match   = '("'+non_greedy_filler+'")'
-word_match                  = '((?:[a-z_][\w]*))'
+word_match                  = '((?:[a-z_]\w*))'
 cdef_match                  = '(cdef)'
 
 
 spec_macro_sig_re = re.compile(
-    r'''^ ([a-zA-Z_]\w*)         # macro name
-          ''', re.VERBOSE)
+                               r'''^ ([a-zA-Z_]\w*)         # macro name
+                               ''', re.VERBOSE)
 
 spec_func_sig_re = re.compile(word_match+'\('
                       + '('+match_all+')' 
@@ -46,10 +46,22 @@ spec_func_sig_re = re.compile(word_match+'\('
 spec_cdef_name_sig_re = re.compile(double_quote_string_match, re.IGNORECASE|re.DOTALL)
 
 
-class SpecObject(ObjectDescription):
+class SpecMacroObject(ObjectDescription):
     """
-    Description of a SPEC object (macro definition or variable).
+    Description of a SPEC macro definition
     """
+
+    doc_field_types = [
+        TypedField('parameter', label=l_('Parameters'),
+                   names=('param', 'parameter', 'arg', 'argument',
+                          'keyword', 'kwarg', 'kwparam'),
+                   typerolename='def', typenames=('paramtype', 'type'),
+                   can_collapse=True),
+        Field('returnvalue', label=l_('Returns'), has_arg=False,
+              names=('returns', 'return')),
+        Field('returntype', label=l_('Return type'), has_arg=False,
+              names=('rtype',)),
+    ]
 
     def add_target_and_index(self, name, sig, signode):
         targetname = '%s-%s' % (self.objtype, name)
@@ -83,7 +95,7 @@ class SpecObject(ObjectDescription):
             raise ValueError
         arglist = m.groups()
         name = arglist[0]
-        args = []
+        args = ['need to fix this']
         if len(arglist) > 1:
             args = arglist[1:]
             if name == 'cdef':
@@ -100,14 +112,18 @@ class SpecObject(ObjectDescription):
         return name
 
 
-class SpecXRefRole(XRefRole):    # TODO: needs to be checked
+class SpecVariableObject(ObjectDescription):
+    """
+    Description of a SPEC variable
+    """
+
+
+class SpecXRefRole(XRefRole):
     """ """
     
-    # TODO: output is not properly formatted yet
-    # TODO: output does not yet provide link to directive instance
-
     def process_link(self, env, refnode, has_explicit_title, title, target):
-        refnode['spec:def'] = env.temp_data.get('spec:def')
+        key = ":".join((refnode['refdomain'], refnode['reftype']))
+        refnode[key] = env.temp_data.get(key)        # key was 'spec:def'
         if not has_explicit_title:
             title = title.lstrip(':')   # only has a meaning for the target
             target = target.lstrip('~') # only has a meaning for the title
@@ -142,19 +158,25 @@ class SpecDomain(Domain):
     name = 'spec'
     label = 'SPEC, http://www.certif.com'
     object_types = {    # type of object that a domain can document
-        'def':  ObjType(l_('def'),  'def'),
-        'rdef': ObjType(l_('rdef'), 'rdef'),
-        'cdef': ObjType(l_('cdef'), 'cdef'),
+        'def':    ObjType(l_('def'),    'def'),
+        'rdef':   ObjType(l_('rdef'),   'rdef'),
+        'cdef':   ObjType(l_('cdef'),   'cdef'),
+        'global': ObjType(l_('global'), 'global'),
+        'local':  ObjType(l_('local'),  'local'),
     }
     directives = {
-        'def':          SpecObject,
-        'rdef':         SpecObject,
-        'cdef':         SpecObject,
+        'def':          SpecMacroObject,
+        'rdef':         SpecMacroObject,
+        'cdef':         SpecMacroObject,
+        'global':       SpecVariableObject,
+        'local':        SpecVariableObject,
     }
     roles = {
-        'def' :  SpecXRefRole(),
-        'rdef':  SpecXRefRole(),
-        'cdef':  SpecXRefRole(),
+        'def' :     SpecXRefRole(),
+        'rdef':     SpecXRefRole(),
+        'cdef':     SpecXRefRole(),
+        'global':   SpecXRefRole(),
+        'local':    SpecXRefRole(),
     }
     initial_data = {
         'objects': {}, # fullname -> docname, objtype
