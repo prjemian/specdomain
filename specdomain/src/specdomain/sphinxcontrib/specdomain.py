@@ -27,9 +27,23 @@ from sphinx.util.nodes import make_refnode              #@UnusedImport
 from sphinx.util.docfields import Field, TypedField     #@UnusedImport
 
 
+match_all                   = '.*'
+non_greedy_filler           = match_all+'?'
+double_quote_string_match   = '("'+non_greedy_filler+'")'
+word_match                  = '((?:[a-z_][\w]*))'
+cdef_match                  = '(cdef)'
+
+
 spec_macro_sig_re = re.compile(
     r'''^ ([a-zA-Z_]\w*)         # macro name
           ''', re.VERBOSE)
+
+spec_func_sig_re = re.compile(word_match+'\('
+                      + '('+match_all+')' 
+                      + '\)', 
+                      re.IGNORECASE|re.DOTALL)
+
+spec_cdef_name_sig_re = re.compile(double_quote_string_match, re.IGNORECASE|re.DOTALL)
 
 
 class SpecObject(ObjectDescription):
@@ -48,9 +62,9 @@ class SpecObject(ObjectDescription):
 
     def _get_index_text(self, name):
         macro_types = {
-            'def':  '%s (SPEC macro)',
-            'rdef': '%s (SPEC run-time macro)',
-            'cdef': '%s (SPEC chained macro)',
+            'def':  'SPEC macro definition; %s',
+            'rdef': 'SPEC run-time macro definition; %s',
+            'cdef': 'SPEC chained macro definition; %s',
         }
         if self.objtype in macro_types:
             return _(macro_types[self.objtype]) % name
@@ -63,19 +77,24 @@ class SpecObject(ObjectDescription):
         #     def macro_name()
         #     def macro_name(arg1, arg2)
         #     rdef macro_name
-        #     cdef(macro_name, content, groupname, flags)
-        m = spec_macro_sig_re.match(sig)
+        #     cdef("macro_name", "content", "groupname", flags)
+        m = spec_func_sig_re.match(sig) or spec_macro_sig_re.match(sig)
         if m is None:
             raise ValueError
-        arglist = sig.strip().split()
-        if len(arglist) == 0:
-            raise ValueError
-        if sig.startswith('cdef'):
-            special = sig.lstrip('cdef')
+        arglist = m.groups()
         name = arglist[0]
-        signode += addnodes.desc_name(name, name)
+        args = []
         if len(arglist) > 1:
-            args = sig.lstrip(name).strip()
+            args = arglist[1:]
+            if name == 'cdef':
+                # TODO: need to match complete arg list
+                # several different signatures are possible (see cdef-examples.mac)
+                # for now, just get the macro name and ignore the arg list
+                m = spec_cdef_name_sig_re.match(args[0])
+                arglist = m.groups()
+                name = arglist[0].strip('"')
+                args = []                       # FIXME:
+        signode += addnodes.desc_name(name, name)
         if len(args) > 0:
             signode += addnodes.desc_addname(args, args)
         return name

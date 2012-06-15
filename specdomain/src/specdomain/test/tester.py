@@ -6,7 +6,7 @@
 import re
 
 #  http://regexpal.com/
-#http://www.txt2re.com/index-python.php3
+#  http://www.txt2re.com/index-python.php3
 
 def tester(test_cases, regexp):
     for s in test_cases.split('\n'):
@@ -119,5 +119,45 @@ cdef1_re = re.compile(cdef_match+'\('
 #                      re.IGNORECASE|re.DOTALL)
 func_start_re = re.compile(word_match+'\(',
                       re.IGNORECASE|re.DOTALL)
+func_match_re = re.compile(word_match+'\('
+                      + '('+match_all+')' 
+                      + '\)', 
+                      re.IGNORECASE|re.DOTALL)
 # cdef1_re is most general for recognizing any of the different cdef signatures
-tester(test_cases, cdef1_re)
+# func_match_re is most general for recognizing any of the different cdef signatures
+tester(test_cases, func_match_re)
+
+
+##################################################################################
+
+txt='\'"macro_name", "content", "groupname", flags\''
+
+uninteresting_csv = non_greedy_filler+','
+csv_match = '(' + non_greedy_filler + '),'
+
+re_str=non_greedy_filler        # Non-greedy match on filler
+re_str += double_quote_string   # Double Quote String 1
+re_str += non_greedy_filler     # Non-greedy match on filler
+re_str += uninteresting_csv     # Uninteresting: csv
+re_str += non_greedy_filler     # Non-greedy match on filler
+re_str += csv_match             # Command Seperated Values 1
+re_str += non_greedy_filler     # Non-greedy match on filler
+re_str += uninteresting_csv     # Uninteresting: csv
+re_str += non_greedy_filler     # Non-greedy match on filler
+re_str += csv_match             # Command Seperated Values 2
+
+re_str = "(.*)"
+
+rg = re.compile(re_str, re.IGNORECASE|re.DOTALL)
+
+test_cases = '''
+'"macro_name", "commands", "partname", "delete"'
+'"macro_name", "commands", "partname", flags'
+'"cleanup_once", sprintf("dscan_cleanup $1 %s;", _c1), "dscan"'
+'"macro_name", "commands", "partname"'
+'"macro_name"'
+'"geo_ub_default", "", "ub.mac"'
+'"config_mac", "{PLOT_CNTRS_MAX = COUNTERS}", "PLOT_Y", 0x10'
+'''
+print re_str
+tester(test_cases, rg)

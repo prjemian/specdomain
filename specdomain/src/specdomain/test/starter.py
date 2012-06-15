@@ -18,7 +18,7 @@ def force_rebuild_all(parent = '_build'):
     
     :param str parent: path to *build* subdirectory (either ``build`` or ``_build``)
     '''
-    if os.path.exists(parent):
+    if os.path.exists(parent+'/doctrees'):
         garbage_list = [
             parent+'/doctrees/environment.pickle',
             parent+'/doctrees/index.doctree',

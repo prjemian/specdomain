@@ -25,15 +25,19 @@ SPEC Macros
 
    This is a standard SPEC macro definition.
 
+.. spec:def:: def_function(arguments)
+
+   :param str arguments: named argument(s) to this function
+
 .. spec:rdef:: rdef_macro content
 
    This is a SPEC macro definition with symbols that are evaluated only at run-time.
 
-.. spec:cdef:: cdef(macro_name, [content, groupname, [flags]])
+.. spec:cdef:: cdef("cdef_macro", "content", "cdef_part", flags)
 
-   :param str macro_name: one-word name (quoted string) for this macro chain
+   :param str cdef_macro: one-word name (quoted string) for this macro chain
    :param str content: SPEC code to be inserted (typically a single macro)
-   :param str groupname: name of organizational group
+   :param str cdef_part: name for this part of the chained macro
    :param str flags: see the manual
 
 SPEC Variables
@@ -68,8 +72,9 @@ SPEC Macros
 ^^^^^^^^^^^
 
 * macro definition: :spec:def:`def_macro`
+* function definition: :spec:def:`def_function(arguments)`
 * runtime-defined macro definition: :spec:rdef:`rdef_macro`
-* chained macro definition: :spec:cdef:`cdef(macro_name, content, groupname, flags)`
+* chained macro definition: :spec:cdef:`cdef("cdef_macro", "content", "cdef_part", flags)`
 
 SPEC Variables
 ^^^^^^^^^^^^^^
