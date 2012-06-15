@@ -95,7 +95,7 @@ class SpecMacroObject(ObjectDescription):
             raise ValueError
         arglist = m.groups()
         name = arglist[0]
-        args = ['need to fix this']
+        args = []
         if len(arglist) > 1:
             args = arglist[1:]
             if name == 'cdef':
@@ -105,7 +105,7 @@ class SpecMacroObject(ObjectDescription):
                 m = spec_cdef_name_sig_re.match(args[0])
                 arglist = m.groups()
                 name = arglist[0].strip('"')
-                args = []                       # FIXME:
+                args = ['<<< cdef argument list not handled yet >>>']       # FIXME:
         signode += addnodes.desc_name(name, name)
         if len(args) > 0:
             signode += addnodes.desc_addname(args, args)

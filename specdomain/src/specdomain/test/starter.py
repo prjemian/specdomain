@@ -21,13 +21,13 @@ def force_rebuild_all(parent = '_build'):
     if os.path.exists(parent+'/doctrees'):
         garbage_list = [
             parent+'/doctrees/environment.pickle',
-            parent+'/doctrees/index.doctree',
-            parent+'/doctrees/test_doc.doctree',
+            #parent+'/doctrees/index.doctree',
+            #parent+'/doctrees/test_doc.doctree',
         ]
         for item in garbage_list:
             if os.path.exists(item):
                 os.remove(item)
-        os.rmdir(parent+'/doctrees')
+        #os.rmdir(parent+'/doctrees')
 
 
 if __name__ == '__main__':

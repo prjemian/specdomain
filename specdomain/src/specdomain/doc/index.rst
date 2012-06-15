@@ -11,9 +11,18 @@ Contents:
    :maxdepth: 2
 
    objectives
+   spec
+
+Other matters:
+
+.. toctree::
+   :maxdepth: 2
+
    reference
    changes
    license
+   
+Cross-reference:
 
 * :ref:`genindex`
 * :ref:`search`
