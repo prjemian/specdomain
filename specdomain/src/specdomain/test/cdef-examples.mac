@@ -1,3 +1,14 @@
+"""
+.. $Id$
+
+Examples of SPEC cdef macros
+==============================
+
+These examples of SPEC cdef macros were extracted from the 
+SPECD ``*.mac`` files.
+The items were obtained via grep, and then cleaned up in an 
+editor, then sorted, with redundancies removed.
+"""
 
 cdef("cleanup_once", "", "ct", "delete")
 cdef("cleanup_once", "", "dscan", "delete")
@@ -32,3 +43,5 @@ cdef("user_scan_loop")
 cdef("user_scan_plot")
 cdef("user_scan_tail")
 cdef("user_waitmove","\nwait(1);\n","waitmove_hack","0x20")
+
+""" end of  $Id$ """
