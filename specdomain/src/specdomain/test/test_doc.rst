@@ -100,6 +100,7 @@ Variables in Roles
 * global variable declaration: :spec:global:`A[]`
 * local variable declaration:  :spec:local:`i`
 * array variable declaration: 
+* constant declaration:
 
 Python example
 ^^^^^^^^^^^^^^
@@ -128,11 +129,37 @@ SPEC Macros
 SPEC Variables
 ^^^^^^^^^^^^^^
 
-* global variable declaration: 
-* local variable declaration: 
+The SPEC macro language provides for several types of variable:
+
+* global variables, such as:  :spec:global:`A[]`
+* local variable, such as:  :spec:local:`i`
 * array variable declaration: 
+* constant declaration:
+
+Source code documentation
+============================
 
 Python example
 ^^^^^^^^^^^^^^
 
 See the python method :py:func:`python_function()` (defined above)
+
+..  This should document the Python module supporting the specdomain
+
+:class:`SpecVariableObject` (Python Module)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: sphinxcontrib.specdomain.SpecVariableObject
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: sphinxcontrib.specdomain
+    :members:
+
+
+
+SPEC macro source file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. spec:macrofile:: cdef-examples.mac
