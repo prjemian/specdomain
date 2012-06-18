@@ -18,31 +18,31 @@ import string                                           #@UnusedImport
 from docutils import nodes                              #@UnusedImport
 from docutils.parsers.rst import directives             #@UnusedImport
 
-from sphinx import addnodes                             #@UnusedImport
-from sphinx.roles import XRefRole                       #@UnusedImport
+from sphinx import addnodes
+from sphinx.roles import XRefRole
 from sphinx.locale import l_, _                         #@UnusedImport
-from sphinx.directives import ObjectDescription         #@UnusedImport
+from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType, Index       #@UnusedImport
 from sphinx.util.compat import Directive                #@UnusedImport
-from sphinx.util.nodes import make_refnode              #@UnusedImport
-from sphinx.util.docfields import Field, TypedField     #@UnusedImport
+from sphinx.util.nodes import make_refnode
+from sphinx.util.docfields import Field, TypedField
+from sphinx.util.docstrings import prepare_docstring    #@UnusedImport
 
-
-match_all                   = '.*'
-non_greedy_filler           = match_all+'?'
-double_quote_string_match   = '("'+non_greedy_filler+'")'
-word_match                  = '((?:[a-z_]\w*))'
-cdef_match                  = '(cdef)'
-extended_comment_flag       = '\"\"\"'
+match_all                   = r'.*'
+non_greedy_filler           = match_all + r'?'
+double_quote_string_match   = r'("' + non_greedy_filler + r'")'
+word_match                  = r'((?:[a-z_]\w*))'
+cdef_match                  = r'(cdef)'
+extended_comment_flag       = r'\"\"\"'
 
 
 spec_macro_sig_re = re.compile(
                                r'''^ ([a-zA-Z_]\w*)         # macro name
                                ''', re.VERBOSE)
 
-spec_func_sig_re = re.compile(word_match+'\('
-                      + '('+match_all+')' 
-                      + '\)', 
+spec_func_sig_re = re.compile(word_match + r'\('
+                      + r'(' + match_all + r')' 
+                      + r'\)', 
                       re.IGNORECASE|re.DOTALL)
 
 spec_cdef_name_sig_re = re.compile(double_quote_string_match, 
@@ -51,17 +51,17 @@ spec_cdef_name_sig_re = re.compile(double_quote_string_match,
 
 spec_extended_comment_flag_sig_re = re.compile(extended_comment_flag, 
                                                re.IGNORECASE|re.DOTALL)
-spec_extended_comment_start_sig_re = re.compile('^'
+spec_extended_comment_start_sig_re = re.compile(r'^'
                                                 + non_greedy_filler
                                                 + extended_comment_flag, 
                                                 re.IGNORECASE|re.DOTALL)
-spec_extended_comment_block_sig_re = re.compile('^'
+spec_extended_comment_block_sig_re = re.compile(r'^'
                                                 + non_greedy_filler
                                                 + extended_comment_flag
-                                                + '(' + non_greedy_filler + ')'
+                                                + r'(' + non_greedy_filler + r')'
                                                 + extended_comment_flag
                                                 + non_greedy_filler
-                                                + '$', 
+                                                + r'$', 
                                                 re.IGNORECASE|re.DOTALL|re.MULTILINE)
 
 
@@ -197,15 +197,11 @@ class SpecMacroSourceObject(ObjectDescription):
         Another step would be to attach source code and provide links from each to
         highlighted source code blocks.
         '''
-        results = self.parse_macro_file(sig)
-        indent = ' '*4
-        for item in results:
-            # FIXME:  not desc_annotation but desc_content, but how to get it right?
-            # see <sphinx>/directives/__init__.py for an example
-            # It's a bit more complicated than this.
-            signode += addnodes.desc_annotation('\n', '\n')
-            for line in item.split('\n'):
-                signode += addnodes.desc_annotation(indent+line, indent+line)
+        extended_comments_list = self.parse_macro_file(sig)
+        for extended_comment in extended_comments_list:
+            linenumber = -1                 # FIXME:
+            #for line in prepare_docstring(extended_comment, ignore=1):
+            #    self.result.append(self.indent + line, sig, linenumber)     # FIXME:
         return sig
     
     def parse_macro_file(self, filename):
@@ -214,21 +210,23 @@ class SpecMacroSourceObject(ObjectDescription):
         
         :param str filename: name (with optional path) of SPEC macro file
             (The path is relative to the ``.rst`` document.)
-        :returns [str]: list of ReST-formatted extended comment blocks from SPEC macro file.
+        :returns [str]: list of ReST-formatted extended comment blocks (docstrings) from SPEC macro file.
         
-        [future] parse more stuff as planned
+        [future] parse more stuff as planned, this is very simplistic for now
         """
         results = []
         if not os.path.exists(filename):
             raise RuntimeError, "could not find: " + filename
         
         buf = open(filename, 'r').read()
-        # TODO: loop until no matches, chopping away the buffer after each match
-        m = spec_extended_comment_block_sig_re.match(buf)
-        if m is not None:
-            rest = m.groups()
-            if len(rest) == 1:
-                results.append(rest[0])
+        #n = len(buf)
+        for node in spec_extended_comment_block_sig_re.finditer(buf):
+            #g = node.group()
+            #gs = node.groups()
+            #s = node.start()
+            #e = node.end()
+            #t = buf[s:e]
+            results.append(node.groups())            # TODO: can we get line number also?
         return results
 
 
