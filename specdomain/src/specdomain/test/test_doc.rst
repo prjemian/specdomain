@@ -146,6 +146,14 @@ See the python method :py:func:`python_function()` (defined above)
 
 ..  This should document the Python module supporting the specdomain
 
+.. py:function:: test.testdoc.radius(x, y)
+	
+	:param float x: ordinate
+	:param float y: abcissa
+	:returns float: hypotenuse
+	
+	return math.sqrt(x*x + y*y)
+
 :class:`SpecVariableObject` (Python Module)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -159,7 +167,13 @@ See the python method :py:func:`python_function()` (defined above)
 
 
 
-SPEC macro source file
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SPEC macro source file: ``cdef-examples.mac``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. spec:macrofile:: cdef-examples.mac
+
+
+SPEC macro source file: ``test-battery.mac``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. spec:macrofile:: test-battery.mac

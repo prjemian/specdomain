@@ -3,10 +3,15 @@
     sphinxcontrib.specdomain
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    SPEC domain.
+    :synopsis: SPEC domain for Sphinx
+    
+    Automatically insert ReST-formatted extended comments 
+    from SPEC files for macro definitions and variable declarations into
+    the Sphinx doctree, thus avoiding duplication between docstrings and documentation
+    for those who like elaborate docstrings.
 
-    :copyright: Copyright 2012 by Pete Jemian
-    :license: BSD, see LICENSE for details.
+    :copyright: Copyright 2012 by BCDA, Advanced Photon Source, Argonne National Laboratory
+    :license: ANL Open Source License, see LICENSE for details.
 """
 
 # http://sphinx.pocoo.org/ext/appapi.html
@@ -24,9 +29,13 @@ from sphinx.locale import l_, _                         #@UnusedImport
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType, Index       #@UnusedImport
 from sphinx.util.compat import Directive                #@UnusedImport
-from sphinx.util.nodes import make_refnode
+from sphinx.util.nodes import make_refnode, nested_parse_with_titles
 from sphinx.util.docfields import Field, TypedField
 from sphinx.util.docstrings import prepare_docstring    #@UnusedImport
+
+from docutils.statemachine import ViewList, string2lines
+import sphinx.util.nodes
+
 
 match_all                   = r'.*'
 non_greedy_filler           = match_all + r'?'
@@ -198,10 +207,15 @@ class SpecMacroSourceObject(ObjectDescription):
         highlighted source code blocks.
         '''
         extended_comments_list = self.parse_macro_file(sig)
+        view = ViewList([u'TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up'])
+        node = nodes.paragraph()
+        node.document = self.state.document
+        self.state.nested_parse(view, 0, signode)
+        # TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up
         for extended_comment in extended_comments_list:
-            linenumber = -1                 # FIXME:
-            #for line in prepare_docstring(extended_comment, ignore=1):
-            #    self.result.append(self.indent + line, sig, linenumber)     # FIXME:
+            for line in string2lines(extended_comment):
+                view = ViewList([line])
+                nested_parse_with_titles(self.state, view, signode)
         return sig
     
     def parse_macro_file(self, filename):
@@ -226,7 +240,7 @@ class SpecMacroSourceObject(ObjectDescription):
             #s = node.start()
             #e = node.end()
             #t = buf[s:e]
-            results.append(node.groups())            # TODO: can we get line number also?
+            results.append(node.groups()[0])            # TODO: can we get line number also?
         return results
 
 
