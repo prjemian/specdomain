@@ -64,12 +64,12 @@ COPYRIGHT
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see http://www.gnu.org/licenses/.
  
-VERSION:
+VERSION::
  
-*   $. Date: 2010-11-04 19:06:06 -0400 (Thu, 04 Nov 2010) $
-*   $. Author: cschlep $
-*   $. URL: file:///data/svn/software/spec/trunk/common/shutter.mac $
-*   $. Revision: 17 $
+   $. Date: 2010-11-04 19:06:06 -0400 (Thu, 04 Nov 2010) $
+   $. Author: cschlep $
+   $. URL: file:///data/svn/software/spec/trunk/common/shutter.mac $
+   $. Revision: 17 $
  
 DEPENDENCIES
    Chained macro definitions affected by this macro:
