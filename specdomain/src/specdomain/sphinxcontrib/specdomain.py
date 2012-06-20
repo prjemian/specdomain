@@ -208,15 +208,28 @@ class SpecMacroSourceObject(ObjectDescription):
         '''
         extended_comments_list = self.parse_macro_file(sig)
         view = ViewList([u'TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up'])
+        #contentnode = nodes.TextElement()
         node = nodes.paragraph()
         node.document = self.state.document
         self.state.nested_parse(view, 0, signode)
         # TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up
-        for extended_comment in extended_comments_list:
-            for line in string2lines(extended_comment):
-                view = ViewList([line])
-                nested_parse_with_titles(self.state, view, signode)
+        # nodes.TextElement(raw, text)
+        # sphinx.directives.__init__.py  ObjectDescription.run() method
+        #  Summary:  This does not belong here, in the signature processing part.
+        #            Instead, it goes at the directive.run() method.  Where's that here?
+#        for extended_comment in extended_comments_list:
+#            for line in string2lines(extended_comment):
+#                view = ViewList([line])
+#                nested_parse_with_titles(self.state, view, signode)
         return sig
+    
+    def XX_run(self):
+        # TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up
+        # nodes.TextElement(raw, text)
+        # sphinx.directives.__init__.py  ObjectDescription.run() method
+        #  Summary:  This does not belong here, in the signature processing part.
+        #            Instead, it goes at the directive.run() method.  This is the new place!
+        pass
     
     def parse_macro_file(self, filename):
         """

@@ -147,12 +147,17 @@ See the python method :py:func:`python_function()` (defined above)
 ..  This should document the Python module supporting the specdomain
 
 .. py:function:: test.testdoc.radius(x, y)
+	:noindex:
 	
 	:param float x: ordinate
 	:param float y: abcissa
 	:returns float: hypotenuse
 	
 	return math.sqrt(x*x + y*y)
+	
+	The radius function is based on an algorithm of Pythagorus.
+	
+	.. note:: The Pythagorean theorem was also cited in the movie *The Wizard of Oz*.
 
 :class:`SpecVariableObject` (Python Module)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
