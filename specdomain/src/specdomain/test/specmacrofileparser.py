@@ -120,13 +120,13 @@ class SpecMacrofileParser:
         parse the internal buffer
         """
         line_number = 0
-        state = 'command level'
+        state = 'global'
         state_stack = []
         for line in self.buf.split('\n'):
             if state not in self.states:
                 raise RuntimeError, "unexpected parser state: " + state
             line_number += 1
-            if state == 'command level':
+            if state == 'global':
 
                 m = self._match(lgc_variable_sig_re, line)
                 if m is not None:           # local, global, or constant variable declaration
@@ -231,8 +231,8 @@ class SpecMacrofileParser:
 
 
 if __name__ == '__main__':
-    p = SpecMacrofileParser('test-battery.mac')
+    p = SpecMacrofileParser('../test/test-battery.mac')
     #print p.ReST()
     print p
-    p = SpecMacrofileParser('cdef-examples.mac')
+    p = SpecMacrofileParser('../test/cdef-examples.mac')
     #print p.ReST()
