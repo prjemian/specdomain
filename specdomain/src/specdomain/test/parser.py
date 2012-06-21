@@ -18,43 +18,47 @@ import os
 import re
 
 
+#   http://www.txt2re.com/index-python.php3
+#  http://regexpal.com/
+
 string_start                = r'^'
 string_end                  = r'$'
 match_all                   = r'.*'
 non_greedy_filler           = match_all + r'?'
-non_greedy_whitespace       = r'\w*?'
+non_greedy_whitespace       = r'\s*?'
 double_quote_string_match   = r'("' + non_greedy_filler + r'")'
+prog_name_match             = r'([a-z_]\w*)'
 word_match                  = r'((?:[a-z_]\w*))'
 cdef_match                  = r'(cdef)'
 extended_comment_marker     = r'\"{3}'
 extended_comment_match      = r'(' + extended_comment_marker + r')'
 
-spec_macro_sig_re = re.compile(
+macro_sig_re = re.compile(
                                r'''^ ([a-zA-Z_]\w*)         # macro name
                                ''', re.VERBOSE)
 
-spec_func_sig_re = re.compile(word_match + r'\('
+func_sig_re = re.compile(word_match + r'\('
                       + r'(' + match_all + r')' 
                       + r'\)', 
                       re.IGNORECASE|re.DOTALL)
 
-spec_cdef_name_sig_re = re.compile(double_quote_string_match, 
+cdef_name_sig_re = re.compile(double_quote_string_match, 
                                    re.IGNORECASE|re.DOTALL)
 
 
-spec_extended_comment_flag_sig_re = re.compile(extended_comment_marker, 
+extended_comment_flag_sig_re = re.compile(extended_comment_marker, 
                                                re.IGNORECASE|re.DOTALL)
-spec_extended_comment_start_sig_re = re.compile(string_start
+extended_comment_start_sig_re = re.compile(string_start
                                                 + non_greedy_whitespace
                                                 + extended_comment_match, 
                                                 re.IGNORECASE|re.VERBOSE)
-spec_extended_comment_end_sig_re = re.compile(non_greedy_whitespace
+extended_comment_end_sig_re = re.compile(non_greedy_whitespace
                                                 + extended_comment_match
                                                 + non_greedy_whitespace
                                                 + r'#' + non_greedy_filler
-                                                + r'$',
+                                                + string_end,
                                                 re.IGNORECASE|re.VERBOSE)
-spec_extended_comment_block_sig_re = re.compile(string_start
+extended_comment_block_sig_re = re.compile(string_start
                                                 + non_greedy_whitespace
                                                 + extended_comment_marker
                                                 + r'(' + non_greedy_filler + r')'
@@ -62,6 +66,14 @@ spec_extended_comment_block_sig_re = re.compile(string_start
                                                 + non_greedy_filler
                                                 + string_end, 
                                                 re.IGNORECASE|re.DOTALL|re.MULTILINE)
+lgc_variable_sig_re = re.compile(string_start
+                                    + non_greedy_whitespace
+                                    + r'(local|global|constant)'
+                                    + r'((?:\s*@?[\w.eE+-]+\[?\]?)*)'
+                                    + non_greedy_whitespace
+                                    + r'#' + non_greedy_filler
+                                    + string_end, 
+                                    re.VERBOSE)
 
 
 class SpecMacrofileParser:
@@ -113,18 +125,40 @@ class SpecMacrofileParser:
                 raise RuntimeError, "unexpected parser state: " + state
             line_number += 1
             if state == 'command level':
+                # test if local, global, or constant variable declaration
+                m = self._match(lgc_variable_sig_re, line)
+                if m is not None:
+                    objtype, vars = lgc_variable_sig_re.match(line).groups()
+                    pos = vars.find('#')
+                    if pos > -1:
+                        vars = vars[:pos]
+                    if line_number > 220:
+                        pass        # TODO: test for multiple definitions on one line
+                    m['objtype'] = objtype
+                    m['start_line'] = m['end_line'] = line_number
+                    del m['start'], m['end'], m['line']
+                    if objtype == 'constant':
+                        var, value = vars.split()
+                        m['text'] = var
+                        self.findings.append(dict(m))
+                    else:
+                        for var in vars.split():
+                            m['text'] = var
+                            self.findings.append(dict(m))
+                            # TODO: to what is this local?
+                    continue
+
                 # test if one-line extended comment
-                m = self._match(spec_extended_comment_block_sig_re, line)
+                m = self._match(extended_comment_block_sig_re, line)
                 if m is not None:
                     del m['start'], m['end'], m['line']
                     m['objtype'] = 'extended comment'
-                    m['start_line'] = line_number
-                    m['end_line'] = line_number
-                    self.findings.append(m)
+                    m['start_line'] = m['end_line'] = line_number
+                    self.findings.append(dict(m))
                     continue
                 
                 # test if start of multiline extended comment
-                m = self._match(spec_extended_comment_start_sig_re, line)
+                m = self._match(extended_comment_start_sig_re, line)
                 if m is not None:
                     text = m['line'][m['end']:]
                     del m['start'], m['end'], m['line']
@@ -138,15 +172,13 @@ class SpecMacrofileParser:
 
             elif state == 'extended comment':
                 # test if end of multiline extended comment
-                if line_number > 250:
-                    pass
-                m = self._match(spec_extended_comment_end_sig_re, line)
+                m = self._match(extended_comment_end_sig_re, line)
                 if m is not None:
                     text = m['line'][:m['start']]
                     ec['text'].append(text)
                     ec['text'] = '\n'.join(ec['text'])
                     ec['end_line'] = line_number
-                    self.findings.append(ec)
+                    self.findings.append(dict(ec))
                     state = state_stack.pop()
                     del ec
                 else:
@@ -163,6 +195,7 @@ class SpecMacrofileParser:
             'end':   m.end(1),
             'text':  m.group(1),
             'line':  line,
+            'filename':  self.filename,
         }
         return d
 
@@ -170,12 +203,34 @@ class SpecMacrofileParser:
         s = []
         for r in self.findings:
             s.append( '' )
-            t = '%s %s %d %d %s' % ('*'*20, r['objtype'], r['start_line'], r['end_line'], '*'*20)
+            t = '%s %s %d %d %s' % ('*'*20, 
+                                    r['objtype'], 
+                                    r['start_line'], 
+                                    r['end_line'], 
+                                    '*'*20)
             s.append( t )
             s.append( r['text'] )
         return '\n'.join(s)
 
+    def ReST(self):
+        """create the ReStructured Text from what has been found"""
+        s = []
+        for r in self.findings:
+            if r['objtype'] == 'extended comment':
+                s.append( '' )
+                s.append( '.. %s %s %d %d' % (self.filename, 
+                                              r['objtype'], 
+                                              r['start_line'], 
+                                              r['end_line']) )
+                s.append( '' )
+                s.append(r['text'])
+            # TODO: other objtypes
+        return '\n'.join(s)
+
 
 if __name__ == '__main__':
-    print SpecMacrofileParser('test-battery.mac')
-    print SpecMacrofileParser('cdef-examples.mac')
+    p = SpecMacrofileParser('test-battery.mac')
+    #print p.ReST()
+    print p
+    p = SpecMacrofileParser('cdef-examples.mac')
+    #print p.ReST()
