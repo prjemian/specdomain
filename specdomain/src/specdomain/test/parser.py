@@ -12,6 +12,9 @@
 """
 Construct a SPEC macro source code file parser for 
 use by the specdomain for Sphinx.
+
+:copyright: Copyright 2012 by BCDA, Advanced Photon Source, Argonne National Laboratory
+:license: ANL Open Source License, see LICENSE for details.
 """
 
 import os
@@ -82,13 +85,12 @@ class SpecMacrofileParser:
     variable declarations, and extended comments.
     '''
 
-    states = (
-        'command level', 
-        'extended comment', 
-        'def macro', 
-        'rdef macro', 
-        'cdef macro'
-              
+    states = (                  # assume SPEC def macros cannot be nested
+        'global',               # the level that provides the SPEC command prompt 
+        'extended comment',     # inside a multiline extended comment
+        'def macro',            # inside a multiline def macro definition
+        'rdef macro',           # inside a multiline rdef macro definition
+        'cdef macro',           # inside a multiline cdef macro definition
     )
 
     def __init__(self, macrofile):
@@ -125,27 +127,27 @@ class SpecMacrofileParser:
                 raise RuntimeError, "unexpected parser state: " + state
             line_number += 1
             if state == 'command level':
-                # test if local, global, or constant variable declaration
+
                 m = self._match(lgc_variable_sig_re, line)
-                if m is not None:
-                    objtype, vars = lgc_variable_sig_re.match(line).groups()
-                    pos = vars.find('#')
+                if m is not None:           # local, global, or constant variable declaration
+                    objtype, args = lgc_variable_sig_re.match(line).groups()
+                    pos = args.find('#')
                     if pos > -1:
-                        vars = vars[:pos]
-                    if line_number > 220:
-                        pass        # TODO: test for multiple definitions on one line
+                        args = args[:pos]
                     m['objtype'] = objtype
                     m['start_line'] = m['end_line'] = line_number
                     del m['start'], m['end'], m['line']
                     if objtype == 'constant':
-                        var, value = vars.split()
+                        var, _ = args.split()
                         m['text'] = var
                         self.findings.append(dict(m))
                     else:
-                        for var in vars.split():
+                        # TODO: consider not indexing "global" inside a def
+                        # TODO: consider not indexing "local" at global level
+                        for var in args.split():
                             m['text'] = var
                             self.findings.append(dict(m))
-                            # TODO: to what is this local?
+                            # TODO: to what is this local?  (remember the def it belongs to)
                     continue
 
                 # test if one-line extended comment
