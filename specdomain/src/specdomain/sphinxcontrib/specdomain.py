@@ -144,6 +144,9 @@ class SpecVariableObject(ObjectDescription):
     """
     Description of a SPEC variable
     """
+    
+    # TODO: The directive that declares the variable should be the primary (bold) index.
+    # TODO: array variables are not handled at all
 
 
 class SpecMacroSourceObject(ObjectDescription):
@@ -206,8 +209,8 @@ class SpecMacroSourceObject(ObjectDescription):
         Another step would be to attach source code and provide links from each to
         highlighted source code blocks.
         '''
-        extended_comments_list = self.parse_macro_file(sig)
-        view = ViewList([u'TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up'])
+        #extended_comments_list = self.parse_macro_file(sig)
+        view = ViewList([u'TODO: Just handle the macro signature, additional documentation elsewhere'])
         #contentnode = nodes.TextElement()
         node = nodes.paragraph()
         node.document = self.state.document
@@ -223,13 +226,17 @@ class SpecMacroSourceObject(ObjectDescription):
 #                nested_parse_with_titles(self.state, view, signode)
         return sig
     
-    def XX_run(self):
+    def run(self):
         # TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up
         # nodes.TextElement(raw, text)
         # sphinx.directives.__init__.py  ObjectDescription.run() method
-        #  Summary:  This does not belong here, in the signature processing part.
-        #            Instead, it goes at the directive.run() method.  This is the new place!
-        pass
+        #  Summary:  This belongs with the directive.run() method.  This is the new place!
+        #self.content.append(u'')
+        #self.content.append(u'.. caution:: Use caution.')
+        from specmacrofileparser import SpecMacrofileParser
+        macrofile = self.arguments[0]
+        p = SpecMacrofileParser(macrofile)
+        return ObjectDescription.run(self)
     
     def parse_macro_file(self, filename):
         """
@@ -297,11 +304,13 @@ class SpecDomain(Domain):
     name = 'spec'
     label = 'SPEC, http://www.certif.com'
     object_types = {    # type of object that a domain can document
-        'def':    ObjType(l_('def'),    'def'),
-        'rdef':   ObjType(l_('rdef'),   'rdef'),
-        'cdef':   ObjType(l_('cdef'),   'cdef'),
-        'global': ObjType(l_('global'), 'global'),
-        'local':  ObjType(l_('local'),  'local'),
+        'def':        ObjType(l_('def'),        'def'),
+        'rdef':       ObjType(l_('rdef'),       'rdef'),
+        'cdef':       ObjType(l_('cdef'),       'cdef'),
+        'global':     ObjType(l_('global'),     'global'),
+        'local':      ObjType(l_('local'),      'local'),
+        'constant':   ObjType(l_('constant'),   'constant'),
+        'macrofile':  ObjType(l_('macrofile'),  'macrofile'),
     }
     directives = {
         'def':          SpecMacroObject,
@@ -309,6 +318,7 @@ class SpecDomain(Domain):
         'cdef':         SpecMacroObject,
         'global':       SpecVariableObject,
         'local':        SpecVariableObject,
+        'constant':     SpecVariableObject,
         'macrofile':    SpecMacroSourceObject,
     }
     roles = {
@@ -317,6 +327,7 @@ class SpecDomain(Domain):
         'cdef':     SpecXRefRole(),
         'global':   SpecXRefRole(),
         'local':    SpecXRefRole(),
+        'constant': SpecXRefRole(),
     }
     initial_data = {
         'objects': {}, # fullname -> docname, objtype
