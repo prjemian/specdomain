@@ -247,4 +247,17 @@ But this is not the highest priority.
     Declares a two-dimensional data array.
 """
 
+#==============================================================================
+
+"""    # This is the start of an extended comment
+
+this is located within an extended comment
+
+"""    # this is a normal comment after the extended comment
+
+
+a = 42.0    #  """ this is not an extended comment"""
+#==============================================================================
+
+
 """End of $Id$"""
