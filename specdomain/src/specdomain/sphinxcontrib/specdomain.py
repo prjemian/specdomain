@@ -19,7 +19,7 @@
 import os
 import re
 import string                                           #@UnusedImport
-import sys
+import sys                                              #@UnusedImport
 
 from docutils import nodes                              #@UnusedImport
 from docutils.parsers.rst import directives             #@UnusedImport
@@ -34,15 +34,16 @@ from sphinx.util.nodes import make_refnode, nested_parse_with_titles
 from sphinx.util.docfields import Field, TypedField
 from sphinx.util.docstrings import prepare_docstring    #@UnusedImport
 
-from docutils.statemachine import ViewList, string2lines
-import sphinx.util.nodes
+#from docutils.statemachine import ViewList, string2lines
+#import sphinx.util.nodes
 from sphinx.ext.autodoc import Documenter, bool_option
-from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
-     safe_getattr, safe_repr
-from sphinx.util.pycompat import base_exception, class_types
+#from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
+#     safe_getattr, safe_repr
+#from sphinx.util.pycompat import base_exception, class_types
 from specmacrofileparser import SpecMacrofileParser
 
 
+# TODO: merge these with specmacrofileparser.py
 match_all                   = r'.*'
 non_greedy_filler           = match_all + r'?'
 double_quote_string_match   = r'("' + non_greedy_filler + r'")'
@@ -165,12 +166,18 @@ class SpecMacroDocumenter(Documenter):
 
         rest = prepare_docstring(extended_comment)
 
-        # TODO: Another step should (like for Python) attach source code and provide
-        #       links from each to highlighted source code blocks.
-
         #self.add_line(u'', '<autodoc>')
         #sig = self.format_signature()
         #self.add_directive_header(sig)
+        
+        # TODO: Another step should (like for Python) attach source code and provide
+        #       links from each to highlighted source code blocks.
+        # This works for now.
+        self.add_line(u'', '<autodoc>')
+        line = 'source code:  :download:`%s <%s>`' % (macrofile, macrofile)
+        self.add_line(line, macrofile)
+        # TODO: Add each .mac file name to the Index
+        
         self.add_line(u'', '<autodoc>')
         for linenumber, line in enumerate(rest):
             self.add_line(line, macrofile, linenumber)
