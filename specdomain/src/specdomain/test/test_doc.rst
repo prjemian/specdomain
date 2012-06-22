@@ -40,21 +40,22 @@ SPEC Macros
    :param str content: SPEC code to be inserted (typically a single macro)
    :param str cdef_part: name for this part of the chained macro
    :param str flags: see the manual
-   
-SPEC cdef macro definitions
-++++++++++++++++++++++++++++++++
 
-.. TODO: pull this subsection once this part is made to work
-
-There are several different signatures for SPEC's ``cdef`` macro definition.
-Here are some examples pulled from the ``SPEC.D`` directory.
-
-.. note::  At present, the argument list from ``cdef`` macro definitions
-   is not being parsed or handled.  This will be fixed in a future revision.
-   
-.. literalinclude:: cdef-examples.mac
-   :linenos:
-   :language: guess
+..
+	SPEC cdef macro definitions
+	++++++++++++++++++++++++++++++++
+	
+	.. TODO: pull this subsection once this part is made to work
+	
+	There are several different signatures for SPEC's ``cdef`` macro definition.
+	Here are some examples pulled from the ``SPEC.D`` directory.
+	
+	.. note::  At present, the argument list from ``cdef`` macro definitions
+	   is not being parsed or handled.  This will be fixed in a future revision.
+	   
+	.. literalinclude:: cdef-examples.mac
+	   :linenos:
+	   :language: guess
 
 SPEC Variables
 ^^^^^^^^^^^^^^
@@ -78,37 +79,33 @@ These are some representative variable declarations in SPEC macro source files::
 Variables in Directives
 +++++++++++++++++++++++
 
+These define the variable.
+
 global variable declaration: 
 
-.. spec:global:: A[]
-
-   ``A[]`` contains the values of all motors
+	.. spec:global:: A[]
+	
+	   ``A[]`` contains the values of all motors
 
 local variable declaration:  
 
-.. spec:local:: i
-
-   ``i`` is a local loop counter
+	.. spec:local:: i
+	
+	   ``i`` is a local loop counter
 
 array variable declaration: 
 
-	tba
+	*--tba--*
 
 Variables in Roles
 +++++++++++++++++++++++
 
-* global variable declaration: :spec:global:`A[]`
-* local variable declaration:  :spec:local:`i`
-* array variable declaration: 
-* constant declaration:
+These items should link back to the directives above.
 
-Python example
-^^^^^^^^^^^^^^
-
-.. py:function:: python_function(t = None)
-
-   :param t: time_t object or None (defaults to ``now()``)
-   :type  t: str
+* global variable declaration: 	:spec:global:`A[]`
+* local variable declaration:  	:spec:local:`i`
+* array variable declaration: 	*--tba--*
+* constant declaration:			*--tba--*
 
 
 Roles
@@ -121,64 +118,30 @@ Each of these items should produce a valid link.  Additionally, every call to a
 SPEC Macros
 ^^^^^^^^^^^
 
-* macro definition: :spec:def:`def_macro`
-* function definition: :spec:def:`def_function(arguments)`
+These items should link back to the directives above.
+
+* macro definition: 				:spec:def:`def_macro`
+* function definition: 				:spec:def:`def_function(arguments)`
 * runtime-defined macro definition: :spec:rdef:`rdef_macro`
-* chained macro definition: :spec:cdef:`cdef("cdef_macro", "content", "cdef_part", flags)`
+* chained macro definition: 		:spec:cdef:`cdef("cdef_macro", "content", "cdef_part", flags)`
 
 SPEC Variables
 ^^^^^^^^^^^^^^
 
 The SPEC macro language provides for several types of variable:
 
-* global variables, such as:  :spec:global:`A[]`
-* local variable, such as:  :spec:local:`i`
-* array variable declaration: 
-* constant declaration:
+* global variables, such as:  	:spec:global:`A[]`
+* local variable, such as:  	:spec:local:`i`
+* array variable declaration: 	*--tba--*
+* constant declaration: 		*--tba--*
 
 Source code documentation
 ============================
 
-Python example
-^^^^^^^^^^^^^^
+.. toctree::
+   :maxdepth: 2
 
-See the python method :py:func:`python_function()` (defined above)
-
-..  This should document the Python module supporting the specdomain
-
-.. py:function:: test.testdoc.radius(x, y)
-	:noindex:
-	
-	:param float x: ordinate
-	:param float y: abcissa
-	:returns float: hypotenuse
-	
-	return math.sqrt(x*x + y*y)
-	
-	The radius function is based on an algorithm of Pythagorus.
-	
-	.. note:: The Pythagorean theorem was also cited in the movie *The Wizard of Oz*.
-
-:class:`SpecVariableObject` (Python Module)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: sphinxcontrib.specdomain.SpecVariableObject
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: sphinxcontrib.specdomain
-    :members:
-
-
-
-SPEC macro source file: ``cdef-examples.mac``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. spec:macrofile:: cdef-examples.mac
-
-
-SPEC macro source file: ``test-battery.mac``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. spec:macrofile:: test-battery.mac
+   cdef-examples.mac
+   test-battery.mac
+   shutter.mac
+   python-example-source

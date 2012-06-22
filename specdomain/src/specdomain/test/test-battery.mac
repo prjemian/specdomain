@@ -73,6 +73,7 @@ VERSION::
  
 DEPENDENCIES
    Chained macro definitions affected by this macro:
+   
    - user_precount
    - user_getcounts
    - cleanup_always
@@ -192,7 +193,7 @@ def sh_help '{
   }
 }'
 
-"""there is more in shutter.mac"""
+""".. note:: there is much more content in ``shutter.mac``"""
 
 #==============================================================================
 

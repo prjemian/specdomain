@@ -9,7 +9,7 @@ Welcome to sphinxcontrib-specdomain-acceptancetest's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    test_doc
 

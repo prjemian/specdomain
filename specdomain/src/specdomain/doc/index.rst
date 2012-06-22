@@ -18,7 +18,6 @@ Other matters:
 .. toctree::
    :maxdepth: 2
 
-   reference
    changes
    license
    

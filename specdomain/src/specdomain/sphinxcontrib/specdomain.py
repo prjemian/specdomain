@@ -19,6 +19,7 @@
 import os
 import re
 import string                                           #@UnusedImport
+import sys
 
 from docutils import nodes                              #@UnusedImport
 from docutils.parsers.rst import directives             #@UnusedImport
@@ -35,6 +36,11 @@ from sphinx.util.docstrings import prepare_docstring    #@UnusedImport
 
 from docutils.statemachine import ViewList, string2lines
 import sphinx.util.nodes
+from sphinx.ext.autodoc import Documenter, bool_option
+from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
+     safe_getattr, safe_repr
+from sphinx.util.pycompat import base_exception, class_types
+from specmacrofileparser import SpecMacrofileParser
 
 
 match_all                   = r'.*'
@@ -72,6 +78,125 @@ spec_extended_comment_block_sig_re = re.compile(r'^'
                                                 + non_greedy_filler
                                                 + r'$', 
                                                 re.IGNORECASE|re.DOTALL|re.MULTILINE)
+
+
+class SpecMacroDocumenter(Documenter):
+    """
+    Document a SPEC macro source code file (autodoc.Documenter subclass)
+    
+    This code responds to the ReST file directive::
+    
+        .. autospecmacro:: partial/path/name/somefile.mac
+            :displayorder: fileorder
+    
+    The ``:displayorder`` parameter indicates how the
+    contents will be sorted for appearance in the ReST document.
+    
+        **fileorder** or **file**
+            Items will be documented in the order in 
+            which they appear in the ``.mac`` file.
+        
+        **alphabetical** or **alpha**
+            Items will be documented in alphabetical order.
+    
+    .. tip::
+        A (near) future enhancement will provide for
+        documenting all macro files in a directory, with optional
+        recursion into subdirectories.  By default, the code will 
+        only document files that match the glob pattern ``*.mac``.
+        (This could be defined as a list in the ``conf.py`` file.)
+        Such as::
+        
+           .. spec:directory:: partial/path/name
+              :recursion:
+              :displayorder: alphabetical
+    """
+
+    objtype = 'specmacro'
+    member_order = 50
+    priority = 0
+
+    option_spec = {
+        'displayorder': bool_option,
+    }
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        # don't document submodules automatically
+        #return isinstance(member, (FunctionType, BuiltinFunctionType))
+        r = membername in ('SpecMacroDocumenter', )
+        return r
+    
+    def generate(self, *args, **kw):
+        """
+        Generate reST for the object given by *self.name*, and possibly for
+        its members.
+
+        If *more_content* is given, include that content. If *real_modname* is
+        given, use that module name to find attribute docs. If *check_module* is
+        True, only generate if the object is defined in the module name it is
+        imported from. If *all_members* is True, document all members.
+        """
+        # now, parse the SPEC macro file
+        macrofile = self.parse_name()
+        spec = SpecMacrofileParser(macrofile)
+        extended_comment = spec.ReST()
+        
+        # FIXME:
+        #     Assume all extended comments contain ReST formatted comments, 
+        #     *including initial section titles or transitions*.
+        '''
+            cdef-examples.mac:7: SEVERE: Unexpected section title.
+            
+            Examples of SPEC cdef macros
+            ==============================
+            test-battery.mac:4: SEVERE: Unexpected section title or transition.
+            
+            ###############################################################################
+            test-battery.mac:6: WARNING: Block quote ends without a blank line; unexpected unindent.
+            test-battery.mac:6: SEVERE: Unexpected section title or transition.
+            
+            ###############################################################################
+            test-battery.mac:19: SEVERE: Unexpected section title.
+            
+            common/shutter
+            ==============
+        '''
+
+        rest = prepare_docstring(extended_comment)
+
+        # TODO: Another step should (like for Python) attach source code and provide
+        #       links from each to highlighted source code blocks.
+
+        #self.add_line(u'', '<autodoc>')
+        #sig = self.format_signature()
+        #self.add_directive_header(sig)
+        self.add_line(u'', '<autodoc>')
+        for linenumber, line in enumerate(rest):
+            self.add_line(line, macrofile, linenumber)
+        #self.add_content(rest)
+        #self.document_members(all_members)
+
+    def resolve_name(self, modname, parents, path, base):
+        if modname is not None:
+            self.directive.warn('"::" in autospecmacro name doesn\'t make sense')
+        return (path or '') + base, []
+
+    def parse_name(self):
+        """Determine what file to parse.
+        
+        :returns: True if if parsing was successful
+
+        .. Note:: The template method from autodoc sets *self.modname*, *self.objpath*, *self.fullname*,
+            *self.args* and *self.retann*.  This is not done here yet.
+        """
+        ret = self.name
+        self.fullname = os.path.abspath(ret)        # TODO: Consider using this
+        self.fullname = ret                         # TODO: provisional
+        if self.args or self.retann:
+            self.directive.warn('signature arguments or return annotation '
+                                'given for autospecmacro %s' % self.fullname)
+        return ret
 
 
 class SpecMacroObject(ObjectDescription):
@@ -147,122 +272,7 @@ class SpecVariableObject(ObjectDescription):
     
     # TODO: The directive that declares the variable should be the primary (bold) index.
     # TODO: array variables are not handled at all
-
-
-class SpecMacroSourceObject(ObjectDescription):
-    """
-    Document a SPEC macro source code file
-    
-    This code responds to the ReST file directive::
-    
-        .. spec:macrofile:: partial/path/name/somefile.mac
-            :displayorder: fileorder
-    
-    The ``:displayorder`` parameter indicates how the
-    contents will be sorted for appearance in the ReST document.
-    
-        **fileorder**, **file**
-            Items will be documented in the order in 
-            which they appear in the ``.mac`` file.
-        
-        **alphabetical**, **alpha**
-            Items will be documented in alphabetical order.
-    
-    A (near) future enhancement would be to provide for
-    documenting all macro files in a directory, with optional
-    recursion into subdirectories.  By default, the code would 
-    only document files that match the glob pattern ``*.mac``.
-    Such as::
-    
-       .. spec:directory:: partial/path/name
-          :recursion:
-          :displayorder: alphabetical
-    """
-    
-    # TODO: work-in-progress
-    
-    doc_field_types = [
-        Field('displayorder', label=l_('Display order'), has_arg=False,
-              names=('displayorder', 'synonym')),
-    ]
-
-    def add_target_and_index(self, name, sig, signode):
-        targetname = '%s-%s' % (self.objtype, name)
-        signode['ids'].append(targetname)
-        self.state.document.note_explicit_target(signode)
-        indextext = sig
-        if indextext:
-            self.indexnode['entries'].append(('single', indextext,
-                                              targetname, ''))
-
-    def handle_signature(self, sig, signode):
-        signode += addnodes.desc_name(sig, sig)
-        # TODO: this is the place to parse the SPEC macro source code file named in "sig"
-        '''
-        Since 2002, SPEC has allowed for triple-quoted strings as extended comments.
-        Few, if any, have used them.
-        Assume that they will contain ReST formatted comments.
-        The first, simplest thing to do is to read the .mac file and only extract
-        all the extended comments and add them as nodes to the current document.
-        
-        An additional step would be to parse for def, cdef, rdef, global, local, const, ...
-        Another step would be to attach source code and provide links from each to
-        highlighted source code blocks.
-        '''
-        #extended_comments_list = self.parse_macro_file(sig)
-        view = ViewList([u'TODO: Just handle the macro signature, additional documentation elsewhere'])
-        #contentnode = nodes.TextElement()
-        node = nodes.paragraph()
-        node.document = self.state.document
-        self.state.nested_parse(view, 0, signode)
-        # TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up
-        # nodes.TextElement(raw, text)
-        # sphinx.directives.__init__.py  ObjectDescription.run() method
-        #  Summary:  This does not belong here, in the signature processing part.
-        #            Instead, it goes at the directive.run() method.  Where's that here?
-#        for extended_comment in extended_comments_list:
-#            for line in string2lines(extended_comment):
-#                view = ViewList([line])
-#                nested_parse_with_titles(self.state, view, signode)
-        return sig
-    
-    def run(self):
-        # TODO: recognize the ReST formatting in the following extended comment and it needs to be cleaned up
-        # nodes.TextElement(raw, text)
-        # sphinx.directives.__init__.py  ObjectDescription.run() method
-        #  Summary:  This belongs with the directive.run() method.  This is the new place!
-        #self.content.append(u'')
-        #self.content.append(u'.. caution:: Use caution.')
-        from specmacrofileparser import SpecMacrofileParser
-        macrofile = self.arguments[0]
-        p = SpecMacrofileParser(macrofile)
-        return ObjectDescription.run(self)
-    
-    def parse_macro_file(self, filename):
-        """
-        parse the SPEC macro file and return the ReST blocks
-        
-        :param str filename: name (with optional path) of SPEC macro file
-            (The path is relative to the ``.rst`` document.)
-        :returns [str]: list of ReST-formatted extended comment blocks (docstrings) from SPEC macro file.
-        
-        [future] parse more stuff as planned, this is very simplistic for now
-        """
-        results = []
-        if not os.path.exists(filename):
-            raise RuntimeError, "could not find: " + filename
-        
-        buf = open(filename, 'r').read()
-        #n = len(buf)
-        for node in spec_extended_comment_block_sig_re.finditer(buf):
-            #g = node.group()
-            #gs = node.groups()
-            #s = node.start()
-            #e = node.end()
-            #t = buf[s:e]
-            results.append(node.groups()[0])            # TODO: can we get line number also?
-        return results
-
+    # TODO: variables cited by *role* should link back to their *directive* declarations
 
 class SpecXRefRole(XRefRole):
     """ """
@@ -310,7 +320,7 @@ class SpecDomain(Domain):
         'global':     ObjType(l_('global'),     'global'),
         'local':      ObjType(l_('local'),      'local'),
         'constant':   ObjType(l_('constant'),   'constant'),
-        'macrofile':  ObjType(l_('macrofile'),  'macrofile'),
+        #'specmacro':  ObjType(l_('specmacro'),  'specmacro'),
     }
     directives = {
         'def':          SpecMacroObject,
@@ -319,7 +329,6 @@ class SpecDomain(Domain):
         'global':       SpecVariableObject,
         'local':        SpecVariableObject,
         'constant':     SpecVariableObject,
-        'macrofile':    SpecMacroSourceObject,
     }
     roles = {
         'def' :     SpecXRefRole(),
@@ -358,4 +367,5 @@ class SpecDomain(Domain):
 
 def setup(app):
     app.add_domain(SpecDomain)
-    # http://sphinx.pocoo.org/ext/appapi.html#sphinx.domains.Domain
+    app.add_autodocumenter(SpecMacroDocumenter)
+    app.add_config_value('autospecmacrodir_process_subdirs', True, True)

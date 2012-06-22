@@ -83,6 +83,24 @@ class SpecMacrofileParser:
     '''
     Parse a SPEC macro file for macro definitions, 
     variable declarations, and extended comments.
+
+        Since 2002, SPEC has allowed for triple-quoted 
+        strings as extended comments.  Few, if any, have used them.
+        Assume all extended comments contain ReST formatted comments, 
+        *including initial section titles or transitions*.
+        The first and simplest thing to do is to read the .mac file and only extract
+        all the extended comments and add them as nodes to the current document.
+        
+        An additional step would be to parse for:
+        * def
+        * cdef
+        * rdef
+        * global    (done)
+        * local    (done)
+        * constant    (done)
+        * array
+        * ...
+        
     '''
 
     states = (                  # assume SPEC def macros cannot be nested
@@ -156,6 +174,7 @@ class SpecMacrofileParser:
                     del m['start'], m['end'], m['line']
                     m['objtype'] = 'extended comment'
                     m['start_line'] = m['end_line'] = line_number
+                    m['text'] = m['text'].strip()
                     self.findings.append(dict(m))
                     continue
                 
@@ -205,12 +224,13 @@ class SpecMacrofileParser:
         s = []
         for r in self.findings:
             s.append( '' )
-            t = '%s %s %d %d %s' % ('*'*20, 
+            t = '%s %s %d %d %s' % ('.. ' + '*'*20, 
                                     r['objtype'], 
                                     r['start_line'], 
                                     r['end_line'], 
                                     '*'*20)
             s.append( t )
+            s.append( '' )
             s.append( r['text'] )
         return '\n'.join(s)
 
