@@ -41,6 +41,7 @@ from sphinx.ext.autodoc import Documenter, bool_option
 #     safe_getattr, safe_repr
 #from sphinx.util.pycompat import base_exception, class_types
 from specmacrofileparser import SpecMacrofileParser
+from docutils.statemachine import ViewList
 
 
 # TODO: merge these with specmacrofileparser.py
@@ -116,6 +117,8 @@ class SpecMacroDocumenter(Documenter):
     objtype = 'specmacro'
     member_order = 50
     priority = 0
+    #: true if the generated content may contain titles
+    titles_allowed = True
 
     option_spec = {
         'displayorder': bool_option,
@@ -132,55 +135,28 @@ class SpecMacroDocumenter(Documenter):
         """
         Generate reST for the object given by *self.name*, and possibly for
         its members.
-
-        If *more_content* is given, include that content. If *real_modname* is
-        given, use that module name to find attribute docs. If *check_module* is
-        True, only generate if the object is defined in the module name it is
-        imported from. If *all_members* is True, document all members.
         """
         # now, parse the SPEC macro file
         macrofile = self.parse_name()
         spec = SpecMacrofileParser(macrofile)
         extended_comment = spec.ReST()
-        
-        # FIXME:
-        #     Assume all extended comments contain ReST formatted comments, 
-        #     *including initial section titles or transitions*.
-        '''
-            cdef-examples.mac:7: SEVERE: Unexpected section title.
-            
-            Examples of SPEC cdef macros
-            ==============================
-            test-battery.mac:4: SEVERE: Unexpected section title or transition.
-            
-            ###############################################################################
-            test-battery.mac:6: WARNING: Block quote ends without a blank line; unexpected unindent.
-            test-battery.mac:6: SEVERE: Unexpected section title or transition.
-            
-            ###############################################################################
-            test-battery.mac:19: SEVERE: Unexpected section title.
-            
-            common/shutter
-            ==============
-        '''
-
         rest = prepare_docstring(extended_comment)
 
         #self.add_line(u'', '<autodoc>')
         #sig = self.format_signature()
         #self.add_directive_header(sig)
         
-        # TODO: Another step should (like for Python) attach source code and provide
-        #       links from each to highlighted source code blocks.
+        # TODO: provide links from each to highlighted source code blocks (like Python documenters).
         # This works for now.
         self.add_line(u'', '<autodoc>')
         line = 'source code:  :download:`%s <%s>`' % (macrofile, macrofile)
         self.add_line(line, macrofile)
         # TODO: Add each .mac file name to the Index
-        
+
         self.add_line(u'', '<autodoc>')
         for linenumber, line in enumerate(rest):
             self.add_line(line, macrofile, linenumber)
+
         #self.add_content(rest)
         #self.document_members(all_members)
 
@@ -193,13 +169,12 @@ class SpecMacroDocumenter(Documenter):
         """Determine what file to parse.
         
         :returns: True if if parsing was successful
-
-        .. Note:: The template method from autodoc sets *self.modname*, *self.objpath*, *self.fullname*,
-            *self.args* and *self.retann*.  This is not done here yet.
         """
         ret = self.name
-        self.fullname = os.path.abspath(ret)        # TODO: Consider using this
-        self.fullname = ret                         # TODO: provisional
+        self.fullname = os.path.abspath(ret)
+        self.objpath, self.modname = os.path.split(self.fullname)
+        self.args = None
+        self.retann = None
         if self.args or self.retann:
             self.directive.warn('signature arguments or return annotation '
                                 'given for autospecmacro %s' % self.fullname)

@@ -103,6 +103,7 @@ class SpecMacrofileParser:
         
     '''
 
+    # consider using:  docutils.statemachine here
     states = (                  # assume SPEC def macros cannot be nested
         'global',               # the level that provides the SPEC command prompt 
         'extended comment',     # inside a multiline extended comment
