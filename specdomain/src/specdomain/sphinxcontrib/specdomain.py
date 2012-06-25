@@ -255,6 +255,7 @@ class SpecVariableObject(ObjectDescription):
     # TODO: The directive that declares the variable should be the primary (bold) index.
     # TODO: array variables are not handled at all
     # TODO: variables cited by *role* should link back to their *directive* declarations
+    #       probably need to override handle_signature(), add_target_and_index(), and _get_index_text()
 
 class SpecXRefRole(XRefRole):
     """ """
