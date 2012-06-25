@@ -7,17 +7,18 @@ from setuptools import setup, find_packages
 long_desc = '''
 This package contains the specdomain Sphinx extension.
 
-.. add description here ..
-'''
+''' + open('README').read()
+
+version = open('VERSION').read()
 
 requires = ['Sphinx>=0.6']
 
 setup(
     name='sphinxcontrib-specdomain',
-    version='0.1',
-    url='http://bitbucket.org/birkenfeld/sphinx-contrib',
-    download_url='http://pypi.python.org/pypi/sphinxcontrib-specdomain',
-    license='BSD',
+    version=version,
+    #url='http://bitbucket.org/birkenfeld/sphinx-contrib',
+    #download_url='http://pypi.python.org/pypi/sphinxcontrib-specdomain',
+    license='Argonne OPEN SOURCE LICENSE, see LICENSE file for details',
     author='Pete Jemian',
     author_email='jemian@anl.gov',
     description='Sphinx "specdomain" extension',
