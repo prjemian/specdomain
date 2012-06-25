@@ -36,47 +36,21 @@ cdef_match                  = r'(cdef)'
 extended_comment_marker     = r'\"{3}'
 extended_comment_match      = r'(' + extended_comment_marker + r')'
 
-macro_sig_re = re.compile(
-                               r'''^ ([a-zA-Z_]\w*)         # macro name
-                               ''', re.VERBOSE)
-
-func_sig_re = re.compile(word_match + r'\('
-                      + r'(' + match_all + r')' 
-                      + r'\)', 
-                      re.IGNORECASE|re.DOTALL)
-
-cdef_name_sig_re = re.compile(double_quote_string_match, 
-                                   re.IGNORECASE|re.DOTALL)
-
-
-extended_comment_flag_sig_re = re.compile(extended_comment_marker, 
-                                               re.IGNORECASE|re.DOTALL)
-extended_comment_start_sig_re = re.compile(string_start
-                                                + non_greedy_whitespace
-                                                + extended_comment_match, 
-                                                re.IGNORECASE|re.VERBOSE)
-extended_comment_end_sig_re = re.compile(non_greedy_whitespace
-                                                + extended_comment_match
-                                                + non_greedy_whitespace
-                                                + r'#' + non_greedy_filler
-                                                + string_end,
-                                                re.IGNORECASE|re.VERBOSE)
-extended_comment_block_sig_re = re.compile(string_start
-                                                + non_greedy_whitespace
-                                                + extended_comment_marker
-                                                + r'(' + non_greedy_filler + r')'
-                                                + extended_comment_marker
-                                                + non_greedy_filler
-                                                + string_end, 
-                                                re.IGNORECASE|re.DOTALL|re.MULTILINE)
-lgc_variable_sig_re = re.compile(string_start
-                                    + non_greedy_whitespace
-                                    + r'(local|global|constant)'
-                                    + r'((?:,?\s*@?[\w.eE+-]+\[?\]?)*)'
-                                    + non_greedy_whitespace
-                                    + r'#' + non_greedy_filler
-                                    + string_end, 
-                                    re.VERBOSE)
+#    macro_sig_re = re.compile(
+#                                   r'''^ ([a-zA-Z_]\w*)         # macro name
+#                                   ''', re.VERBOSE)
+#    
+#    func_sig_re = re.compile(word_match + r'\('
+#                          + r'(' + match_all + r')' 
+#                          + r'\)', 
+#                          re.IGNORECASE|re.DOTALL)
+#    
+#    cdef_name_sig_re = re.compile(double_quote_string_match, 
+#                                       re.IGNORECASE|re.DOTALL)
+#    
+#    
+#    extended_comment_flag_sig_re = re.compile(extended_comment_marker, 
+#                                                   re.IGNORECASE|re.DOTALL)
 
 # TODO: handle "#: " indicating a description of a variable on the preceding line
 
@@ -91,6 +65,8 @@ class SpecMacrofileParser:
         *including initial section titles or transitions*.
         The first and simplest thing to do is to read the .mac file and only extract
         all the extended comments and add them as nodes to the current document.
+    
+    Assume macro definitions are not nested (but test for this).
         
     An additional step would be to parse for:
     * def
@@ -110,6 +86,7 @@ class SpecMacrofileParser:
         'def macro',            # inside a multiline def macro definition
         'rdef macro',           # inside a multiline rdef macro definition
         'cdef macro',           # inside a multiline cdef macro definition
+        'parsed',               # parsing of file is complete
     )
 
     def __init__(self, macrofile):
@@ -142,43 +119,55 @@ class SpecMacrofileParser:
         self.state = 'global'
         self.state_stack = []
         for line in self.buf.split('\n'):
-            m = None
-            if self.state not in self.states:
-                raise RuntimeError, "unexpected parser state: " + self.state
-            line_number += 1
-            if self.state == 'global':
 
+            line_number += 1
+            if self.state not in self.states:
+                # this quickly points out a programmer error
+                msg = "unexpected parser state: %s, line %s" % (self.state, line_number)
+                raise RuntimeError, msg
+
+            if self.state == 'global':
                 if self._is_lgc_variable(line, line_number):
                     continue
-
                 if self._is_one_line_extended_comment(line, line_number):
                     continue
-
                 if self._is_multiline_start_extended_comment(line, line_number):
                     continue
-
             elif self.state == 'extended comment':
-
                 if not self._is_multiline_end_extended_comment(line, line_number):
                     # multiline extended comment continues
                     self.ec['text'].append(line)
                 continue
-
             elif self.state == 'def macro':
                 pass
-
             elif self.state == 'cdef macro':
                 pass
-
             elif self.state == 'rdef macro':
                 pass
-    
+        
+        if len(self.state_stack) > 0:
+            fmt = "encountered EOF while parsing %s, line %d, in state %s, stack=%s"
+            msg = fmt % (self.filename, line_number, self.state, self.state_stack)
+            raise RuntimeWarning, msg
+
+        self.state = 'parsed'
+        
+    lgc_variable_sig_re = re.compile(string_start
+                                        + non_greedy_whitespace
+                                        + r'(local|global|constant)'
+                                        + r'((?:,?\s*@?[\w.eE+-]+\[?\]?)*)'
+                                        + non_greedy_whitespace
+                                        + r'#' + non_greedy_filler
+                                        + string_end, 
+                                        re.VERBOSE)
+
     def _is_lgc_variable(self, line, line_number):
         ''' local, global, or constant variable declaration '''
-        m = self._match(lgc_variable_sig_re, line)
+        m = self._search(self.lgc_variable_sig_re, line)
         if m is None:
             return False
-        objtype, args = lgc_variable_sig_re.match(line).groups()
+        
+        objtype, args = self.lgc_variable_sig_re.match(line).groups()
         pos = args.find('#')
         if pos > -1:
             args = args[:pos]
@@ -192,14 +181,24 @@ class SpecMacrofileParser:
         else:
             # TODO: consider not indexing "global" inside a def
             # TODO: consider not indexing "local" at global level
+            #      or leave these decisions for later, including some kind of analyzer
             for var in args.split():
                 m['text'] = var.rstrip(',')
                 self.findings.append(dict(m))
                 # TODO: to what is this local?  (remember the def it belongs to)
         return True
     
+    extended_comment_block_sig_re = re.compile(string_start
+                                                + non_greedy_whitespace
+                                                + extended_comment_marker
+                                                + r'(' + non_greedy_filler + r')'
+                                                + extended_comment_marker
+                                                + non_greedy_filler
+                                                + string_end, 
+                                                re.IGNORECASE|re.DOTALL|re.MULTILINE)
+
     def _is_one_line_extended_comment(self, line, line_number):
-        m = self._match(extended_comment_block_sig_re, line)
+        m = self._search(self.extended_comment_block_sig_re, line)
         if m is None:
             return False
         del m['start'], m['end'], m['line']
@@ -208,9 +207,13 @@ class SpecMacrofileParser:
         m['text'] = m['text'].strip()
         self.findings.append(dict(m))
         return True
+    extended_comment_start_sig_re = re.compile(string_start
+                                                + non_greedy_whitespace
+                                                + extended_comment_match, 
+                                                re.IGNORECASE|re.VERBOSE)
     
     def _is_multiline_start_extended_comment(self, line, line_number):
-        m = self._match(extended_comment_start_sig_re, line)
+        m = self._search(self.extended_comment_start_sig_re, line)
         if m is None:
             return False
         text = m['line'][m['end']:]
@@ -223,8 +226,15 @@ class SpecMacrofileParser:
         self.state = 'extended comment'
         return True
 
+    extended_comment_end_sig_re = re.compile(non_greedy_whitespace
+                                                + extended_comment_match
+                                                + non_greedy_whitespace
+                                                + r'#' + non_greedy_filler
+                                                + string_end,
+                                                re.IGNORECASE|re.VERBOSE)
+
     def _is_multiline_end_extended_comment(self, line, line_number):
-        m = self._match(extended_comment_end_sig_re, line)
+        m = self._search(self.extended_comment_end_sig_re, line)
         if m is None:
             return False
         text = m['line'][:m['start']]
@@ -236,10 +246,12 @@ class SpecMacrofileParser:
         del self.ec
         return True
     
-    def _match(self, regexp, line):
+    def _search(self, regexp, line):
+        '''regular expression search of line, returns a match as a dictionary or None'''
         m = regexp.search(line)
         if m is None:
             return None
+        # TODO: define a parent key somehow
         d = {
             'start': m.start(1),
             'end':   m.end(1),
@@ -265,6 +277,9 @@ class SpecMacrofileParser:
 
     def ReST(self):
         """create the ReStructured Text from what has been found"""
+        if self.state == 'parsed':
+            raise RuntimeWarning, "state = %s, should be 'parsed'" % self.filename
+            
         s = []
         declarations = []
         for r in self.findings:
@@ -281,23 +296,21 @@ class SpecMacrofileParser:
             # TODO: other objtypes
         if len(declarations) > 0:
             col_keys = ('text', 'objtype', 'start_line', 'end_line', )
-            widths = {}
-            for key in col_keys:
-                widths[key] = len( str(key) )
+            widths = dict([( key, len(str(key)) ) for key in col_keys])
             for d in declarations:
-                for key, w in widths.items():
-                    widths[key] = max(w, len( str(d[key]) ) )
+                widths = dict([( key, max(w, len(str(d[key])))) for key, w in widths.items()])
             separator = " ".join( ["="*widths[key] for key in col_keys] )
-            format = " ".join( ["%%-%ds"%widths[key] for key in col_keys] )
+            fmt = " ".join( ["%%-%ds"%widths[key] for key in col_keys] )
             s.append( '' )
-            s.append( '.. rubric:: Variable Declarations:' )
+#            s.append( '.. rubric:: Variable Declarations:' )
+            s.append( 'Variable Declarations' )
+            s.append( '=====================' )
             s.append( '' )
             s.append( separator )
-            #s.append( " ".join( [str(key) for key in col_keys]) )
-            s.append( format % tuple([str(key) for key in col_keys]) )
+            s.append( fmt % tuple([str(key) for key in col_keys]) )
             s.append( separator )
             for d in declarations:
-                s.append( format % tuple([str(d[key]) for key in col_keys]) )
+                s.append( fmt % tuple([str(d[key]) for key in col_keys]) )
             s.append( separator )
         return '\n'.join(s)
 
