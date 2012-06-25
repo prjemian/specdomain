@@ -1,0 +1,47 @@
+"""
+.. $Id$
+
+Examples of SPEC cdef macros
+==============================
+
+These examples of SPEC cdef macros were extracted from the 
+SPECD ``*.mac`` files.
+The items were obtained via grep, and then cleaned up in an 
+editor, then sorted, with redundancies removed.
+"""
+
+cdef("cleanup_once", "", "ct", "delete")
+cdef("cleanup_once", "", "dscan", "delete")
+cdef("cleanup_once", "onp; show_cnts; offp; user_ct", "ct")
+cdef("cleanup_once", "powder_cleanup;", "powder_setup")
+cdef("cleanup_once", "", "powder_setup", "delete")
+cdef("cleanup_once", "_scanabort;", "scan_cleanup")
+cdef("cleanup_once", "", "scan_cleanup", "delete")
+cdef("cleanup_once", sprintf("dscan_cleanup $1 %s;", _c1), "dscan")
+cdef("cleanup_once", t, "tweak")
+cdef("cleanup_once", "", "tweak", "delete")
+cdef("cleanup_once", "", "uct", "delete")
+cdef("cleanup_once", "", "uctn", "delete")
+cdef("cleanup_once", "user_ct", "uct")
+cdef("cleanup_once", "user_ct", "uctn")
+cdef("config_mac", "{PLOT_CNTRS_MAX = COUNTERS}", "PLOT_Y", 0x10 )
+cdef("config_mac", "_plotconfig();", "PLOT2")
+cdef("geo_ub_default", "", "ub.mac")
+cdef("geo_ub_default", "", "ub.mac")
+cdef("", "", "onwiz", "delete")
+cdef("spec_scan_tail", "powder_cleanup;", "powder_setup")
+cdef("spec_scan_tail", "", "powder_setup", "delete")
+cdef("user_Fheader")
+cdef("user_offsim")
+cdef("user_offsim", "", "getE", "delete")
+cdef("user_offsim", "getE;", "getE")
+cdef("user_onsim")
+cdef("user_Pheader")
+cdef("user_postscan_head")
+cdef("user_prescan_head")
+cdef("user_scan_loop")
+cdef("user_scan_plot")
+cdef("user_scan_tail")
+cdef("user_waitmove","\nwait(1);\n","waitmove_hack","0x20")
+
+""" end of  $Id$ """
