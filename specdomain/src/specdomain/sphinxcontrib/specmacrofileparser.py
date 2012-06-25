@@ -72,12 +72,13 @@ extended_comment_block_sig_re = re.compile(string_start
 lgc_variable_sig_re = re.compile(string_start
                                     + non_greedy_whitespace
                                     + r'(local|global|constant)'
-                                    + r'((?:\s*@?[\w.eE+-]+\[?\]?)*)'
+                                    + r'((?:,?\s*@?[\w.eE+-]+\[?\]?)*)'
                                     + non_greedy_whitespace
                                     + r'#' + non_greedy_filler
                                     + string_end, 
                                     re.VERBOSE)
 
+# TODO: handle "#: " indicating a description of a variable on the preceding line
 
 class SpecMacrofileParser:
     '''
@@ -91,16 +92,15 @@ class SpecMacrofileParser:
         The first and simplest thing to do is to read the .mac file and only extract
         all the extended comments and add them as nodes to the current document.
         
-        An additional step would be to parse for:
-        * def
-        * cdef
-        * rdef
-        * global    (done)
-        * local    (done)
-        * constant    (done)
-        * array
-        * ...
-        
+    An additional step would be to parse for:
+    * def
+    * cdef
+    * rdef
+    * global    (done)
+    * local    (done)
+    * constant    (done)
+    * array
+    * ...
     '''
 
     # consider using:  docutils.statemachine here
@@ -133,80 +133,108 @@ class SpecMacrofileParser:
             raise RuntimeError, "file not found: " + filename
         self.filename = filename
         self.buf = open(filename, 'r').read()
-    
+
     def parse_macro_file(self):
         """
         parse the internal buffer
         """
         line_number = 0
-        state = 'global'
-        state_stack = []
+        self.state = 'global'
+        self.state_stack = []
         for line in self.buf.split('\n'):
-            if state not in self.states:
-                raise RuntimeError, "unexpected parser state: " + state
+            m = None
+            if self.state not in self.states:
+                raise RuntimeError, "unexpected parser state: " + self.state
             line_number += 1
-            if state == 'global':
+            if self.state == 'global':
 
-                m = self._match(lgc_variable_sig_re, line)
-                if m is not None:           # local, global, or constant variable declaration
-                    objtype, args = lgc_variable_sig_re.match(line).groups()
-                    pos = args.find('#')
-                    if pos > -1:
-                        args = args[:pos]
-                    m['objtype'] = objtype
-                    m['start_line'] = m['end_line'] = line_number
-                    del m['start'], m['end'], m['line']
-                    if objtype == 'constant':
-                        var, _ = args.split()
-                        m['text'] = var
-                        self.findings.append(dict(m))
-                    else:
-                        # TODO: consider not indexing "global" inside a def
-                        # TODO: consider not indexing "local" at global level
-                        for var in args.split():
-                            m['text'] = var
-                            self.findings.append(dict(m))
-                            # TODO: to what is this local?  (remember the def it belongs to)
+                if self._is_lgc_variable(line, line_number):
                     continue
 
-                # test if one-line extended comment
-                m = self._match(extended_comment_block_sig_re, line)
-                if m is not None:
-                    del m['start'], m['end'], m['line']
-                    m['objtype'] = 'extended comment'
-                    m['start_line'] = m['end_line'] = line_number
-                    m['text'] = m['text'].strip()
-                    self.findings.append(dict(m))
-                    continue
-                
-                # test if start of multiline extended comment
-                m = self._match(extended_comment_start_sig_re, line)
-                if m is not None:
-                    text = m['line'][m['end']:]
-                    del m['start'], m['end'], m['line']
-                    m['objtype'] = 'extended comment'
-                    m['start_line'] = line_number
-                    ec = dict(m)    # container for extended comment data
-                    ec['text'] = [text]
-                    state_stack.append(state)
-                    state = 'extended comment'
+                if self._is_one_line_extended_comment(line, line_number):
                     continue
 
-            elif state == 'extended comment':
-                # test if end of multiline extended comment
-                m = self._match(extended_comment_end_sig_re, line)
-                if m is not None:
-                    text = m['line'][:m['start']]
-                    ec['text'].append(text)
-                    ec['text'] = '\n'.join(ec['text'])
-                    ec['end_line'] = line_number
-                    self.findings.append(dict(ec))
-                    state = state_stack.pop()
-                    del ec
-                else:
+                if self._is_multiline_start_extended_comment(line, line_number):
+                    continue
+
+            elif self.state == 'extended comment':
+
+                if not self._is_multiline_end_extended_comment(line, line_number):
                     # multiline extended comment continues
-                    ec['text'].append(line)
+                    self.ec['text'].append(line)
                 continue
+
+            elif self.state == 'def macro':
+                pass
+
+            elif self.state == 'cdef macro':
+                pass
+
+            elif self.state == 'rdef macro':
+                pass
+    
+    def _is_lgc_variable(self, line, line_number):
+        ''' local, global, or constant variable declaration '''
+        m = self._match(lgc_variable_sig_re, line)
+        if m is None:
+            return False
+        objtype, args = lgc_variable_sig_re.match(line).groups()
+        pos = args.find('#')
+        if pos > -1:
+            args = args[:pos]
+        m['objtype'] = objtype
+        m['start_line'] = m['end_line'] = line_number
+        del m['start'], m['end'], m['line']
+        if objtype == 'constant':
+            var, _ = args.split()
+            m['text'] = var.rstrip(',')
+            self.findings.append(dict(m))
+        else:
+            # TODO: consider not indexing "global" inside a def
+            # TODO: consider not indexing "local" at global level
+            for var in args.split():
+                m['text'] = var.rstrip(',')
+                self.findings.append(dict(m))
+                # TODO: to what is this local?  (remember the def it belongs to)
+        return True
+    
+    def _is_one_line_extended_comment(self, line, line_number):
+        m = self._match(extended_comment_block_sig_re, line)
+        if m is None:
+            return False
+        del m['start'], m['end'], m['line']
+        m['objtype'] = 'extended comment'
+        m['start_line'] = m['end_line'] = line_number
+        m['text'] = m['text'].strip()
+        self.findings.append(dict(m))
+        return True
+    
+    def _is_multiline_start_extended_comment(self, line, line_number):
+        m = self._match(extended_comment_start_sig_re, line)
+        if m is None:
+            return False
+        text = m['line'][m['end']:]
+        del m['start'], m['end'], m['line']
+        m['objtype'] = 'extended comment'
+        m['start_line'] = line_number
+        self.ec = dict(m)    # container for extended comment data
+        self.ec['text'] = [text]
+        self.state_stack.append(self.state)
+        self.state = 'extended comment'
+        return True
+
+    def _is_multiline_end_extended_comment(self, line, line_number):
+        m = self._match(extended_comment_end_sig_re, line)
+        if m is None:
+            return False
+        text = m['line'][:m['start']]
+        self.ec['text'].append(text)
+        self.ec['text'] = '\n'.join(self.ec['text'])
+        self.ec['end_line'] = line_number
+        self.findings.append(dict(self.ec))
+        self.state = self.state_stack.pop()
+        del self.ec
+        return True
     
     def _match(self, regexp, line):
         m = regexp.search(line)
@@ -238,6 +266,7 @@ class SpecMacrofileParser:
     def ReST(self):
         """create the ReStructured Text from what has been found"""
         s = []
+        declarations = []
         for r in self.findings:
             if r['objtype'] == 'extended comment':
                 s.append( '' )
@@ -247,13 +276,39 @@ class SpecMacrofileParser:
                                               r['end_line']) )
                 s.append( '' )
                 s.append(r['text'])
+            elif r['objtype'] in ('local', 'global', 'constant'):
+                declarations.append(r)      # remember, show this later
             # TODO: other objtypes
+        if len(declarations) > 0:
+            col_keys = ('text', 'objtype', 'start_line', 'end_line', )
+            widths = {}
+            for key in col_keys:
+                widths[key] = len( str(key) )
+            for d in declarations:
+                for key, w in widths.items():
+                    widths[key] = max(w, len( str(d[key]) ) )
+            separator = " ".join( ["="*widths[key] for key in col_keys] )
+            format = " ".join( ["%%-%ds"%widths[key] for key in col_keys] )
+            s.append( '' )
+            s.append( '.. rubric:: Variable Declarations:' )
+            s.append( '' )
+            s.append( separator )
+            #s.append( " ".join( [str(key) for key in col_keys]) )
+            s.append( format % tuple([str(key) for key in col_keys]) )
+            s.append( separator )
+            for d in declarations:
+                s.append( format % tuple([str(d[key]) for key in col_keys]) )
+            s.append( separator )
         return '\n'.join(s)
 
 
 if __name__ == '__main__':
-    p = SpecMacrofileParser('../test/test-battery.mac')
-    #print p.ReST()
-    print p
-    p = SpecMacrofileParser('../test/cdef-examples.mac')
-    #print p.ReST()
+    filelist = [
+        '../macros/test-battery.mac',
+        '../macros/cdef-examples.mac',
+        '../macros/shutter.mac',
+    ]
+    for item in filelist:
+        p = SpecMacrofileParser(item)
+        #print p
+        print p.ReST()

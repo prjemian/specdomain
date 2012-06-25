@@ -1,10 +1,10 @@
 .. $Id$
 
 ====================================================
-SPEC macro source file: ``shutter.mac``
+SPEC macro source file: ``../macros/shutter.mac``
 ====================================================
 
 .. caution:: This file is as-received.  
 	No attempt to prepare it for ReST comments has been made.
 
-.. autospecmacro:: shutter.mac
+.. autospecmacro:: ../macros/shutter.mac

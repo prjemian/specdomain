@@ -1,7 +1,7 @@
 .. $Id$
 
-====================================================
-SPEC macro source file: ``cdef-examples.mac``
-====================================================
+=============================================================
+SPEC macro source file: ``../macros/cdef-examples.mac``
+=============================================================
 
-.. autospecmacro:: cdef-examples.mac
+.. autospecmacro:: ../macros/cdef-examples.mac
