@@ -262,7 +262,7 @@ class SpecMacrofileParser:
 
     def ReST(self):
         """create the ReStructured Text from what has been found"""
-        if self.state == 'parsed':
+        if not self.state == 'parsed':
             raise RuntimeWarning, "state = %s, should be 'parsed'" % self.filename
             
         s = []
