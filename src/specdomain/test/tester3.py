@@ -1,7 +1,10 @@
-'''
-Created on Jun 12, 2012
+#!/usr/bin/env python
 
-@author: Pete
+
+'''
+$Id$
+
+test various regular expressions to match macro declaration signatures
 '''
 
 
