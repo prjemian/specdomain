@@ -3,6 +3,9 @@
 #  $Id$
 
 
+'''test various regular expressions to match macro declarations'''
+
+
 import re
 
 #  http://regexpal.com/
@@ -102,9 +105,7 @@ aFunc(parm1)
 cdef("geo_ub_default", "", "ub.mac")
 cdef("config_mac", "{PLOT_CNTRS_MAX = COUNTERS}", "PLOT_Y", 0x10 )
 '''
-f = open('cdef-examples.mac', 'r')
-buf = f.read()
-f.close()
+buf = open('../macros/cdef-examples.mac', 'r').read()
 test_cases += buf
 tester(test_cases, spec_func_re)
 

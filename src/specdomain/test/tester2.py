@@ -4,6 +4,8 @@
 
 
 """
+test various regular expressions to locate arguments 
+to cdef for a particular case from standard.mac
 """
 
 import re
@@ -37,7 +39,7 @@ arg4_re = re.compile(DOUBLE_QUOTE_STRING_MATCH
                      + WORD_OR_DQS_MATCH
                      , re.IGNORECASE|re.DOTALL)
 
-for regexp in (arg1_re, arg2_re, arg3_re, arg4_re):
+for i, regexp in enumerate((arg1_re, arg2_re, arg3_re, arg4_re)):
     m = regexp.match(s)
     if m is not None:
-        print m.groups()
+        print i, m.groups()
