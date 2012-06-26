@@ -36,21 +36,6 @@ cdef_match                  = r'(cdef)'
 extended_comment_marker     = r'\"{3}'
 extended_comment_match      = r'(' + extended_comment_marker + r')'
 
-#    macro_sig_re = re.compile(
-#                                   r'''^ ([a-zA-Z_]\w*)         # macro name
-#                                   ''', re.VERBOSE)
-#    
-#    func_sig_re = re.compile(word_match + r'\('
-#                          + r'(' + match_all + r')' 
-#                          + r'\)', 
-#                          re.IGNORECASE|re.DOTALL)
-#    
-#    cdef_name_sig_re = re.compile(double_quote_string_match, 
-#                                       re.IGNORECASE|re.DOTALL)
-#    
-#    
-#    extended_comment_flag_sig_re = re.compile(extended_comment_marker, 
-#                                                   re.IGNORECASE|re.DOTALL)
 
 # TODO: handle "#: " indicating a description of a variable on the preceding line
 
