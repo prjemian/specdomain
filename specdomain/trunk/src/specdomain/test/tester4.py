@@ -11,6 +11,8 @@ develop regular expression to match macro declarations
 import re
 import os
 
+# TODO: consider multiline declaration signtures
+# This test module only considers single line declarations
 
 spec_macro_declaration_match_re = re.compile(
                               r'^'                      # line start
@@ -22,14 +24,15 @@ spec_macro_declaration_match_re = re.compile(
                             + r'(#.*?)?'                # 3: optional comment
                             + r'$'                      # line end
                         )
+
 spec_cdef_declaration_match_re = re.compile(
                               r'^'                      # line start
-                            + r'\s*?'                   # optional blank space
+                            + r'.*?'                    # optional any kind of preceding stuff, was \s*? (optional blank space)
                             + r'(cdef)'                 # 0: cdef
                             + r'\('                     # opening parenthesis
                             + r'(.*?)'                  # 1: args (anything between the parentheses)
                             + r'\)'                     # closing parenthesis
-                            + r'\s*?'                   # optional blank space
+                            + r'.*?'                    # optional blank space
                             + r'(#.*?)?'                # 2: optional comment
                             + r'$'                      # line end
                         )
@@ -57,6 +60,9 @@ tests = {
     'cdef':     spec_cdef_declaration_match_re,
     'function': spec_function_declaration_match_re,
 }
+
+for name, test in tests.items():
+    print "%10s  %s" % (name, test.pattern)
 
 for f in sorted(os.listdir(TEST_DIR)):
     if f.endswith('.mac'):

@@ -192,6 +192,7 @@ class SpecMacrofileParser:
         m['text'] = m['text'].strip()
         self.findings.append(dict(m))
         return True
+
     extended_comment_start_sig_re = re.compile(string_start
                                                 + non_greedy_whitespace
                                                 + extended_comment_match, 
