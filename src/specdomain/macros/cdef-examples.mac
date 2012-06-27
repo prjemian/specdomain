@@ -44,4 +44,7 @@ cdef("user_scan_plot")
 cdef("user_scan_tail")
 cdef("user_waitmove","\nwait(1);\n","waitmove_hack","0x20")
 
+# it's possible to embed cdef in a block like this, like in standard.mac
+if DECISION==1{cdef("user_offsim", "getE;", "embedded")}
+
 """ end of  $Id$ """
