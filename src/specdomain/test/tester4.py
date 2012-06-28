@@ -32,8 +32,8 @@ spec_cdef_declaration_match_re = re.compile(
                             + r'\('                     # opening parenthesis
                             + r'(.*?)'                  # 1: args (anything between the parentheses)
                             + r'\)'                     # closing parenthesis
-                            + r'.*?'                    # optional blank space
-                            + r'(#.*?)?'                # 2: optional comment
+                            + r'.*?'                    # optional any kind of stuff
+                            + r'(#.*?)?'                # 2: optional comment with content
                             + r'$'                      # line end
                         )
 
@@ -49,7 +49,7 @@ spec_function_declaration_match_re = re.compile(
                             + r'\s*?'                   # optional blank space
                             + r'\''                     # open macro content
                             + r'(.*?)'                  # 3: args (anything between the parentheses)
-                            + r'(#.*?)?'                # 4: more_content
+                            + r'(#.*?)?'                # 4: optional comment
                             + r'$'                      # line end
                         )
 

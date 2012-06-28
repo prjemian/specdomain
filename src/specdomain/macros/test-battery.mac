@@ -121,7 +121,7 @@ HISTORY
            SHUTTER_MAC = DOFILE
 
     # EPICS PV of the binary output which controls the shutter
-    #
+    
     global SHUTTER_CONTROL_PV
            SHUTTER_CONTROL_PV = "X04SA-ES3-SC:FPS"
 
@@ -133,7 +133,7 @@ HISTORY
 
     # EPICS PV of the binary input which monitors the state of the shutter
     # if SHUTTER_MONITOR_PV = "", no monitoring is performed
-    #
+    
     global SHUTTER_MONITOR_PV
            SHUTTER_MONITOR_PV = ""
 
