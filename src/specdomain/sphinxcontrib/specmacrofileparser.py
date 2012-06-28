@@ -390,17 +390,16 @@ class SpecMacrofileParser:
                 declarations.append(r)
 
         s += self._report_table('Variable Declarations', declarations)
-        s += self._report_table('Macro Declarations', macros)
+        s += self._report_table('Macro Declarations', macros, ('start_line', 'name', 'line',))
         s += self._report_table('Function Macro Declarations', functions)
 
         return '\n'.join(s)
     
-    def _report_table(self, title, itemlist):
+    def _report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
         """ return the itemlist as a reST table """
         s = []
         if len(itemlist) == 0:
             return s
-        col_keys = ('start_line', 'line',)  # TODO: temporary
         widths = dict([( key, len(str(key)) ) for key in col_keys])
         for d in itemlist:
             widths = dict([( key, max(w, len(str(d[key])))) for key, w in widths.items()])
