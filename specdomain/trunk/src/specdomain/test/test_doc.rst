@@ -140,8 +140,7 @@ Source code documentation
 
 .. toctree::
    :maxdepth: 2
+   :glob:
 
-   cdef-examples.mac
-   test-battery.mac
-   shutter.mac
+   *.mac
    python-example-source

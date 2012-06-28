@@ -29,10 +29,10 @@ string_end                  = r'$'
 match_all                   = r'.*'
 non_greedy_filler           = match_all + r'?'
 non_greedy_whitespace       = r'\s*?'
-double_quote_string_match   = r'("' + non_greedy_filler + r'")'
-prog_name_match             = r'([a-z_]\w*)'
-word_match                  = r'((?:[a-z_]\w*))'
-cdef_match                  = r'(cdef)'
+#double_quote_string_match   = r'("' + non_greedy_filler + r'")'
+#prog_name_match             = r'([a-z_]\w*)'
+#word_match                  = r'((?:[a-z_]\w*))'
+#cdef_match                  = r'(cdef)'
 extended_comment_marker     = r'\"{3}'
 extended_comment_match      = r'(' + extended_comment_marker + r')'
 
@@ -112,12 +112,15 @@ class SpecMacrofileParser:
                 raise RuntimeError, msg
 
             if self.state == 'global':
-                if self._is_lgc_variable(line, line_number):
-                    continue
-                if self._is_one_line_extended_comment(line, line_number):
-                    continue
-                if self._is_multiline_start_extended_comment(line, line_number):
-                    continue
+                for thing in (self._is_def_macro,
+                              self._is_cdef_macro,
+                              self._is_function_macro,
+                              self._is_lgc_variable,
+                              self._is_one_line_extended_comment,
+                              self._is_multiline_start_extended_comment
+                              ):
+                    if thing(line, line_number):
+                        break
             elif self.state == 'extended comment':
                 if not self._is_multiline_end_extended_comment(line, line_number):
                     # multiline extended comment continues
@@ -133,7 +136,8 @@ class SpecMacrofileParser:
         if len(self.state_stack) > 0:
             fmt = "encountered EOF while parsing %s, line %d, in state %s, stack=%s"
             msg = fmt % (self.filename, line_number, self.state, self.state_stack)
-            raise RuntimeWarning, msg
+            #raise RuntimeWarning, msg
+            print msg
 
         self.state = 'parsed'
         
@@ -158,8 +162,10 @@ class SpecMacrofileParser:
             args = args[:pos]
         m['objtype'] = objtype
         m['start_line'] = m['end_line'] = line_number
-        del m['start'], m['end'], m['line']
+        del m['start'], m['end']
         if objtype == 'constant':
+            if not len(args.split()) == 2:
+                print "line_number, args: ", line_number, args
             var, _ = args.split()
             m['text'] = var.rstrip(',')
             self.findings.append(dict(m))
@@ -186,7 +192,8 @@ class SpecMacrofileParser:
         m = self._search(self.extended_comment_block_sig_re, line)
         if m is None:
             return False
-        del m['start'], m['end'], m['line']
+        line = m['line']
+        del m['start'], m['end']
         m['objtype'] = 'extended comment'
         m['start_line'] = m['end_line'] = line_number
         m['text'] = m['text'].strip()
@@ -202,8 +209,9 @@ class SpecMacrofileParser:
         m = self._search(self.extended_comment_start_sig_re, line)
         if m is None:
             return False
+        line = m['line']
         text = m['line'][m['end']:]
-        del m['start'], m['end'], m['line']
+        del m['start'], m['end']
         m['objtype'] = 'extended comment'
         m['start_line'] = line_number
         self.ec = dict(m)    # container for extended comment data
@@ -231,7 +239,102 @@ class SpecMacrofileParser:
         self.state = self.state_stack.pop()
         del self.ec
         return True
-    
+
+    spec_macro_declaration_match_re = re.compile(
+                              r'^'                      # line start
+                            + r'\s*?'                   # optional blank space
+                            + r'(r?def)'                # 0: def_type (rdef | def)
+                            + r'\s*?'                   # optional blank space
+                            + r'([a-zA-Z_][\w_]*)'      # 1: macro_name
+                            + r'(.*?)'                  # 2: optional arguments
+                            + r'(#.*?)?'                # 3: optional comment
+                            + r'$'                      # line end
+                        )
+
+    def _is_def_macro(self, line, line_number):
+        m = self._search(self.spec_macro_declaration_match_re, line)
+        if m is None:
+            return False
+        self.ec = dict(m)
+        del self.ec['text']
+        m = self.spec_macro_declaration_match_re.match(line)
+        macrotype, name, args, comment = m.groups()
+        self.ec['start_line'] = line_number
+        self.ec['end_line'] = line_number       # TODO: consider the multiline definition later
+        self.ec['objtype'] = macrotype
+        self.ec['name'] = name
+        self.ec['args'] = args
+        self.ec['comment'] = comment
+        self.findings.append(dict(self.ec))
+        del self.ec
+        return True
+
+    spec_cdef_declaration_match_re = re.compile(
+                              r'^'                      # line start
+                            + r'.*?'                    # optional any kind of preceding stuff, was \s*? (optional blank space)
+                            + r'(cdef)'                 # 0: cdef
+                            + r'\('                     # opening parenthesis
+                            + r'(.*?)'                  # 1: args (anything between the parentheses)
+                            + r'\)'                     # closing parenthesis
+                            + r'.*?'                    # optional any kind of stuff
+                            + r'(#.*?)?'                # 2: optional comment with content
+                            + r'$'                      # line end
+                        )
+
+    def _is_cdef_macro(self, line, line_number):
+        m = self._search(self.spec_cdef_declaration_match_re, line)
+        if m is None:
+            return False
+        self.ec = dict(m)
+        del self.ec['text']
+        m = self.spec_cdef_declaration_match_re.match(line)
+        macrotype, args, comment = m.groups()
+        name = args.split(',')[0].strip('"')
+        self.ec['start_line'] = line_number
+        self.ec['end_line'] = line_number       # TODO: consider the multiline definition later
+        self.ec['objtype'] = macrotype
+        self.ec['name'] = name
+        self.ec['args'] = args
+        self.ec['comment'] = comment
+        self.findings.append(dict(self.ec))
+        del self.ec
+        return True
+
+    spec_function_declaration_match_re = re.compile(
+                              r'^'                      # line start
+                            + r'\s*?'                   # optional blank space
+                            + r'(r?def)'                # 0: def_type (rdef | def)
+                            + r'\s*?'                   # optional blank space
+                            + r'([a-zA-Z_][\w_]*)'      # 1: function_name
+                            + r'\('                     # opening parenthesis
+                            + r'(.*?)'                  # 2: args (anything between the parentheses)
+                            + r'\)'                     # closing parenthesis
+                            + r'\s*?'                   # optional blank space
+                            + r'\''                     # open macro content
+                            + r'(.*?)'                  # 3: content, optional
+                            + r'(#.*?)?'                # 4: optional comment
+                            + r'$'                      # line end
+                        )
+
+    def _is_function_macro(self, line, line_number):
+        m = self._search(self.spec_function_declaration_match_re, line)
+        if m is None:
+            return False
+        self.ec = dict(m)
+        del self.ec['text']
+        m = self.spec_function_declaration_match_re.match(line)
+        macrotype, name, args, content, comment = m.groups()
+        self.ec['start_line'] = line_number
+        self.ec['end_line'] = line_number       # TODO: consider the multiline definition later
+        self.ec['objtype'] = 'function ' + macrotype
+        self.ec['name'] = name
+        self.ec['args'] = args
+        self.ec['content'] = content
+        self.ec['comment'] = comment
+        self.findings.append(dict(self.ec))
+        del self.ec
+        return True
+
     def _search(self, regexp, line):
         '''regular expression search of line, returns a match as a dictionary or None'''
         m = regexp.search(line)
@@ -267,7 +370,9 @@ class SpecMacrofileParser:
             raise RuntimeWarning, "state = %s, should be 'parsed'" % self.filename
             
         s = []
-        declarations = []
+        declarations = []       # variables and constants
+        macros = []             # def, cdef, and rdef macros
+        functions = []          # def and rdef function macros
         for r in self.findings:
             if r['objtype'] == 'extended comment':
                 s.append( '' )
@@ -277,37 +382,53 @@ class SpecMacrofileParser:
                                               r['end_line']) )
                 s.append( '' )
                 s.append(r['text'])
+            elif r['objtype'] in ('def', 'rdef', 'cdef'):
+                macros.append(r)
+            elif r['objtype'] in ('function def', 'function rdef',):
+                functions.append(r)
             elif r['objtype'] in ('local', 'global', 'constant'):
-                declarations.append(r)      # remember, show this later
-            # TODO: other objtypes
-        if len(declarations) > 0:
-            col_keys = ('text', 'objtype', 'start_line', 'end_line', )
-            widths = dict([( key, len(str(key)) ) for key in col_keys])
-            for d in declarations:
-                widths = dict([( key, max(w, len(str(d[key])))) for key, w in widths.items()])
-            separator = " ".join( ["="*widths[key] for key in col_keys] )
-            fmt = " ".join( ["%%-%ds"%widths[key] for key in col_keys] )
-            s.append( '' )
-#            s.append( '.. rubric:: Variable Declarations:' )
-            s.append( 'Variable Declarations' )
-            s.append( '=====================' )
-            s.append( '' )
-            s.append( separator )
-            s.append( fmt % tuple([str(key) for key in col_keys]) )
-            s.append( separator )
-            for d in declarations:
-                s.append( fmt % tuple([str(d[key]) for key in col_keys]) )
-            s.append( separator )
+                declarations.append(r)
+
+        s += self._report_table('Variable Declarations', declarations)
+        s += self._report_table('Macro Declarations', macros)
+        s += self._report_table('Function Macro Declarations', functions)
+
         return '\n'.join(s)
+    
+    def _report_table(self, title, itemlist):
+        """ return the itemlist as a reST table """
+        s = []
+        if len(itemlist) == 0:
+            return s
+        col_keys = ('start_line', 'line',)  # TODO: temporary
+        widths = dict([( key, len(str(key)) ) for key in col_keys])
+        for d in itemlist:
+            widths = dict([( key, max(w, len(str(d[key])))) for key, w in widths.items()])
+        separator = " ".join( ["="*widths[key] for key in col_keys] )
+        fmt = " ".join( ["%%-%ds"%widths[key] for key in col_keys] )
+        s.append( '' )
+        s.append( title )
+        s.append( '='*len(title) )
+        s.append( '' )
+        s.append( separator )
+        s.append( fmt % tuple([str(key.strip()) for key in col_keys]) )
+        s.append( separator )
+        last_line = -1
+        for d in itemlist:
+            if d['start_line'] != last_line:
+                s.append( fmt % tuple([str(d[key]).strip() for key in col_keys]) )
+            last_line = d['start_line']
+        s.append( separator )
+        return s
+
+
+TEST_DIR = os.path.join('..', 'macros')
 
 
 if __name__ == '__main__':
-    filelist = [
-        '../macros/test-battery.mac',
-        '../macros/cdef-examples.mac',
-        '../macros/shutter.mac',
-    ]
+    filelist = [f for f in sorted(os.listdir(TEST_DIR)) if f.endswith('.mac')]
     for item in filelist:
-        p = SpecMacrofileParser(item)
-        #print p
+        filename = os.path.join(TEST_DIR, item)
+        print filename
+        p = SpecMacrofileParser(filename)
         print p.ReST()
