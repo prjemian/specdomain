@@ -13,6 +13,14 @@ Contents:
 
    test_doc
 
+Example Python Source code documentation
+=============================================
+
+.. toctree::
+   :maxdepth: 2
+
+   python-example-source
+
 Indices and tables
 ==================
 

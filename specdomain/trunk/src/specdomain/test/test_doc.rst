@@ -143,4 +143,3 @@ Source code documentation
    :glob:
 
    *.mac
-   python-example-source
