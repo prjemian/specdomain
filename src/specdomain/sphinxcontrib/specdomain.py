@@ -133,6 +133,7 @@ class SpecMacroDocumenter(Documenter):
         # This works for now.
         self.add_line(u'', '<autodoc>')
         self.add_line(u'.. index:: SPEC macro file; %s' % macrofile, '<autodoc>')
+        self.add_line(u'.. index:: !%s' % os.path.split(macrofile)[1], '<autodoc>')
         self.add_line(u'', '<autodoc>')
         line = 'source code:  :download:`%s <%s>`' % (macrofile, macrofile)
         self.add_line(line, macrofile)
@@ -203,6 +204,7 @@ class SpecMacroObject(ObjectDescription):
             return ''
 
     def handle_signature(self, sig, signode):
+        '''return the name of this object from its signature'''
         # Must be able to match these (without preceding def or rdef)
         #     def macro_name
         #     def macro_name()
@@ -239,7 +241,25 @@ class SpecVariableObject(ObjectDescription):
     # TODO: The directive that declares the variable should be the primary (bold) index.
     # TODO: array variables are not handled at all
     # TODO: variables cited by *role* should link back to their *directive* declarations
-    #       probably need to override handle_signature(), add_target_and_index(), and _get_index_text()
+    #       probably need to override handle_signature() and add_target_and_index()
+
+    def handle_signature(self, sig, signode):
+        '''return the name of this object from its signature'''
+        # TODO: Should it match a regular expression?
+        # TODO: What if global or local?  
+        return sig
+
+    def add_target_and_index(self, name, sig, signode):
+        targetname = '%s-%s' % (self.objtype, name)
+        signode['ids'].append(targetname)
+        # TODO: index entry here is at line before directive, now must get it right
+        # TODO: role does not point back to it yet
+        # http://sphinx.pocoo.org/markup/misc.html#directive-index
+        text = u'! ' + sig      # TODO: How to use emphasized index entry in this context?
+        text = sig              # FIXME: temporary override
+        self.indexnode['entries'].append(('single', text, targetname, ''))
+        text = u'SPEC %s variable; %s' % (self.objtype, sig)
+        self.indexnode['entries'].append(('single', text, targetname, ''))
 
 class SpecXRefRole(XRefRole):
     """ """
