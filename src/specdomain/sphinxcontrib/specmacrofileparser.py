@@ -368,11 +368,18 @@ class SpecMacrofileParser:
         """create the ReStructured Text from what has been found"""
         if not self.state == 'parsed':
             raise RuntimeWarning, "state = %s, should be 'parsed'" % self.filename
+        return self._simple_ReST_renderer()
+
+    def _simple_ReST_renderer(self):
+        """create a simple ReStructured Text rendition of the findings"""
+        if not self.state == 'parsed':
+            raise RuntimeWarning, "state = %s, should be 'parsed'" % self.filename
             
-        s = []
         declarations = []       # variables and constants
         macros = []             # def, cdef, and rdef macros
         functions = []          # def and rdef function macros
+        title = 'Extended Comments'
+        s = ['', title, '='*len(title), ]
         for r in self.findings:
             if r['objtype'] == 'extended comment':
                 s.append( '' )
