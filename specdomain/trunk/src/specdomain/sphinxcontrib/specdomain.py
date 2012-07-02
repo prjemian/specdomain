@@ -189,8 +189,8 @@ class SpecMacroObject(ObjectDescription):
         self.state.document.note_explicit_target(signode)
         indextext = self._get_index_text(name)
         if indextext:
-            self.indexnode['entries'].append(('single', indextext,
-                                              targetname, ''))
+            self.indexnode['entries'].append(('single', indextext, targetname, ''))
+            self.indexnode['entries'].append(('single', sig, targetname, ''))
 
     def _get_index_text(self, name):
         macro_types = {
@@ -241,18 +241,17 @@ class SpecVariableObject(ObjectDescription):
     # TODO: The directive that declares the variable should be the primary (bold) index.
     # TODO: array variables are not handled at all
     # TODO: variables cited by *role* should link back to their *directive* declarations
-    #       probably need to override handle_signature() and add_target_and_index()
 
     def handle_signature(self, sig, signode):
         '''return the name of this object from its signature'''
         # TODO: Should it match a regular expression?
         # TODO: What if global or local?  
+        signode += addnodes.desc_name(sig, sig)
         return sig
 
     def add_target_and_index(self, name, sig, signode):
         targetname = '%s-%s' % (self.objtype, name)
         signode['ids'].append(targetname)
-        # TODO: index entry here is at line before directive, now must get it right
         # TODO: role does not point back to it yet
         # http://sphinx.pocoo.org/markup/misc.html#directive-index
         text = u'! ' + sig      # TODO: How to use emphasized index entry in this context?
