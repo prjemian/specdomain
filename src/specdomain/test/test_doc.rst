@@ -93,6 +93,12 @@ local variable declaration:
 	
 	   ``i`` is a local loop counter
 
+constant declaration:  
+
+	.. spec:local:: TWO_PI
+	
+	   ``TWO_PI`` is the ratio of a circle's circumference to its diameter.
+
 array variable declaration: 
 
 	*--tba--*
@@ -105,7 +111,7 @@ These items should link back to the directives above.
 * global variable declaration: 	:spec:global:`A[]`
 * local variable declaration:  	:spec:local:`i`
 * array variable declaration: 	*--tba--*
-* constant declaration:			*--tba--*
+* constant declaration:			:spec:constant:`TWO_PI`
 
 
 Roles
@@ -133,7 +139,7 @@ The SPEC macro language provides for several types of variable:
 * global variables, such as:  	:spec:global:`A[]`
 * local variable, such as:  	:spec:local:`i`
 * array variable declaration: 	*--tba--*
-* constant declaration: 		*--tba--*
+* constant declaration: 		:spec:constant:`TWO_PI`
 
 Source code documentation
 ============================

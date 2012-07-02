@@ -48,15 +48,15 @@ class SpecMacrofileParser:
         strings as extended comments.  Few, if any, have used them.
         Assume all extended comments contain ReST formatted comments, 
         *including initial section titles or transitions*.
-        The first and simplest thing to do is to read the .mac file and only extract
-        all the extended comments and add them as nodes to the current document.
     
     Assume macro definitions are not nested (but test for this).
+    
+    Assume macro files are small enough to load completely in memory.
         
     An additional step would be to parse for:
-    * def
-    * cdef
-    * rdef
+    * def    (done)
+    * cdef    (done)
+    * rdef    (done)
     * global    (done)
     * local    (done)
     * constant    (done)
@@ -378,8 +378,9 @@ class SpecMacrofileParser:
         declarations = []       # variables and constants
         macros = []             # def, cdef, and rdef macros
         functions = []          # def and rdef function macros
-        title = 'Extended Comments'
-        s = ['', title, '='*len(title), ]
+        #title = 'Extended Comments'
+        #s = ['', title, '='*len(title), ]
+        s = []
         for r in self.findings:
             if r['objtype'] == 'extended comment':
                 s.append( '' )
@@ -389,10 +390,32 @@ class SpecMacrofileParser:
                                               r['end_line']) )
                 s.append( '' )
                 s.append(r['text'])
-            elif r['objtype'] in ('def', 'rdef', 'cdef'):
+            elif r['objtype'] in ('def', 'rdef', 'cdef', ):
                 macros.append(r)
+                s.append( '' )
+                s.append( '.. %s %s %s %d %d' % (self.filename, 
+                                              r['objtype'], 
+                                              r['name'], 
+                                              r['start_line'], 
+                                              r['end_line']) )
+                s.append( '' )
+                s.append( '.. rubric:: %s macro declaration' % r['objtype']  )
+                s.append( '' )
+                #s.append( '.. spec:%s:: %s %s' % ( r['objtype'], r['name'], r['args'],) )
+                s.append( '.. spec:%s:: %s' % ( r['objtype'], r['name'],) )
             elif r['objtype'] in ('function def', 'function rdef',):
+                # FIXME:  not getting here, such as for kohzuE_cmd()
                 functions.append(r)
+                s.append( '' )
+                s.append( '.. %s %s %s %d %d' % (self.filename, 
+                                              r['objtype'], 
+                                              r['name'], 
+                                              r['start_line'], 
+                                              r['end_line']) )
+                s.append( '' )
+                s.append( '.. rubric:: %s macro function declaration' % r['objtype']  )
+                s.append( '' )
+                s.append( '.. spec:%s:: %s(%s)' % ( r['objtype'], r['name'], r['args']) )
             elif r['objtype'] in ('local', 'global', 'constant'):
                 declarations.append(r)
 
