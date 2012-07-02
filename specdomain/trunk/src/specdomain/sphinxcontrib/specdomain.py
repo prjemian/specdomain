@@ -30,7 +30,7 @@ from sphinx.locale import l_, _                         #@UnusedImport
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType, Index       #@UnusedImport
 from sphinx.util.compat import Directive                #@UnusedImport
-from sphinx.util.nodes import make_refnode, nested_parse_with_titles
+from sphinx.util.nodes import make_refnode, nested_parse_with_titles    #@UnusedImport
 from sphinx.util.docfields import Field, TypedField
 from sphinx.util.docstrings import prepare_docstring    #@UnusedImport
 
@@ -41,7 +41,7 @@ from sphinx.ext.autodoc import Documenter, bool_option
 #     safe_getattr, safe_repr
 #from sphinx.util.pycompat import base_exception, class_types
 from specmacrofileparser import SpecMacrofileParser
-from docutils.statemachine import ViewList
+from docutils.statemachine import ViewList    #@UnusedImport
 
 
 # TODO: merge these with specmacrofileparser.py
@@ -50,7 +50,6 @@ non_greedy_filler           = match_all + r'?'
 double_quote_string_match   = r'("' + non_greedy_filler + r'")'
 word_match                  = r'((?:[a-z_]\w*))'
 cdef_match                  = r'(cdef)'
-extended_comment_flag       = r'\"\"\"'
 
 
 spec_macro_sig_re = re.compile(
@@ -64,22 +63,6 @@ spec_func_sig_re = re.compile(word_match + r'\('
 
 spec_cdef_name_sig_re = re.compile(double_quote_string_match, 
                                    re.IGNORECASE|re.DOTALL)
-
-
-spec_extended_comment_flag_sig_re = re.compile(extended_comment_flag, 
-                                               re.IGNORECASE|re.DOTALL)
-spec_extended_comment_start_sig_re = re.compile(r'^'
-                                                + non_greedy_filler
-                                                + extended_comment_flag, 
-                                                re.IGNORECASE|re.DOTALL)
-spec_extended_comment_block_sig_re = re.compile(r'^'
-                                                + non_greedy_filler
-                                                + extended_comment_flag
-                                                + r'(' + non_greedy_filler + r')'
-                                                + extended_comment_flag
-                                                + non_greedy_filler
-                                                + r'$', 
-                                                re.IGNORECASE|re.DOTALL|re.MULTILINE)
 
 
 class SpecMacroDocumenter(Documenter):
@@ -149,9 +132,10 @@ class SpecMacroDocumenter(Documenter):
         # TODO: provide links from each to highlighted source code blocks (like Python documenters).
         # This works for now.
         self.add_line(u'', '<autodoc>')
+        self.add_line(u'.. index:: SPEC macro file; %s' % macrofile, '<autodoc>')
+        self.add_line(u'', '<autodoc>')
         line = 'source code:  :download:`%s <%s>`' % (macrofile, macrofile)
         self.add_line(line, macrofile)
-        # TODO: Add each .mac file name to the Index
 
         self.add_line(u'', '<autodoc>')
         for linenumber, line in enumerate(rest):
