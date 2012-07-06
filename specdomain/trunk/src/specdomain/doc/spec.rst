@@ -1,9 +1,82 @@
 .. $Id$
 
+.. TODO: rewrite this from a SPEC macro authors viewpoint.
+	This reads from a SPHINX domain author's viewpoint.
+	
+	Note that most authors will not need the documentation primitives but rather just the
+	*autospecmacro* and *autospecdir* directives.
+
 Documenting SPEC Code
 ========================
 
 .. _spec-directives:
+
+
+.. _spec-autospecdir:
+.. index:: ! autospecdir
+
+Documenting SPEC File Directories
+-----------------------------------
+
+.. rst:directive:: .. autospecdir:: path
+
+	:param str path: path (absolute or relative to the .rst file) 
+		to an accessible directory with SPEC macro files
+   
+	::
+   
+   		.. autospecdir:: /home/user/spec.d/macros
+   		
+   	.. note::  options planned for future versions:
+
+   		* document all subdirectories of *path*
+   		* match files by a pattern (? glob *v.* re ?)
+
+   
+
+.. _spec-autospecmacro:
+.. index:: ! autospecmacro
+
+Documenting SPEC Files
+-----------------------------------
+
+.. rst:directive:: .. autospecmacro:: filename
+
+	:param str filename: name (with optional path) of the SPEC macro file.
+		The path component can be relative or absolute.  If relative,
+		the path is relative to the *.rst* file.
+
+	Document the contents of a SPEC macro source code file, including extended comments,
+	*def*, *rdef*, and *cdef* macro declarations and changes, and *local*,
+	*global*, and *constant* variable declarations.
+   
+	::
+   
+   		.. autospecmacro:: sixc.mac
+   		
+   	.. note::  options planned for future versions:
+
+   		* standard documentation pattern
+   		* include all extended comments
+   		* ignore :index:`hidden objects` [#]_
+   		* ignore :index:`anonymous objects` [#]_
+
+
+.. _spec-extended-comments:
+.. index:: ! extended comments
+
+SPEC Extended Comments
+--------------------------------
+
+Since 2002, SPEC has provided an *extended comment* block. [#]_
+Such a block begins and ends
+with three double-quotes, such as::
+
+	"""This is an extended comment"""
+
+Here, the extended comment block should be formatted according to the conventions of 
+restructured text [#]_.
+
 
 Describing SPEC objects
 -----------------------------------
@@ -94,6 +167,18 @@ and create index entries and identifiers:
    |   .. spec:local:: demo_local   |                               |
    +--------------------------------+-------------------------------+
 
+.. rst:directive::  spec:constant
+
+   Declare the name of a SPEC constant.
+   
+   +-----------------------------------+----------------------------------+
+   | ReST code                         | Displays like                    |
+   +===================================+==================================+
+   | ::                                | .. spec:constant:: demo_const    |
+   |                                   |                                  |
+   |   .. spec:constant:: demo_const   |                                  |
+   +-----------------------------------+----------------------------------+
+
 
 .. _spec-roles:
 
@@ -157,3 +242,94 @@ and are possibly hyperlinked if a matching identifier is found:
    		An example ``local`` variable: :spec:local:`demo_local`
 
    An example ``local`` variable: :spec:local:`demo_local`
+   
+.. rst:role:: spec:constant
+
+   Reference a local-scope variable.
+   
+   ::
+   
+   		An example ``local`` variable: :spec:constant:`demo_constant`
+
+   An example ``local`` variable: :spec:constant:`demo_constant`
+
+
+
+Undeclared Variables
+---------------------
+
+Undeclared variables (those with no formal global, local, constant, or 
+array declaration) will not be documented.  At least for now.
+
+
+Common Conventions
+====================
+
+There are several conventions to help provide consistency.
+These are not requirements.
+
+extended comments
+-----------------
+
+Only the first extended comment in a "section" should be documented.
+(This setting could be changed with an optional switch.)
+
+A "section" might be the global scope of a .mac file or a macro definition block.
+
+As much as possible, use the python documentation style (that is, 
+first comment is module documentation, first comment inside 
+macro definition is the macro documentation).
+
+hidden objects
+----------------
+
+*Hidden* objects begin with at least one underline character, 
+such as ``_hidden``.  This includes macros and variables.
+These should be optional in the documentation.
+
+*Anonymous* objects begin with at least two underline characters,
+such as ``___anon``.  This includes macros and variables.
+These should not be documented unless specifically requested and 
+only then if hidden objects are documented. 
+
+undeclared variables
+---------------------
+
+Undeclared variables (those with no formal global, local, constant, 
+or array declaration) will not be documented.  At least for now.
+
+parameter descriptions
+----------------------------
+
+Use the same syntax as parameter declarations for Python modules.  
+Here is an example SPEC macro with reST markup::
+
+	def my_comment '{
+	    '''
+	    Make a comment
+	    
+	    usage: ``my_comment "AR aligned to 15.14063 degrees"``
+	    
+	    :param str text: message to be printed
+	    '''
+	    qcomment "%s" $1
+	}'
+
+which documentation looks like this:
+
+.. spec:def:: my_comment text
+	    
+	    Make a comment
+	    
+	    usage: ``my_comment "AR aligned to 15.14063 degrees"``
+	    
+	    :param str text: message to be printed
+
+------------
+
+.. rubric:: Footnotes
+.. [#] *hidden* objects begin with one underline character, such as ``_hidden``
+.. [#] *anonymous* objects begin with at least two underline characters, such as ``__anon``
+.. [#] SPEC extended comments:  http://www.certif.com/spec_help/chg5_01.html
+.. [#] restructured text: http://docutils.sf.net/rst.html
+.. [#] For now, the rendition is basic.  This will be improved in a future revision.
