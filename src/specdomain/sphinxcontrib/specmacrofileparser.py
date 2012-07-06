@@ -425,31 +425,6 @@ class SpecMacrofileParser:
 
         return '\n'.join(s)
     
-    def old_report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
-        """ return the itemlist as a reST table """
-        s = []
-        if len(itemlist) == 0:
-            return s
-        widths = dict([( key, len(str(key)) ) for key in col_keys])
-        for d in itemlist:
-            widths = dict([( key, max(w, len(str(d[key])))) for key, w in widths.items()])
-        separator = " ".join( ["="*widths[key] for key in col_keys] )
-        fmt = " ".join( ["%%-%ds"%widths[key] for key in col_keys] )
-        s.append( '' )
-        s.append( title )
-        s.append( '='*len(title) )
-        s.append( '' )
-        s.append( separator )
-        s.append( fmt % tuple([str(key.strip()) for key in col_keys]) )
-        s.append( separator )
-        last_line = -1
-        for d in itemlist:
-            if d['start_line'] != last_line:
-                s.append( fmt % tuple([str(d[key]).strip() for key in col_keys]) )
-            last_line = d['start_line']
-        s.append( separator )
-        return s
-    
     def _report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
         """ return the itemlist as a reST table """
         if len(itemlist) == 0:
