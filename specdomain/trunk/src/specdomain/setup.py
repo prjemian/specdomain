@@ -13,10 +13,13 @@ version = open('VERSION').read()
 
 requires = ['Sphinx>=0.6']
 
+# classifiers: http://pypi.python.org/pypi?%3Aaction=list_classifiers
+
 setup(
     name='sphinxcontrib-specdomain',
     version=version,
-    #url='http://bitbucket.org/birkenfeld/sphinx-contrib',
+    url='https://subversion.xray.aps.anl.gov/bcdaext/specdomain/trunk/src/specdomain/', 
+    #'http://bitbucket.org/birkenfeld/sphinx-contrib',
     #download_url='http://pypi.python.org/pypi/sphinxcontrib-specdomain',
     license='Argonne OPEN SOURCE LICENSE, see LICENSE file for details',
     author='Pete Jemian',
@@ -29,7 +32,7 @@ setup(
         'Environment :: Console',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
+        'License :: Free To Use But Restricted',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Documentation',
