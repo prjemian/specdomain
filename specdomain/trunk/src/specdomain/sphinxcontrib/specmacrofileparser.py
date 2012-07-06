@@ -419,23 +419,31 @@ class SpecMacrofileParser:
             elif r['objtype'] in ('local', 'global', 'constant'):
                 declarations.append(r)
 
-        s += self._report_table('Variable Declarations', declarations)
-        s += self._report_table('Macro Declarations', macros, ('start_line', 'name', 'line',))
-        s += self._report_table('Function Macro Declarations', functions)
+        s += _report_table('Variable Declarations', declarations)
+        s += _report_table('Macro Declarations', macros, ('start_line', 'name', 'line',))
+        s += _report_table('Function Macro Declarations', functions)
 
         return '\n'.join(s)
+
+
+def _report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
+    """ 
+    return the itemlist as a reST table
     
-    def _report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
-        """ return the itemlist as a reST table """
-        if len(itemlist) == 0:
-            return []
-        rows = []
-        last_line = None
-        for d in itemlist:
-            if d['start_line'] != last_line:
-                rows.append( tuple([str(d[key]).strip() for key in col_keys]) )
-            last_line = d['start_line']
-        return _make_table(title, col_keys, rows, '=')
+    :param str title:  section heading above the table
+    :param {str,str} itemlist: database (keyed dictionary) to use for table
+    :param [str] col_keys: column labels (must be keys in the dictionary)
+    :returns [str]: the table (where each list item is a string of reST)
+    """
+    if len(itemlist) == 0:
+        return []
+    rows = []
+    last_line = None
+    for d in itemlist:
+        if d['start_line'] != last_line:
+            rows.append( tuple([str(d[key]).strip() for key in col_keys]) )
+        last_line = d['start_line']
+    return _make_table(title, col_keys, rows, '=')
 
 
 def _make_table( title, labels, rows, titlechar = '='):
