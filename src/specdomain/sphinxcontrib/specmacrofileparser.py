@@ -425,7 +425,7 @@ class SpecMacrofileParser:
 
         return '\n'.join(s)
     
-    def _report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
+    def old_report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
         """ return the itemlist as a reST table """
         s = []
         if len(itemlist) == 0:
@@ -449,6 +449,51 @@ class SpecMacrofileParser:
             last_line = d['start_line']
         s.append( separator )
         return s
+    
+    def _report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
+        """ return the itemlist as a reST table """
+        if len(itemlist) == 0:
+            return []
+        rows = []
+        last_line = None
+        for d in itemlist:
+            if d['start_line'] != last_line:
+                rows.append( tuple([str(d[key]).strip() for key in col_keys]) )
+            last_line = d['start_line']
+        return _make_table(title, col_keys, rows, '=')
+
+
+def _make_table( title, labels, rows, titlechar = '='):
+    """
+    build a reST table (internal routine)
+    
+    :param str title: placed in a section heading above the table
+    :param [str] labels: columns labels
+    :param [[str]] rows: 2-D grid of data, len(labels) == len(data[i]) for all i
+    :param str titlechar: character to use when underlining title as reST section heading
+    :returns [str]: each list item is reST
+    """
+    s = []
+    if len(rows) == 0:
+        return s
+    if len(labels) > 0:
+        columns = zip(labels, *rows)
+    else:
+        columns = zip(*rows)
+    widths = [max([len(item) for item in row]) for row in columns]
+    separator = " ".join( ['='*key for key in widths] )
+    fmt = " ".join( '%%-%ds' % key for key in widths )
+    s.append( '' )
+    s.append( title )
+    s.append( titlechar*len(title) )
+    s.append( '' )
+    s.append( separator )
+    if len(labels) > 0:
+        s.append( fmt % labels )
+        s.append( separator )
+    s.extend( fmt % row for row in rows )
+    s.append( separator )
+    return s
 
 
 TEST_DIR = os.path.join('..', 'macros')
