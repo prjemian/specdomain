@@ -112,9 +112,10 @@ class SpecMacrofileParser:
                 raise RuntimeError, msg
 
             if self.state == 'global':
-                for thing in (self._is_def_macro,
-                              self._is_cdef_macro,
+                for thing in (
                               self._is_function_macro,
+                              self._is_def_macro,
+                              self._is_cdef_macro,
                               self._is_lgc_variable,
                               self._is_one_line_extended_comment,
                               self._is_multiline_start_extended_comment
@@ -167,14 +168,14 @@ class SpecMacrofileParser:
             if not len(args.split()) == 2:
                 print "line_number, args: ", line_number, args
             var, _ = args.split()
-            m['text'] = var.rstrip(',')
+            m['name'] = var.rstrip(',')
             self.findings.append(dict(m))
         else:
             # TODO: consider not indexing "global" inside a def
             # TODO: consider not indexing "local" at global level
             #      or leave these decisions for later, including some kind of analyzer
             for var in args.split():
-                m['text'] = var.rstrip(',')
+                m['name'] = var.rstrip(',')
                 self.findings.append(dict(m))
                 # TODO: to what is this local?  (remember the def it belongs to)
         return True
@@ -306,6 +307,7 @@ class SpecMacrofileParser:
                             + r'(r?def)'                # 0: def_type (rdef | def)
                             + r'\s*?'                   # optional blank space
                             + r'([a-zA-Z_][\w_]*)'      # 1: function_name
+                            + r'\s*?'                   # optional blank space
                             + r'\('                     # opening parenthesis
                             + r'(.*?)'                  # 2: args (anything between the parentheses)
                             + r'\)'                     # closing parenthesis
@@ -417,16 +419,18 @@ class SpecMacrofileParser:
                 s.append( '' )
                 s.append( '.. spec:%s:: %s(%s)' % ( r['objtype'], r['name'], r['args']) )
             elif r['objtype'] in ('local', 'global', 'constant'):
+                del r['text']
                 declarations.append(r)
 
-        s += _report_table('Variable Declarations', declarations)
-        s += _report_table('Macro Declarations', macros, ('start_line', 'name', 'line',))
-        s += _report_table('Function Macro Declarations', functions)
+        s += report_table('Variable Declarations', declarations, ('start_line', 'objtype', 'name', 'line',))
+        s += report_table('Macro Declarations', macros, ('start_line', 'name', 'line',))
+        s += report_table('Function Macro Declarations', functions)
+        #s += report_table('Findings from .mac File', self.findings, ('start_line', 'objtype', 'line',))
 
         return '\n'.join(s)
 
 
-def _report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
+def report_table(title, itemlist, col_keys = ('start_line', 'line',)):
     """ 
     return the itemlist as a reST table
     
@@ -443,10 +447,10 @@ def _report_table(self, title, itemlist, col_keys = ('start_line', 'line',)):
         if d['start_line'] != last_line:
             rows.append( tuple([str(d[key]).strip() for key in col_keys]) )
         last_line = d['start_line']
-    return _make_table(title, col_keys, rows, '=')
+    return make_table(title, col_keys, rows, '=')
 
 
-def _make_table( title, labels, rows, titlechar = '='):
+def make_table(title, labels, rows, titlechar = '='):
     """
     build a reST table (internal routine)
     
