@@ -129,12 +129,18 @@ class SpecMacroDocumenter(Documenter):
         #sig = self.format_signature()
         #self.add_directive_header(sig)
         
-        # TODO: provide links from each to highlighted source code blocks (like Python documenters).
-        # This works for now.
         self.add_line(u'', '<autodoc>')
         self.add_line(u'.. index:: SPEC macro file; %s' % macrofile, '<autodoc>')
         self.add_line(u'.. index:: !%s' % os.path.split(macrofile)[1], '<autodoc>')
         self.add_line(u'', '<autodoc>')
+        self.add_line(u'', '<autodoc>')
+        title = 'SPEC Macro File: %s' %  macrofile
+        self.add_line('@'*len(title), '<autodoc>')
+        self.add_line(title, '<autodoc>')
+        self.add_line('@'*len(title), '<autodoc>')
+        self.add_line(u'', '<autodoc>')
+        # TODO: provide links from each to highlighted source code blocks (like Python documenters).
+        # This works for now.
         line = 'source code:  :download:`%s <%s>`' % (macrofile, macrofile)
         self.add_line(line, macrofile)
 
@@ -164,6 +170,49 @@ class SpecMacroDocumenter(Documenter):
             self.directive.warn('signature arguments or return annotation '
                                 'given for autospecmacro %s' % self.fullname)
         return ret
+
+
+class SpecDirDocumenter(Documenter):
+    objtype = 'specdir'
+    member_order = 50
+    priority = 0
+    #: true if the generated content may contain titles
+    titles_allowed = True
+    option_spec = {
+        'include_subdirs': bool_option,
+    }
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        return membername in ('SpecDirDocumenter', )
+    
+    def generate(self, *args, **kw):
+        """
+        Look at the named directory and
+        Generate reST for the object given by *self.name*, and possibly for
+        its members.
+        """
+        # now, parse the .mac files in the SPEC directory
+        specdir = self.name
+#        self.add_line(u'', '<autodoc>')
+#        self.add_line(u'directory:\n   ``%s``' % specdir, '<autodoc>')
+        if os.path.exists(specdir):
+            for f in sorted(os.listdir(specdir)):
+                filename = os.path.join(specdir, f)
+                if os.path.isfile(filename) and filename.endswith('.mac'):
+                    # TODO: support a user choice for pattern match to the file name (glob v. re)
+                    # TODO: support the option to include subdirectories (include_subdirs)
+                    # TODO: do not add the same SPEC macro file more than once
+                    self.add_line(u'', '<autodoc>')
+                    self.add_line(u'.. autospecmacro:: %s' % filename, '<autodoc>')
+                    # TODO: any options?
+                    self.add_line(u'', '<autodoc>')
+                    # TODO: suppress delimiter after last file
+                    self.add_line(u'-'*15, '<autodoc>')         # delimiter between files
+        else:
+            self.add_line(u'', '<autodoc>')
+            self.add_line(u'Could not find directory: ``%s``' % specdir, '<autodoc>')
+
 
 
 class SpecMacroObject(ObjectDescription):
@@ -354,4 +403,5 @@ class SpecDomain(Domain):
 def setup(app):
     app.add_domain(SpecDomain)
     app.add_autodocumenter(SpecMacroDocumenter)
+    app.add_autodocumenter(SpecDirDocumenter)
     app.add_config_value('autospecmacrodir_process_subdirs', True, True)

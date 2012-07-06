@@ -95,7 +95,7 @@ local variable declaration:
 
 constant declaration:  
 
-	.. spec:local:: TWO_PI
+	.. spec:constant:: TWO_PI
 	
 	   ``TWO_PI`` is the ratio of a circle's circumference to its diameter.
 
@@ -149,3 +149,4 @@ Source code documentation
    :glob:
 
    *.mac
+   test_autospecdir
