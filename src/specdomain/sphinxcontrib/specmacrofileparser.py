@@ -380,11 +380,10 @@ class SpecMacrofileParser:
         declarations = []       # variables and constants
         macros = []             # def, cdef, and rdef macros
         functions = []          # def and rdef function macros
-        #title = 'Extended Comments'
-        #s = ['', title, '='*len(title), ]
         s = []
         for r in self.findings:
             if r['objtype'] == 'extended comment':
+                # TODO: apply rules to suppress reporting under certain circumstances
                 s.append( '' )
                 s.append( '.. %s %s %d %d' % (self.filename, 
                                               r['objtype'], 
@@ -393,6 +392,7 @@ class SpecMacrofileParser:
                 s.append( '' )
                 s.append(r['text'])
             elif r['objtype'] in ('def', 'rdef', 'cdef', ):
+                # TODO: apply rules to suppress reporting under certain circumstances
                 macros.append(r)
                 s.append( '' )
                 s.append( '.. %s %s %s %d %d' % (self.filename, 
@@ -401,12 +401,12 @@ class SpecMacrofileParser:
                                               r['start_line'], 
                                               r['end_line']) )
                 s.append( '' )
+                # TODO: make this next be part of the signature display (in specdomain)
                 s.append( '.. rubric:: %s macro declaration' % r['objtype']  )
                 s.append( '' )
-                #s.append( '.. spec:%s:: %s %s' % ( r['objtype'], r['name'], r['args'],) )
                 s.append( '.. spec:%s:: %s' % ( r['objtype'], r['name'],) )
             elif r['objtype'] in ('function def', 'function rdef',):
-                # FIXME:  not getting here, such as for kohzuE_cmd()
+                # TODO: apply rules to suppress reporting under certain circumstances
                 functions.append(r)
                 s.append( '' )
                 s.append( '.. %s %s %s %d %d' % (self.filename, 
@@ -419,12 +419,13 @@ class SpecMacrofileParser:
                 s.append( '' )
                 s.append( '.. spec:%s:: %s(%s)' % ( r['objtype'], r['name'], r['args']) )
             elif r['objtype'] in ('local', 'global', 'constant'):
+                # TODO: apply rules to suppress reporting under certain circumstances
                 del r['text']
                 declarations.append(r)
 
-        s += report_table('Variable Declarations', declarations, ('start_line', 'objtype', 'name', 'line',))
-        s += report_table('Macro Declarations', macros, ('start_line', 'name', 'line',))
-        s += report_table('Function Macro Declarations', functions)
+        s += report_table('Variable Declarations (%s)' % self.filename, declarations, ('start_line', 'objtype', 'name', 'line',))
+        s += report_table('Macro Declarations (%s)' % self.filename, macros, ('start_line', 'name', 'line',))
+        s += report_table('Function Macro Declarations (%s)' % self.filename, functions)
         #s += report_table('Findings from .mac File', self.findings, ('start_line', 'objtype', 'line',))
 
         return '\n'.join(s)
