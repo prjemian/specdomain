@@ -232,8 +232,9 @@ global CCD_OVERHEAD_SECS_MEASURED   # measured readout time
 global CCD_DARK_NUM CCDDARK CCD_THROW
 global MULTI_IMGS # useful 8-ID's imm fileformat; currently not used
 
+#: twice the ratio of circle's circumference to its diameter
 constant TWO_PI 6.283
-local _newspaper
+local _newspaper	#: don't expect to see new ones
 
 #==============================================================================
 
