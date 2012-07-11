@@ -108,15 +108,26 @@ class SpecMacrofileParser:
         self.buf = open(macrofile, 'r').read()
 
     def parse_macro_file(self):
+        ext_com = self.find_extended_comments()
+        desc_com = self.find_descriptive_comments()
+        def_macro = self.find_def_macro()
+        cdef_macro = self.find_cdef_macro()
+        vars = self.find_variables()
+        
+        for linenumber in range(len(self.line_positions)):
+            # TODO: decide the parent for each item, expect all def are at global scope
+            # TODO: decide which macros and variables should not be documented
+            # walk through the line numbers in the file
+            #  if a def_macro starts, note its name and set the parent field 
+            #     of all comments, variables, var_desc, rdef, and cdef within 
+            #     its start_line and end_line range
+            #  How to handle descriptive comments?
+            pass
+        
         self.findings = []
-        self.findings.extend(self.find_extended_comments())
-        self.findings.extend(self.find_def_macro())
-        vd = self.find_variable_descriptions()
-        if len(vd) > 0:
-            self.findings.extend(vd)
-        self.findings.extend(self.find_variables())
-        # TODO: decide the parent for each item, expect all def are at global scope
-        # TODO: decide which macros and variables should not be documented
+        for item in (ext_com, desc_com, def_macro, cdef_macro, vars,):
+            if len(item)>0:
+                self.findings.extend(item)
         
     extended_comment_block_sig_re = re.compile(
                             string_start
@@ -134,8 +145,8 @@ class SpecMacrofileParser:
         """
         items = []
         for mo in self.extended_comment_block_sig_re.finditer(self.buf):
-            start = self.find_line_pos(mo.start(1))
-            end = self.find_line_pos(mo.end(1))
+            start = self.find_pos_in_line_number(mo.start(1))
+            end = self.find_pos_in_line_number(mo.end(1))
             text = mo.group(1)
             items.append({
                             'start_line': start, 
@@ -156,17 +167,26 @@ class SpecMacrofileParser:
                             + string_end, 
                             re.IGNORECASE|re.DOTALL|re.MULTILINE)
 
-    def find_variable_descriptions(self):
+    def find_descriptive_comments(self):
         """
-        parse the internal buffer for variable descriptions that look like::
+        Descriptive comments are used to document items that cannot contain
+        extended comments (triple-quoted strings) such as variable declarations
+        or *rdef* or *cdef* macro declarations.  They appear either in-line
+        with the declaration or on the preceding line.
         
-            #: two-theta, the scattering angle
-            global tth
+        Descriptive comment example that documents *tth*, a global variable declaration::
+            
+            global tth    #: two-theta, the scattering angle
+        
+        Descriptive comment example that documents *ccdset_shutter*, a *rdef* declaration::
+        
+            #: clear the ccd shutter handler
+            rdef ccdset_shutter ''
         """
         items = []
         for mo in self.variable_description_re.finditer(self.buf):
-            start = self.find_line_pos(mo.start(1))
-            end = self.find_line_pos(mo.end(1))
+            start = self.find_pos_in_line_number(mo.start(1))
+            end = self.find_pos_in_line_number(mo.end(1))
             items.append({
                             'start_line': start, 
                             'end_line':   end, 
@@ -200,8 +220,8 @@ class SpecMacrofileParser:
         """
         items = []
         for mo in self.lgc_variable_sig_re.finditer(self.buf):
-            start = self.find_line_pos(mo.start(1))
-            end = self.find_line_pos(mo.end(1))
+            start = self.find_pos_in_line_number(mo.start(1))
+            end = self.find_pos_in_line_number(mo.end(1))
             objtype = mo.group(1)
             content = mo.group(2)
             p = content.find('#')
@@ -250,14 +270,15 @@ class SpecMacrofileParser:
         items = []
         for mo in self.spec_macro_declaration_match_re.finditer(self.buf):
             objtype = mo.group(1)
-            start = self.find_line_pos(mo.start(1))
-            end = self.find_line_pos(mo.end(4))
+            start = self.find_pos_in_line_number(mo.start(1))
+            end = self.find_pos_in_line_number(mo.end(4))
             args = mo.group(3)
             if len(args)>2:
                 m = self.args_match.search(args)
                 if m is not None:
                     objtype = 'function ' + objtype
                     args = m.group(1)
+            # TODO: What if args is multi-line?  flatten.  What if really long?
             items.append({
                             'start_line': start, 
                             'end_line':   end, 
@@ -270,7 +291,53 @@ class SpecMacrofileParser:
                           })
         return items
 
-    def find_line_pos(self, pos):
+    def find_cdef_macro(self):
+        """
+        parse the internal buffer for def and rdef macro declarations
+        """
+        
+        # note:  It is not possible to find properly all variations 
+        # of the argument list in a cdef declaration using a regular expression,
+        # especially across multiple lines.
+        
+        items = []
+        for mo in re.finditer('cdef\(', self.buf):
+            # look at each potential cdef declaration
+            objtype = 'cdef'
+            s = mo.start()
+            start = self.find_pos_in_line_number(s)
+            p = mo.end()
+            nesting = 1                     # number of nested parentheses
+            sign = {'(': 1, ')': -1}        # increment or decrement
+            while nesting > 0 and p < len(self.buf):
+                if self.buf[p] in sign.keys():
+                    nesting += sign[self.buf[p]]
+                p += 1
+            e = p
+            text = self.buf[s+5:e-1]    # carve it out, and remove cdef( ... ) wrapping
+            end = self.find_pos_in_line_number(e)
+            p = text.find(',')
+            name = text[:p].strip('"')
+            if len(name) == 0:
+                name = '<empty name>'
+            args = text[p+1:]
+            # TODO: parse "args" for content
+            # TODO: What if args is multi-line?  convert \n to ;
+            #   args = ';'.join(args.splitlines())  # WRONG: This converts string content, as well
+            # TODO: What if args is really long?
+            items.append({
+                            'start_line': start, 
+                            'end_line':   end, 
+                            'objtype':    objtype,
+                            'name':       name,
+                            'args':       args,
+#                            'body':       mo.group(4),
+#                            'comment':    mo.group(5),
+                            'parent':     None,
+                          })
+        return items
+
+    def find_pos_in_line_number(self, pos):
         """
         find the line number that includes *pos*
         
@@ -280,9 +347,11 @@ class SpecMacrofileParser:
         # TODO: optimize using search by bisection
         linenumber = None
         for linenumber, start, end in self.line_positions:
-            if pos >= start and pos < end:
+            if start <= pos < end:
                 break
         return linenumber
+    
+    #------------------------ reporting section below ----------------------------------
 
     def ReST(self):
         """create the ReStructured Text from what has been found"""
@@ -320,7 +389,7 @@ class SpecMacrofileParser:
                                               r['end_line']) )
                 s.append( '' )
                 # TODO: make this next be part of the signature display (in specdomain)
-                s.append( '.. rubric:: %s macro declaration' % r['objtype']  )
+                #s.append( '.. rubric:: %s macro declaration' % r['objtype']  )
                 s.append( '' )
                 s.append( '.. spec:%s:: %s' % ( r['objtype'], r['name'],) )
             elif r['objtype'] in ('function def', 'function rdef',):
@@ -333,7 +402,7 @@ class SpecMacrofileParser:
                                               r['start_line'], 
                                               r['end_line']) )
                 s.append( '' )
-                s.append( '.. rubric:: %s macro function declaration' % r['objtype']  )
+                #s.append( '.. rubric:: %s macro function declaration' % r['objtype']  )
                 s.append( '' )
                 s.append( '.. spec:%s:: %s(%s)' % ( r['objtype'], r['name'], r['args']) )
             elif r['objtype'] in ('local', 'global', 'constant'):
