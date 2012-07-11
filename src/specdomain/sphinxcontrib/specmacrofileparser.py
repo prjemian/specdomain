@@ -42,6 +42,67 @@ arglist_match               = r'(' + match_all + r')'
 non_greedy_filler_match     = r'(' + non_greedy_filler + r')'
 variable_name_match         = r'(@?' + macro_name + r'\[?\]?)'
 
+
+        
+extended_comment_block_sig_re = re.compile(
+                        string_start
+                        + non_greedy_whitespace
+                        + extended_comment_marker
+                        + r'(' + non_greedy_filler + r')'
+                        + extended_comment_marker
+                        + non_greedy_filler
+                        + string_end, 
+                        re.IGNORECASE|re.DOTALL|re.MULTILINE)
+
+variable_description_re = re.compile(
+                        string_start
+                        + non_greedy_filler
+                        + r'#:'
+                        + non_greedy_whitespace
+                        + r'(' + non_greedy_filler + r')'
+                        + non_greedy_whitespace
+                        + string_end, 
+                        re.IGNORECASE|re.DOTALL|re.MULTILINE)
+
+    
+lgc_variable_sig_re = re.compile(
+                        r''
+                        + string_start
+                        + non_greedy_whitespace
+                        + r'(local|global|constant)'        # 1: object type
+                        + non_greedy_whitespace
+                        + r'(' + non_greedy_filler + r')'   # 2: too complicated to parse all at once
+                        + string_end
+                        , 
+                        re.DOTALL
+                        |re.MULTILINE
+                    )
+
+variable_name_re = re.compile(
+                        variable_name_match, 
+                        re.IGNORECASE|re.DOTALL|re.MULTILINE
+                        )
+
+spec_macro_declaration_match_re = re.compile(
+                        string_start
+                        + r'\s*?'                           # optional blank space
+                        + r'(r?def)'                        # 1: def_type (rdef | def)
+                        + non_greedy_whitespace
+                        + macro_name_match                  # 2: macro_name
+                        + non_greedy_filler_match           # 3: optional arguments
+                        + r'\'\{?'                          # start body section
+                        + non_greedy_filler_match           # 4: body
+                        + r'\}?\''                          # end body section
+                        + r'(#.*?)?'                        # 5: optional comment
+                        + string_end, 
+                        re.IGNORECASE|re.DOTALL|re.MULTILINE)
+    
+args_match = re.compile(
+                          r'\('
+                        + arglist_match                     # 1:  argument list
+                        + r'\)', 
+                        re.DOTALL)
+
 class SpecMacrofileParser:
     '''
     Parse a SPEC macro file for macro definitions, 
@@ -76,8 +137,8 @@ class SpecMacrofileParser:
     
     def read(self, macrofile):
         """
-        load the SPEC macro source code file into an internal buffer.
-        Also remember the start and end position of each line.
+        load the SPEC macro source code file into an internal buffer (self.buf).
+        Also remember the start and end position of each line (self.line_positions).
         
         :param str filename: name (with optional path) of SPEC macro file
             (The path is relative to the ``.rst`` document.)
@@ -108,43 +169,90 @@ class SpecMacrofileParser:
         self.buf = open(macrofile, 'r').read()
 
     def parse_macro_file(self):
-        ext_com = self.find_extended_comments()
-        desc_com = self.find_descriptive_comments()
-        def_macro = self.find_def_macro()
-        cdef_macro = self.find_cdef_macro()
-        vars = self.find_variables()
+        """
+        Figure out what can be documented in the file's contents (in self.buf)
         
-        for linenumber in range(len(self.line_positions)):
-            # TODO: decide the parent for each item, expect all def are at global scope
-            # TODO: decide which macros and variables should not be documented
-            # walk through the line numbers in the file
-            #  if a def_macro starts, note its name and set the parent field 
-            #     of all comments, variables, var_desc, rdef, and cdef within 
-            #     its start_line and end_line range
-            #  How to handle descriptive comments?
-            pass
+            each of the list_...() methods returns a 
+            list of dictionaries where each dictionary 
+            has the keys: objtype, start_line, end_line, and others
+        """
+        db = {}
+        # first, the file parsing
+        for func in (self.list_def_macros, 
+                     self.list_cdef_macros,
+                     self.list_variables,
+                     self.list_extended_comments,
+                     self.list_descriptive_comments,
+                     ):
+            for item in func():
+                s = item['start_line']
+                if s not in db.keys():
+                    db[s] = []
+                db[s].append(item)
         
+        # then, the analysis of what was found
         self.findings = []
-        for item in (ext_com, desc_com, def_macro, cdef_macro, vars,):
-            if len(item)>0:
-                self.findings.extend(item)
-        
-    extended_comment_block_sig_re = re.compile(
-                            string_start
-                            + non_greedy_whitespace
-                            + extended_comment_marker
-                            + r'(' + non_greedy_filler + r')'
-                            + extended_comment_marker
-                            + non_greedy_filler
-                            + string_end, 
-                            re.IGNORECASE|re.DOTALL|re.MULTILINE)
+        description = ''
+        clear_description = False
+        found_first_global_extended_comment = False
+        for linenumber in sorted(db.keys()):
+            #print linenumber, ':', ', '.join([d['objtype'] for d in db[linenumber]])
+            
+            line = db[linenumber]
+            item = line[-1]
+            if item['objtype'] in ('def', 'function def'):
+                # identify all the children of this item
+                parent = item['name']
+                found_first_local_extended_comment = False
+                for row in xrange(item['start_line']+1, item['end_line']-1):
+                    if row in db.keys():
+                        for thing in db[row]:
+                            thing['parent'] = parent
+                            if thing['objtype'] == 'extended comment':
+                                if not found_first_local_extended_comment:
+                                    # TODO: could override this rule with an option
+                                    item['description'] = thing['text']
+                                    found_first_local_extended_comment = False
+                if not item['name'].startswith('_'):
+                    # TODO: could override this rule with an option
+                    self.findings.append(item)
+            
+            if item['objtype'] == 'extended comment':
+                start = item['start_line']
+                if item['parent'] == None:
+                    if not found_first_global_extended_comment:
+                        # TODO: could override this rule with an option
+                        self.findings.append(item)
+                        found_first_global_extended_comment = True
 
-    def find_extended_comments(self):
+            if item['objtype'] == 'descriptive comment':
+                description = item['text']
+
+            for item in line:
+                if item['objtype'] in ('local', 'global', 'constant', 'rdef', 'cdef'):
+                    if len(description)>0:
+                        item['description'] = description
+                        clear_description = True
+                    if not item['name'].startswith('_'):
+                        # TODO: could override this rule with an option
+                        self.findings.append(item)
+            
+            if clear_description:
+                description, clear_description = '', False
+
+    def list_extended_comments(self):
         """
         parse the internal buffer for triple-quoted strings, possibly multiline
+        
+        Usually, an extended comment is used at the top of a macro file
+        to describe the file's contents.  It is also used at the top 
+        of a macro definition to describe the macro.  The first line
+        of an extended comment for a macro should be a short summary,
+        followed by a blank line, then either a parameter list or
+        more extensive documentation, as needed.
         """
         items = []
-        for mo in self.extended_comment_block_sig_re.finditer(self.buf):
+        for mo in extended_comment_block_sig_re.finditer(self.buf):
             start = self.find_pos_in_line_number(mo.start(1))
             end = self.find_pos_in_line_number(mo.end(1))
             text = mo.group(1)
@@ -156,18 +264,8 @@ class SpecMacrofileParser:
                             'parent':     None,
                           })
         return items
-        
-    variable_description_re = re.compile(
-                            string_start
-                            + non_greedy_filler
-                            + r'#:'
-                            + non_greedy_whitespace
-                            + r'(' + non_greedy_filler + r')'
-                            + non_greedy_whitespace
-                            + string_end, 
-                            re.IGNORECASE|re.DOTALL|re.MULTILINE)
 
-    def find_descriptive_comments(self):
+    def list_descriptive_comments(self):
         """
         Descriptive comments are used to document items that cannot contain
         extended comments (triple-quoted strings) such as variable declarations
@@ -184,53 +282,35 @@ class SpecMacrofileParser:
             rdef ccdset_shutter ''
         """
         items = []
-        for mo in self.variable_description_re.finditer(self.buf):
+        for mo in variable_description_re.finditer(self.buf):
             start = self.find_pos_in_line_number(mo.start(1))
             end = self.find_pos_in_line_number(mo.end(1))
             items.append({
                             'start_line': start, 
                             'end_line':   end, 
-                            'objtype':    'variable description',
+                            'objtype':    'descriptive comment',
                             'text':       mo.group(1),
                             'parent':     None,
                           })
         return items
-    
-    lgc_variable_sig_re = re.compile(
-                            r''
-                            + string_start
-                            + non_greedy_whitespace
-                            + r'(local|global|constant)'        # 1: object type
-                            + non_greedy_whitespace
-                            + r'(' + non_greedy_filler + r')'   # 2: too complicated to parse all at once
-                            + string_end
-                            , 
-                            re.DOTALL
-                            |re.MULTILINE
-                        )
-    
-    variable_name_re = re.compile(
-                            variable_name_match, 
-                            re.IGNORECASE|re.DOTALL|re.MULTILINE
-                            )
 
-    def find_variables(self):
+    def list_variables(self):
         """
         parse the internal buffer for local, global, and constant variable declarations
         """
         items = []
-        for mo in self.lgc_variable_sig_re.finditer(self.buf):
+        for mo in lgc_variable_sig_re.finditer(self.buf):
             start = self.find_pos_in_line_number(mo.start(1))
             end = self.find_pos_in_line_number(mo.end(1))
             objtype = mo.group(1)
             content = mo.group(2)
             p = content.find('#')
-            if p >= 0:                              # strip off any comment
+            if p >= 0:                                      # strip off any comment
                 content = content[:p]
-            content = re.sub('[,;]', ' ', content)  # replace , or ; with blank space
+            content = re.sub('[,;]', ' ', content)          # replace , or ; with blank space
             if content.find('[') >= 0:
-                content = re.sub('\s*?\[', '[', content)  # remove blank space before [
-            for var in self.variable_name_re.finditer(content):
+                content = re.sub('\s*?\[', '[', content)    # remove blank space before [
+            for var in variable_name_re.finditer(content):
                 name = var.group(1)
                 if len(name) > 0:
                     items.append({
@@ -239,42 +319,21 @@ class SpecMacrofileParser:
                                     'objtype':    objtype,
                                     'name':       name,
                                     'parent':     None,
-                                    'text':     'FIX in find_variables(self):',
                                   })
         return items
 
-    spec_macro_declaration_match_re = re.compile(
-                            string_start
-                            + r'\s*?'                           # optional blank space
-                            + r'(r?def)'                        # 1: def_type (rdef | def)
-                            + non_greedy_whitespace
-                            + macro_name_match                  # 2: macro_name
-                            + non_greedy_filler_match           # 3: optional arguments
-                            + r'\'\{?'                          # start body section
-                            + non_greedy_filler_match           # 4: body
-                            + r'\}?\''                          # end body section
-                            + r'(#.*?)?'                        # 5: optional comment
-                            + string_end, 
-                            re.IGNORECASE|re.DOTALL|re.MULTILINE)
-        
-    args_match = re.compile(
-                              r'\('
-                            + arglist_match                     # 1:  argument list
-                            + r'\)', 
-                            re.DOTALL)
-
-    def find_def_macro(self):
+    def list_def_macros(self):
         """
         parse the internal buffer for def and rdef macro declarations
         """
         items = []
-        for mo in self.spec_macro_declaration_match_re.finditer(self.buf):
+        for mo in spec_macro_declaration_match_re.finditer(self.buf):
             objtype = mo.group(1)
             start = self.find_pos_in_line_number(mo.start(1))
             end = self.find_pos_in_line_number(mo.end(4))
             args = mo.group(3)
             if len(args)>2:
-                m = self.args_match.search(args)
+                m = args_match.search(args)
                 if m is not None:
                     objtype = 'function ' + objtype
                     args = m.group(1)
@@ -291,22 +350,17 @@ class SpecMacrofileParser:
                           })
         return items
 
-    def find_cdef_macro(self):
+    def list_cdef_macros(self):
         """
         parse the internal buffer for def and rdef macro declarations
         """
-        
-        # note:  It is not possible to find properly all variations 
-        # of the argument list in a cdef declaration using a regular expression,
-        # especially across multiple lines.
-        
+        # too complicated for a regular expression, just look for the initial part
         items = []
-        for mo in re.finditer('cdef\(', self.buf):
+        for mo in re.finditer('cdef\s*?\(', self.buf):
             # look at each potential cdef declaration
             objtype = 'cdef'
-            s = mo.start()
-            start = self.find_pos_in_line_number(s)
-            p = mo.end()
+            start = self.find_pos_in_line_number(mo.start())
+            s = p = mo.end()                # offset s for start of args
             nesting = 1                     # number of nested parentheses
             sign = {'(': 1, ')': -1}        # increment or decrement
             while nesting > 0 and p < len(self.buf):
@@ -314,7 +368,7 @@ class SpecMacrofileParser:
                     nesting += sign[self.buf[p]]
                 p += 1
             e = p
-            text = self.buf[s+5:e-1]    # carve it out, and remove cdef( ... ) wrapping
+            text = self.buf[s:e-1]    # carve it out, and remove cdef( ... ) wrapping
             end = self.find_pos_in_line_number(e)
             p = text.find(',')
             name = text[:p].strip('"')
@@ -343,8 +397,7 @@ class SpecMacrofileParser:
         
         :param int pos: position in the file
         """
-        # straight search
-        # TODO: optimize using search by bisection
+        # TODO: optimize this straight search using a search by bisection
         linenumber = None
         for linenumber, start, end in self.line_positions:
             if start <= pos < end:
@@ -355,15 +408,10 @@ class SpecMacrofileParser:
 
     def ReST(self):
         """create the ReStructured Text from what has been found"""
-#        if not self.state == 'parsed':
-#            raise RuntimeWarning, "state = %s, should be 'parsed'" % self.filename
         return self._simple_ReST_renderer()
 
     def _simple_ReST_renderer(self):
         """create a simple ReStructured Text rendition of the findings"""
-#        if not self.state == 'parsed':
-#            raise RuntimeWarning, "state = %s, should be 'parsed'" % self.filename
-            
         declarations = []       # variables and constants
         macros = []             # def, cdef, and rdef macros
         functions = []          # def and rdef function macros
@@ -387,38 +435,50 @@ class SpecMacrofileParser:
                                               r['name'], 
                                               r['start_line'], 
                                               r['end_line']) )
-                s.append( '' )
-                # TODO: make this next be part of the signature display (in specdomain)
-                #s.append( '.. rubric:: %s macro declaration' % r['objtype']  )
-                s.append( '' )
                 s.append( '.. spec:%s:: %s' % ( r['objtype'], r['name'],) )
+                desc = r.get('description', '')
+                if len(desc) > 0:
+                    s.append('')
+                    for line in desc.splitlines():
+                        s.append(' '*4 + line)
             elif r['objtype'] in ('function def', 'function rdef',):
                 # TODO: apply rules to suppress reporting under certain circumstances
                 functions.append(r)
+                objtype = r['objtype'].split()[1]
                 s.append( '' )
                 s.append( '.. %s %s %s %d %d' % (self.filename, 
-                                              r['objtype'], 
+                                              objtype, 
                                               r['name'], 
                                               r['start_line'], 
                                               r['end_line']) )
-                s.append( '' )
-                #s.append( '.. rubric:: %s macro function declaration' % r['objtype']  )
-                s.append( '' )
-                s.append( '.. spec:%s:: %s(%s)' % ( r['objtype'], r['name'], r['args']) )
+                s.append( '.. spec:%s:: %s(%s)' % ( objtype, r['name'], r['args']) )
+                desc = r.get('description', '')
+                if len(desc) > 0:
+                    s.append('')
+                    for line in desc.splitlines():
+                        s.append(' '*4 + line)
             elif r['objtype'] in ('local', 'global', 'constant'):
                 # TODO: apply rules to suppress reporting under certain circumstances
-                del r['text']
                 declarations.append(r)
+                s.append( '.. spec:%s:: %s' % ( r['objtype'], r['name']) )
+                desc = r.get('description', '')
+                if len(desc) > 0:
+                    s.append('')
+                    for line in desc.splitlines():
+                        s.append(' '*4 + line)
 
-        s += report_table('Variable Declarations (%s)' % self.filename, declarations, ('objtype', 'name', 'start_line', ))
-        s += report_table('Macro Declarations (%s)' % self.filename, macros, ('objtype', 'name', 'start_line', 'end_line'))
-        s += report_table('Function Macro Declarations (%s)' % self.filename, functions, ('objtype', 'name', 'start_line', 'end_line', 'args'))
-        #s += report_table('Findings from .mac File', self.findings, ('start_line', 'objtype', 'line',))
+        s += _report_table('Variable Declarations (%s)' % self.filename, declarations, 
+                          ('objtype', 'name', 'start_line',))
+        s += _report_table('Macro Declarations (%s)' % self.filename, macros, 
+                          ('objtype', 'name', 'start_line', 'end_line'))
+        s += _report_table('Function Macro Declarations (%s)' % self.filename, functions, 
+                          ('objtype', 'name', 'start_line', 'end_line', 'args'))
+        #s += _report_table('Findings from .mac File', self.findings, ('start_line', 'objtype', 'line',))
 
         return '\n'.join(s)
 
 
-def report_table(title, itemlist, col_keys = ('objtype', 'start_line', 'end_line', )):
+def _report_table(title, itemlist, col_keys = ('objtype', 'start_line', 'end_line', )):
     """ 
     return the itemlist as a reST table
     
@@ -435,18 +495,42 @@ def report_table(title, itemlist, col_keys = ('objtype', 'start_line', 'end_line
         if d['start_line'] != last_line:
             rows.append( tuple([str(d[key]).strip() for key in col_keys]) )
         last_line = d['start_line']
-    return make_table(title, col_keys, rows, '=')
+    return make_rest_table(title, col_keys, rows, '=')
 
 
-def make_table(title, labels, rows, titlechar = '='):
+def make_rest_table(title, labels, rows, titlechar = '='):
     """
-    build a reST table (internal routine)
+    build a reST table
     
     :param str title: placed in a section heading above the table
     :param [str] labels: columns labels
     :param [[str]] rows: 2-D grid of data, len(labels) == len(data[i]) for all i
     :param str titlechar: character to use when underlining title as reST section heading
     :returns [str]: each list item is reST
+    
+    Example::
+
+        title = 'This is a reST table'
+        labels = ('name', 'phone', 'email')
+        rows = [
+                ['Snoopy',           '12345', 'dog@house'],
+                ['Red Baron',        '65432', 'fokker@triplane'],
+                ['Charlie Brown',    '12345', 'main@house'],
+                ]
+        print '\n'.join(make_rest_table(title, labels, rows))
+    
+    This results in this reST::
+    
+        This is a reST table
+        ====================
+        
+        ============= ===== ===============
+        name          phone email          
+        ============= ===== ===============
+        Snoopy        12345 dog@house      
+        Red Baron     65432 fokker@triplane
+        Charlie Brown 12345 main@house     
+        ============= ===== ===============
     """
     s = []
     if len(rows) == 0:
@@ -466,7 +550,7 @@ def make_table(title, labels, rows, titlechar = '='):
     if len(labels) > 0:
         s.append( fmt % labels )
         s.append( separator )
-    s.extend( fmt % row for row in rows )
+    s.extend( [fmt % tuple(row) for row in rows] )
     s.append( separator )
     return s
 
@@ -481,4 +565,4 @@ if __name__ == '__main__':
         print filename
         p = SpecMacrofileParser(filename)
         print p.ReST()
-        pprint (p.findings)
+        #pprint (p.findings)
