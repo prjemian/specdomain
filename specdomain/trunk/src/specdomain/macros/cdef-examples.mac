@@ -39,10 +39,17 @@ cdef("user_onsim")
 cdef("user_Pheader")
 cdef("user_postscan_head")
 cdef("user_prescan_head")
+    cdef("user_prescan_head","
+         if(CCD_FLAG){ _user_prescan_head_ccd}
+	 ","ccd","0x10")
 cdef("user_scan_loop")
 cdef("user_scan_plot")
 cdef("user_scan_tail")
 cdef("user_waitmove","\nwait(1);\n","waitmove_hack","0x20")
+cdef("user_waitmove",
+     "\nwait(1);\n",
+     "waitmove_hack",
+     "0x20")
 
 # it's possible to embed cdef in a block like this, like in standard.mac
 if DECISION==1{cdef("user_offsim", "getE;", "embedded")}
