@@ -10,6 +10,12 @@ The items were obtained via grep, and then cleaned up in an
 editor, then sorted, with redundancies removed.
 """
 
+
+cdef("user_waitmove",
+        "\nwait(1);\n",
+        "waitmove_hack",
+        "0x20")
+
 cdef("cleanup_once", "", "ct", "delete")
 cdef("cleanup_once", "", "dscan", "delete")
 cdef("cleanup_once", "onp; show_cnts; offp; user_ct", "ct")
