@@ -20,7 +20,7 @@ code blocks in the SPEC macro source code file across multiple lines.
 
 import os
 import re
-from pprint import pprint
+from pprint import pprint        #@UnusedImport
 
 #   http://www.txt2re.com/index-python.php3
 #  http://regexpal.com/
@@ -172,7 +172,7 @@ class SpecMacrofileParser:
         """
         Figure out what can be documented in the file's contents (in self.buf)
         
-            each of the list_...() methods returns a 
+            each of the list_something() methods returns a 
             list of dictionaries where each dictionary 
             has the keys: objtype, start_line, end_line, and others
         """
@@ -191,6 +191,8 @@ class SpecMacrofileParser:
                 db[s].append(item)
         
         # then, the analysis of what was found
+        # proceed line-by-line in order
+        # TODO: could override this rule with an option
         self.findings = []
         description = ''
         clear_description = False
@@ -216,6 +218,7 @@ class SpecMacrofileParser:
                 if not item['name'].startswith('_'):
                     # TODO: could override this rule with an option
                     self.findings.append(item)
+                item['summary'] = self._extract_summary(item.get('description', ''))
             
             if item['objtype'] == 'extended comment':
                 start = item['start_line']
@@ -232,6 +235,7 @@ class SpecMacrofileParser:
                 if item['objtype'] in ('local', 'global', 'constant', 'rdef', 'cdef'):
                     if len(description)>0:
                         item['description'] = description
+                        item['summary'] = self._extract_summary(description)
                         clear_description = True
                     if not item['name'].startswith('_'):
                         # TODO: could override this rule with an option
@@ -239,6 +243,26 @@ class SpecMacrofileParser:
             
             if clear_description:
                 description, clear_description = '', False
+    
+    def _extract_summary(self, description):
+        """
+        return the short summary line from the item description text
+        
+        The summary line is the first line in the docstring,
+        such as the line above.
+        
+        For our purposes now, we return the first paragraph, 
+        if it is not a parameter block such as ``:param var: ...``.
+        """
+        if len(description) == 0:
+            return ''
+        text = []
+        for line in description.strip().splitlines():
+            if len(line.strip()) == 0:
+                break
+            if not line.strip().startswith(':'):
+                text.append(line)
+        return ' '.join(text)
 
     def list_extended_comments(self):
         """
@@ -310,16 +334,26 @@ class SpecMacrofileParser:
             content = re.sub('[,;]', ' ', content)          # replace , or ; with blank space
             if content.find('[') >= 0:
                 content = re.sub('\s*?\[', '[', content)    # remove blank space before [
-            for var in variable_name_re.finditer(content):
-                name = var.group(1)
-                if len(name) > 0:
-                    items.append({
-                                    'start_line': start, 
-                                    'end_line':   end, 
-                                    'objtype':    objtype,
-                                    'name':       name,
-                                    'parent':     None,
-                                  })
+            if objtype in ('constant'):
+                name = content.strip().split()[0]
+                items.append({
+                                'start_line': start, 
+                                'end_line':   end, 
+                                'objtype':    objtype,
+                                'name':       name,
+                                'parent':     None,
+                              })
+            else:
+                for var in variable_name_re.finditer(content):
+                    name = var.group(1)
+                    if len(name) > 0:
+                        items.append({
+                                        'start_line': start, 
+                                        'end_line':   end, 
+                                        'objtype':    objtype,
+                                        'name':       name,
+                                        'parent':     None,
+                                      })
         return items
 
     def list_def_macros(self):
@@ -426,6 +460,7 @@ class SpecMacrofileParser:
                                               r['end_line']) )
                 s.append( '' )
                 s.append(r['text'])
+                s.append( '' )
             elif r['objtype'] in ('def', 'rdef', 'cdef', ):
                 # TODO: apply rules to suppress reporting under certain circumstances
                 macros.append(r)
@@ -436,11 +471,14 @@ class SpecMacrofileParser:
                                               r['start_line'], 
                                               r['end_line']) )
                 s.append( '.. spec:%s:: %s' % ( r['objtype'], r['name'],) )
+                s.append('')
+                s.append(' '*4 + '*' + r['objtype'] + ' macro declaration*')
                 desc = r.get('description', '')
                 if len(desc) > 0:
                     s.append('')
                     for line in desc.splitlines():
                         s.append(' '*4 + line)
+                s.append( '' )
             elif r['objtype'] in ('function def', 'function rdef',):
                 # TODO: apply rules to suppress reporting under certain circumstances
                 functions.append(r)
@@ -452,28 +490,40 @@ class SpecMacrofileParser:
                                               r['start_line'], 
                                               r['end_line']) )
                 s.append( '.. spec:%s:: %s(%s)' % ( objtype, r['name'], r['args']) )
+                s.append('')
+                s.append(' '*4 + '*' + r['objtype'].split()[1] + '() macro function declaration*')
                 desc = r.get('description', '')
                 if len(desc) > 0:
                     s.append('')
                     for line in desc.splitlines():
                         s.append(' '*4 + line)
-            elif r['objtype'] in ('local', 'global', 'constant'):
+                s.append( '' )
+            
+            # Why document local variables in a global scope?
+            elif r['objtype'] in ('global', 'constant'):
                 # TODO: apply rules to suppress reporting under certain circumstances
                 declarations.append(r)
-                s.append( '.. spec:%s:: %s' % ( r['objtype'], r['name']) )
-                desc = r.get('description', '')
-                if len(desc) > 0:
+                if r.get('parent') is None:
+                    s.append( '.. spec:%s:: %s' % ( r['objtype'], r['name']) )
                     s.append('')
-                    for line in desc.splitlines():
-                        s.append(' '*4 + line)
+                    if r['objtype'] in ('constant'):
+                        s.append(' '*4 + '*constant declaration*')
+                    else:
+                        s.append(' '*4 + '*' + r['objtype'] + ' variable declaration*')
+                    desc = r.get('description', '')
+                    if len(desc) > 0:
+                        s.append('')
+                        for line in desc.splitlines():
+                            s.append(' '*4 + line)
+                    s.append( '' )
 
         s += _report_table('Variable Declarations (%s)' % self.filename, declarations, 
-                          ('objtype', 'name', 'start_line',))
+                          ('objtype', 'name', 'start_line', 'summary', ))
         s += _report_table('Macro Declarations (%s)' % self.filename, macros, 
-                          ('objtype', 'name', 'start_line', 'end_line'))
+                          ('objtype', 'name', 'start_line', 'end_line', 'summary', ))
         s += _report_table('Function Macro Declarations (%s)' % self.filename, functions, 
-                          ('objtype', 'name', 'start_line', 'end_line', 'args'))
-        #s += _report_table('Findings from .mac File', self.findings, ('start_line', 'objtype', 'line',))
+                          ('objtype', 'name', 'start_line', 'end_line', 'args', 'summary', ))
+        #s += _report_table('Findings from .mac File', self.findings, ('start_line', 'objtype', 'line', 'summary', ))
 
         return '\n'.join(s)
 
@@ -493,7 +543,8 @@ def _report_table(title, itemlist, col_keys = ('objtype', 'start_line', 'end_lin
     last_line = None
     for d in itemlist:
         if d['start_line'] != last_line:
-            rows.append( tuple([str(d[key]).strip() for key in col_keys]) )
+            rowdata = [str(d.get(key,'')).strip() for key in col_keys]
+            rows.append( tuple(rowdata) )
         last_line = d['start_line']
     return make_rest_table(title, col_keys, rows, '=')
 
@@ -507,31 +558,44 @@ def make_rest_table(title, labels, rows, titlechar = '='):
     :param [[str]] rows: 2-D grid of data, len(labels) == len(data[i]) for all i
     :param str titlechar: character to use when underlining title as reST section heading
     :returns [str]: each list item is reST
-    
-    Example::
-
-        title = 'This is a reST table'
-        labels = ('name', 'phone', 'email')
-        rows = [
-                ['Snoopy',           '12345', 'dog@house'],
-                ['Red Baron',        '65432', 'fokker@triplane'],
-                ['Charlie Brown',    '12345', 'main@house'],
-                ]
-        print '\n'.join(make_rest_table(title, labels, rows))
-    
-    This results in this reST::
-    
-        This is a reST table
-        ====================
-        
-        ============= ===== ===============
-        name          phone email          
-        ============= ===== ===============
-        Snoopy        12345 dog@house      
-        Red Baron     65432 fokker@triplane
-        Charlie Brown 12345 main@house     
-        ============= ===== ===============
     """
+    # this is commented out since it causes a warning when building:
+    #  specmacrofileparser.py:docstring of sphinxcontrib.specmacrofileparser.make_rest_table:14: WARNING: Block quote ends without a blank line; unexpected unindent.
+    # -----
+    #    """
+    #    build a reST table
+    #        
+    #    :param str title: placed in a section heading above the table
+    #    :param [str] labels: columns labels
+    #    :param [[str]] rows: 2-D grid of data, len(labels) == len(data[i]) for all i
+    #    :param str titlechar: character to use when underlining title as reST section heading
+    #    :returns [str]: each list item is reST
+    #
+    #    Example::
+    #        
+    #        title = 'This is a reST table'
+    #        labels = ('name', 'phone', 'email')
+    #        rows = [
+    #                ['Snoopy',           '12345', 'dog@house'],
+    #                ['Red Baron',        '65432', 'fokker@triplane'],
+    #                ['Charlie Brown',    '12345', 'main@house'],
+    #        ]
+    #        print '\n'.join(make_rest_table(title, labels, rows, titlechar='~'))
+    #
+    #    This results in this reST::
+    #    
+    #        This is a reST table
+    #        ~~~~~~~~~~~~~~~~~~~~
+    #        
+    #        ============= ===== ===============
+    #        name          phone email          
+    #        ============= ===== ===============
+    #        Snoopy        12345 dog@house      
+    #        Red Baron     65432 fokker@triplane
+    #        Charlie Brown 12345 main@house     
+    #        ============= ===== ===============
+    #    
+    #    """
     s = []
     if len(rows) == 0:
         return s
