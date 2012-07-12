@@ -18,30 +18,20 @@
 
 import os
 import re
-import string                                           #@UnusedImport
-import sys                                              #@UnusedImport
 
-from docutils import nodes                              #@UnusedImport
-from docutils.parsers.rst import directives             #@UnusedImport
+from docutils import nodes
 
 from sphinx import addnodes
 from sphinx.roles import XRefRole
-from sphinx.locale import l_, _                         #@UnusedImport
+from sphinx.locale import l_, _
 from sphinx.directives import ObjectDescription
-from sphinx.domains import Domain, ObjType, Index       #@UnusedImport
-from sphinx.util.compat import Directive                #@UnusedImport
-from sphinx.util.nodes import make_refnode, nested_parse_with_titles    #@UnusedImport
+from sphinx.domains import Domain, ObjType
+from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, TypedField
-from sphinx.util.docstrings import prepare_docstring    #@UnusedImport
+from sphinx.util.docstrings import prepare_docstring
 
-#from docutils.statemachine import ViewList, string2lines
-#import sphinx.util.nodes
 from sphinx.ext.autodoc import Documenter, bool_option
-#from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
-#     safe_getattr, safe_repr
-#from sphinx.util.pycompat import base_exception, class_types
 from specmacrofileparser import SpecMacrofileParser
-from docutils.statemachine import ViewList    #@UnusedImport
 
 
 # TODO: merge these with specmacrofileparser.py
@@ -80,9 +70,11 @@ class SpecMacroDocumenter(Documenter):
         **fileorder** or **file**
             Items will be documented in the order in 
             which they appear in the ``.mac`` file.
+            (Default)
         
         **alphabetical** or **alpha**
             Items will be documented in alphabetical order.
+            (Not implemented at present.)
     
     .. tip::
         A (near) future enhancement will provide for
@@ -173,6 +165,13 @@ class SpecMacroDocumenter(Documenter):
 
 
 class SpecDirDocumenter(Documenter):
+    """
+    Document a directory containing SPEC macro source code files.
+    
+    This code responds to the ReST file directive::
+    
+        .. autospecdir:: partial/path/name
+    """
     objtype = 'specdir'
     member_order = 50
     priority = 0
@@ -188,9 +187,8 @@ class SpecDirDocumenter(Documenter):
     
     def generate(self, *args, **kw):
         """
-        Look at the named directory and
-        Generate reST for the object given by *self.name*, and possibly for
-        its members.
+        Look at the named directory and generate reST for the 
+        object given by *self.name*, and possibly for its members.
         """
         # now, parse the .mac files in the SPEC directory
         specdir = self.name

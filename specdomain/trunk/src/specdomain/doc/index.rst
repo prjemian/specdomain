@@ -9,19 +9,28 @@ Documenting SPEC Macro Source Code with Sphinx
 
 .. include:: ../README
 
-Contents:
+Contents
+==================
+
+.. toctree::
+   :maxdepth: 2
+
+   howto
+   conventions
+   spec
+   example
+   bpm
+   aalength
+
+Other matters
+==================
 
 .. toctree::
    :maxdepth: 2
 
    objectives
-   spec
-
-Other matters:
-
-.. toctree::
-   :maxdepth: 2
-
+   todo
+   bugs
    changes
    license
    
