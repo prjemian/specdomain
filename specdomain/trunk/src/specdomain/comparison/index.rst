@@ -10,7 +10,12 @@ Comparison of SPEC Macro Source Code Documented with Sphinx
 This is an example of documenting SPEC macro source code with Sphinx.
 
 .. autospecdir:: ./
-   
+
+.. toctree::
+   :maxdepth: 2
+
+   auto
+
 Cross-reference:
 
 * :ref:`genindex`
