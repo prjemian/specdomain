@@ -160,12 +160,7 @@ def shutter_help 'sh_help'
 
 def sh_help '{
 	"""
-	.. spec:def:: sh_help, shutter_help
-	
-	sh_help, shutter_help
-	=============================
-	
-	Displays the shutter help text.
+	sh_help, shutter_help: Displays the shutter help text.
 	
 	usage::
 	
