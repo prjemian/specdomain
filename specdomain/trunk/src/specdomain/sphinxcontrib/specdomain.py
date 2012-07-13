@@ -238,15 +238,22 @@ class SpecMacroObject(ObjectDescription):
         if indextext:
             self.indexnode['entries'].append(('single', indextext, targetname, ''))
             self.indexnode['entries'].append(('single', sig, targetname, ''))
+            # TODO: what if there is more than one file, same name, different path?
+            filename = os.path.split(signode.document.current_source)[1]
+            if filename.endswith('.mac'):
+                # TODO: change the match pattern with an option
+                indextext = '%s; %s' % (filename, sig)
+                self.indexnode['entries'].append(('single', indextext, targetname, ''))
+
+    macro_types = {
+        'def':  'SPEC macro definition; %s',
+        'rdef': 'SPEC run-time macro definition; %s',
+        'cdef': 'SPEC chained macro definition; %s',
+    }
 
     def _get_index_text(self, name):
-        macro_types = {
-            'def':  'SPEC macro definition; %s',
-            'rdef': 'SPEC run-time macro definition; %s',
-            'cdef': 'SPEC chained macro definition; %s',
-        }
-        if self.objtype in macro_types:
-            return _(macro_types[self.objtype]) % name
+        if self.objtype in self.macro_types:
+            return _(self.macro_types[self.objtype]) % name
         else:
             return ''
 
@@ -297,12 +304,12 @@ class SpecVariableObject(ObjectDescription):
         return sig
 
     def add_target_and_index(self, name, sig, signode):
-        targetname = '%s-%s' % (self.objtype, name)
+        #text = u'! ' + sig      # TODO: How to use emphasized index entry in this context?
+        text = name.split()[0]   # when sig = "tth    #: scattering angle"
+        targetname = '%s-%s' % (self.objtype, text)
         signode['ids'].append(targetname)
         # TODO: role does not point back to it yet
         # http://sphinx.pocoo.org/markup/misc.html#directive-index
-        text = u'! ' + sig      # TODO: How to use emphasized index entry in this context?
-        text = sig              # FIXME: temporary override
         self.indexnode['entries'].append(('single', text, targetname, ''))
         text = u'SPEC %s variable; %s' % (self.objtype, sig)
         self.indexnode['entries'].append(('single', text, targetname, ''))
