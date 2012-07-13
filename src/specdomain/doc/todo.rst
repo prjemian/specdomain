@@ -14,3 +14,4 @@ TO-DO List
 * identify and document undeclared variables in the global scope
 * support the :summary: role to explicitly declare a summary
 * cdef argument list not handled yet 
+* Extract index of macros in each macro file (option to index all symbols in a macro file)
