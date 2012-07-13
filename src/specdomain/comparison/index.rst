@@ -9,6 +9,8 @@ Comparison of SPEC Macro Source Code Documented with Sphinx
 
 This is an example of documenting SPEC macro source code with Sphinx.
 
+.. seealso:: http://www.aps.anl.gov/Sectors/33_34/controls/spec/robodoc/auto_mac.html
+
 .. autospecdir:: ./
 
 .. toctree::

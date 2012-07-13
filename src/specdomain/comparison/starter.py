@@ -11,10 +11,6 @@ import os
 import sphinx
 import sys
 
-import os
-import sphinx
-import sys
-
 
 def force_rebuild_all(parent = '_build'):
     '''

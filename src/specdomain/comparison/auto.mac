@@ -1,8 +1,4 @@
 """
-===================
-General Information
-===================
-
 Summary
 =======
 This macro provides a set of definitions which allow for automatic filter
@@ -135,7 +131,7 @@ Configuration
 =============
 
 No special configuration is needed to run these macros. Simply load the macro
-file and run ''auto_setup''::
+file and run ``auto_setup``::
 
 > qdo auto.mac
 > auto_setup
@@ -322,13 +318,9 @@ def autohelp 'auto_help'
 
 def auto_help '{
   """
-  Summary
-  -------
   Displays the auto help text.
 
-  Usage
-  -----
-  ::
+  Usage::
 
      > auto_help
 
@@ -367,13 +359,11 @@ def auto_help '{
 #------------------------------------------------------------------------------
 def auto_setup '{
   """
-  Summary
-  -------
-    Set up the control parameters for the automatic filter and exposure
-    adjustments.
+  Set up the control parameters for the automatic filter and exposure
+  adjustments.
 
-  Description
-  -----------
+  Description:
+
     The following parameters can be adjusted to fit the particular needs of an
     experiment or detector type (global variables holding these parameters and
     default values are given in brackets):
@@ -461,9 +451,7 @@ def auto_setup '{
       exposure and filter settings before giving up. This avoids infinite loops
       due to inconsistent choices of control parameters. [AUTO_RETRY_MAX = 20]
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > auto_setup
         then answer the questions
@@ -506,21 +494,17 @@ def auto_setup '{
 #------------------------------------------------------------------------------
 def auto_off '{
   """
-  Summary
-  -------
   Turn off any automatic filter and exposure adjustments.
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > auto_off
 
   .. note:: This command is equivalent to ``auto_set_level 0``
 
-  See also
-  --------
-  auto_set_level, auto_on
+  .. seealso::
+     :spec:def:`auto_set_level`,
+     :spec:def:`auto_on`
 
   """
 
@@ -530,17 +514,20 @@ def auto_off '{
 
 
 #------------------------------------------------------------------------------
-def auto_on '{auto_set_level $*}'
+def auto_on '{
+  """
+  See :spec:def:`auto_set_level`
+  """
+auto_set_level $*
 
+}'
+
+#------------------------------------------------------------------------------
 def auto_set_level '{
   """
-  Summary
-  -------
   Set the level of automatic filter and exposure adjustments.
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > auto_set_level [<level>]
     > auto_on [<level>]
@@ -550,9 +537,17 @@ def auto_set_level '{
           2 - automatic filter and exposure ON
         if <level> is ommitted, the users is asked for input
 
-  Example
-  -------
-  ::
+
+        ===== =================================================================
+        Level Description
+        ===== =================================================================
+        0     No automatic adjustments are made
+        1     Only filters are adjusted, no exposure time adjustments
+        2     Both filters and exposure times are automatically adjusted
+        ===== =================================================================
+
+
+  Examples::
 
     > auto_set_level
         then answer the questions in the dialogue
@@ -563,9 +558,8 @@ def auto_set_level '{
   .. note::
      ``auto_set_level`` and ``auto_on`` are equivalent to each other
 
-  See also
-  --------
-  auto_off
+  .. seealso::
+     :spec:def:`auto_off`
 
   """
 
@@ -712,19 +706,15 @@ def auto_set_level '{
 #------------------------------------------------------------------------------
 def auto_set_mode '{
   """
-  Summary
-  -------
   Set the acquisition mode to be used for the automatic filter and
   exposure time adjustments.
 
-  Description
-  -----------
-  Need some more details here...
+  Description:
+
+    Need some more details here...
 
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > auto_set_mode [<mode>]
         where <mode> must be one of the following:
@@ -732,16 +722,14 @@ def auto_set_mode '{
           1 - pilot exposure mode
         when called with no arguments, the user is prompted
 
-  Example
-  -------
-  ::
+  Example::
 
     > auto_set_mode 1
         use the pilot exposure mode for automatic adjustments.
 
-  See also
-  --------
-  auto, auto_setup
+  .. seealso::
+
+    :spec:def:`auto_setup`
 
   """
 
@@ -775,25 +763,25 @@ def auto_set_mode '{
 #------------------------------------------------------------------------------
 def auto_set_exposure '{
   """
-  Summary
-  -------
   Set the maximum and minimum exposure times used for automatic exposure
   adjustments.
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > auto_set_exposure [<min> <max>]
         where <min> is the minimum and <max> the maximum exposure time [s]
         when called with no arguments, the user is prompted
 
-  Example
-  -------
-  ::
+  Arguments:
 
-    > auto_set_exposure 1 10
-        sets the minimum exposure time to 1 sec and the maximum to 10 sec.
+  :param float min_exptime: minimum exposure time [s]
+  :param float max_exptime: maximum exposure time [s]
+
+  Example:
+
+    * set the minimum exposure time to 1 sec and the maximum to 10 sec::
+
+      > auto_set_exposure 1 10
 
   """
 
@@ -820,13 +808,9 @@ def auto_set_exposure '{
 #------------------------------------------------------------------------------
 def auto_show '{
   """
-  Summary
-  -------
   Display the current auto settings.
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > auto_show
 
@@ -870,13 +854,9 @@ def auto_show '{
 #------------------------------------------------------------------------------
 def auto_show_exposure '{
   """
-  Summary
-  -------
   Display the current auto-level exposure settings.
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > auto_show_exposure
 
@@ -900,8 +880,9 @@ def _auto_print_setup '{
   Prints the configuration options and current values to screen
 
   .. note::
-     The option numbers must be kept in sync between ``_auto_set_option`` and
-     ``_auto_print_setup``.
+     The option numbers must be kept in sync between
+     :spec:def:`_auto_set_option` and
+     :spec:def:`_auto_print_setup`.
   """
 
   tty_cntl("ho")  # home cursor on left upper corner of screen
@@ -937,18 +918,17 @@ def _auto_print_setup '{
 #------------------------------------------------------------------------------
 def _auto_set_option '{
   """
-  Summary
-  -------
   Sets a new value for a given option
 
-  Description
-  -----------
-  Sets a new value for a given option from the options menu that was created
-  with the _auto_print_setup command.
+  Description:
+
+    Sets a new value for a given option from the options menu that was created
+    with the :spec:def:`_auto_print_setup` command.
 
   .. note::
-     The option numbers must be kept in sync between ``_auto_set_option`` and
-     ``_auto_print_setup``.
+     The option numbers must be kept in sync between
+     :spec:def:`_auto_set_option` and
+     :spec:def:`_auto_print_setup`.
 
   """
 
@@ -1180,22 +1160,18 @@ def _auto_set_option '{
 #------------------------------------------------------------------------------
 def _auto_analyze_exposure '{
   """
-  Summary
-  -------
   Analyze the previous exposure
 
-  Description
-  -----------
-  This macro retrieves the necessary information to analyze the last exposure
-  and to initiate adjustments, if necessary. Usually, this step consists only
-  of retrieving the count value from the monitored SPEC counter, but for more
-  sophisticated experimental setups, this definition could be overwritten to
-  include non-standard procedures, such as retrieving counts from EPICS PVs,
-  etc.
+  Description:
 
-  Usage
-  -----
-  ::
+    This macro retrieves the necessary information to analyze the last exposure
+    and to initiate adjustments, if necessary. Usually, this step consists only
+    of retrieving the count value from the monitored SPEC counter, but for more
+    sophisticated experimental setups, this definition could be overwritten to
+    include non-standard procedures, such as retrieving counts from EPICS PVs,
+    etc.
+
+  Usage::
 
     > _auto_analyze_exposure
 
@@ -1209,14 +1185,12 @@ def _auto_analyze_exposure '{
 #------------------------------------------------------------------------------
 def _auto_adjust() '{
   """
-  Summary
-  -------
   Calculate and apply necessary exposure time and filter adjustments.
 
-  Description
-  -----------
-  The function returns 1 if transmission or exposure time are changed, 0
-  otherwise.
+  Description:
+
+    The function returns 1 if transmission or exposure time are changed, 0
+    otherwise.
 
   """
 
@@ -1430,13 +1404,9 @@ def _auto_adjust() '{
 #------------------------------------------------------------------------------
 def _auto_check_exposure '{
   """
-  Summary
-  -------
   Make sure the user-entered exposure times are consistent
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > _auto_check_exposure
 
@@ -1456,13 +1426,9 @@ def _auto_check_exposure '{
 #------------------------------------------------------------------------------
 def _auto_check_levels '{
   """
-  Summary
-  -------
   Make sure the user-entered count levels are consistent
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > _auto_check_levels
 
@@ -1489,14 +1455,10 @@ def _auto_check_levels '{
 #------------------------------------------------------------------------------
 def _auto_calc_exposure(t) '{
   """
-  Summary
-  -------
   Make sure the requested exposure time is between the min and max values and
   round it to the given count time precision.
 
-  Usage
-  -----
-  ::
+  Usage::
 
     > adjusted_time = _auto_calc_exposure(requested_time)
 
@@ -1521,26 +1483,22 @@ def _auto_calc_exposure(t) '{
 #------------------------------------------------------------------------------
 def _auto_adjust_redo() '{
   """
-  Summary
-  -------
   Determines whether the auto-adjusting has been successful.
 
-  Description
-  -----------
-  If the current exposure does not meet the required criteria, counting
-  is repeated until the best possible filter and exposure settings have been
-  obtained, or a maximum number of retry counts has been reached.
-  The function returns 1 in case of success, 0 otherwise.
+  Description:
 
-  Usage
-  -----
-  ::
+    If the current exposure does not meet the required criteria, counting
+    is repeated until the best possible filter and exposure settings have been
+    obtained, or a maximum number of retry counts has been reached.
+    The function returns 1 in case of success, 0 otherwise.
+
+  Usage::
 
     > success = _auto_adjust_redo()
 
   .. note::
-     This macro makes use of the ``recount`` macro, which has to be added to SPEC
-     during the startup procedure.
+     This macro makes use of the :spec:def:`recount` macro, which has to be
+     added to SPEC during the startup procedure.
 
   """
 
@@ -1585,16 +1543,19 @@ def _auto_adjust_redo() '{
 if (!(whatis("_clear_screen") & 0x2)){
   def _clear_screen '{
     """
-    Summary
-    -------
     Clears the terminal screen
 
-    Description
-    -----------
-    Clears the screen without losing the screen history or messing up the
-    scrolling capabilities (this has been a problem for certain terminals)
-    by blanking out the entire height of the screen and returning the cursor to
-    the top left corner.
+    Description:
+
+      Clears the screen without losing the screen history or messing up the
+      scrolling capabilities (this has been a problem for certain terminals)
+      by blanking out the entire height of the screen with newlines and
+      returning the cursor to the top left corner.
+
+    Usage::
+
+      > _clear_screen
+
     """
 
     # update the ROWS and COLS variables in case the terminal has been resized
