@@ -22,8 +22,9 @@ Dependencies
 			The support prefix is ``ioc:xbpm`` (configurable in :spec:constant:`XBPM_PREFIX`)
 
 
-Usage
-	``qdo /epics/clients/spec/macros/bpm.mac``
+Usage::
+
+	qdo /epics/clients/spec/macros/bpm.mac
 """
 
 constant GX_FACTOR "5.93"		;#: X-axis calibration, mm/unit
