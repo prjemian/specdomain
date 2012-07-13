@@ -9,7 +9,7 @@ This package contains the specdomain Sphinx extension.
 
 ''' + open('README').read()
 
-version = open('VERSION').read()
+version = open('VERSION').read().strip()
 
 requires = ['Sphinx>=0.6']
 
