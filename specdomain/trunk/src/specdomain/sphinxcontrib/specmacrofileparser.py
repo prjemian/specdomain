@@ -86,7 +86,7 @@ variable_name_re = re.compile(
 spec_macro_declaration_match_re = re.compile(
                         string_start
                         + r'\s*?'                           # optional blank space
-                        + r'(r?def)'                        # 1: def_type (rdef | def)
+                        + r'(r?def)\s'                      # 1: def_type (rdef | def)
                         + non_greedy_whitespace
                         + macro_name_match                  # 2: macro_name
                         + non_greedy_filler_match           # 3: optional arguments
