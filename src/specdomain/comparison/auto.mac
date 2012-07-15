@@ -61,8 +61,8 @@ exposure times may be adjusted. See the next sections below for details.
 Filter tramsmission adjustments (RATE)
 ----------------------------------------
 The filter adjustment assures a high incident photon rate within a band
-just below the rate limit of the detector. The width of the band is defined
-by the step size in transmission, defined in AUTO_FILTER_FACTOR,
+just below the rate limit of the detector. The width of the band is
+defined by the step size in transmission, defined in AUTO_FILTER_FACTOR,
 which is used for each correction. If the count rate is higher than
 AUTO_RATE_LIMIT, the transmission is immediately reduced by
 AUTO_FILTER_FACTOR and the exposure is retaken. If the count rate is
@@ -131,33 +131,33 @@ Configuration
 =============
 
 No special configuration is needed to run these macros. Simply load the macro
-file and run :spec:def:`auto_setup`::
+file and run ``auto_setup``::
 
-  > qdo auto.mac
-  > auto_setup
+> qdo auto.mac
+> auto_setup
 
 Dependencies
 ------------
 
 Dependencies on other macros:
 
-* :spec:macrofile:`filter.mac` (used to control the attenuators):
+* filter.mac (used to control the attenuators):
 
-  - :spec:def:`filter_trans`
-  - :spec:def:`filter_get_trans()`
-  - :spec:def:`filter_get_trans_up()`
-  - :spec:def:`filter_get_mask()`
-  - :spec:def:`filter_max()`
+  - filter_trans
+  - filter_get_trans()
+  - filter_get_trans_up()
+  - filter_get_mask()
+  - filter_max()
 
-* :spec:def:`recount` (modified count command used to retake an exposure)
+* recount (modified count command used to retake an exposure)
 
 Impact
 ------
 The following chained macro definitions are affected by this macro:
 
-* :spec:def:`user_prescan_head`
-* :spec:def:`user_chk_counts` (from our modified :spec:def:`count` command)
-* :spec:def:`user_precount`
+* user_prescan_head
+* user_chk_counts (provided in our modified ``count`` command)
+* user_precount
 
 File information
 ================
@@ -251,53 +251,45 @@ Change log
 - changed code documentation to be compatible with the new SPEC domain for the
   SPHINX code documentation suite.
 
-2012/07/13 (CS):
-
-- renamed some private macros to start with underscores::
-
-    auto_precount        --> _auto_precount
-    auto_prescan_head    --> _auto_prescan_head
-    auto_user_chk_counts --> _auto_user_chk_counts
-
-- moved the macro definitions for the above macros out of the
-  :spec:def:`auto_set_level` macro to avoid unnecessary nested definitions.
-
-
 TO DO
 -----
 
 - Extensive testing of the pilot exposure mode
 - complete documentation
 - insert hyperlinks into documentation
-
 """
 
-###############################################################################
-# Global variable definitions
-###############################################################################
+#==============================================================================
 
-  global AUTO_MAC                 #: Save the name of this macro file
-  global AUTO_LEVEL               #: Type of adjustments {0,1,2}
-  global AUTO_MODE                #: Adjustment mode (pilot vs. post-exp) {0,1}
-  global AUTO_COUNTER             #: Counter to monitor
-  global AUTO_COUNT_RBV           #: Counter read back value (measured counts)
-  global AUTO_RETRY_MAX           #: Maximum number of retries
-  global AUTO_EXP_LOW             #: Low exposure time limit
-  global AUTO_EXP_HIGH            #: High exposure time limit
-  global AUTO_PILOT_EXPTIME       #: Exposure time for pilot exposures
-  global AUTO_RATE_LIMIT          #: High rate limit
-  global AUTO_COUNT_HIGH          #: High count limit
-  global AUTO_COUNT_TARGET        #: Target count level
-  global AUTO_COUNT_LOW           #: Low count limit
-  global AUTO_FILTER_FACTOR       #: Filter transmission factor for adjustments
-  global AUTO_COUNT_PREC          #: Count time precision (rounding)
-  global AUTO_FILTER_LOCK         #: Lock if rate-limited
-  global AUTO_SET_PILOT           #: Set pilot exposure time in user_precount
-  global AUTO_ORIG_EXPTIME        #: Save the original requested count time
-  global AUTO_DEBUG               #: Debug flag
+#==============================================================================
+# Global variable definitions
+#==============================================================================
+
+  # Save the name of this macro file (Used for the help function).
+  global AUTO_MAC
+         AUTO_MAC = DOFILE
+
+  global AUTO_LEVEL                # Type of adjustments {0,1,2}
+  global AUTO_MODE                 # Adjustment mode (pilot/post-exp){0,1}
+  global AUTO_COUNTER              # Counter to monitor
+  global AUTO_COUNT_RBV            # Counter read back value (measured counts)
+  global AUTO_RETRY_MAX            # Maximum number of retries
+  global AUTO_EXP_LOW              # low exposure time limit
+  global AUTO_EXP_HIGH             # highexposure time limit
+  global AUTO_PILOT_EXPTIME        # exposure time for pilot exposures
+  global AUTO_RATE_LIMIT           # High rate limit
+  global AUTO_COUNT_HIGH           # High count limit
+  global AUTO_COUNT_TARGET         # Target count level
+  global AUTO_COUNT_LOW            # Low count limit
+  global AUTO_FILTER_FACTOR        # Filter transmission factor for adjustments
+  global AUTO_COUNT_PREC           # Count time precision (rounding)
+
+  global AUTO_FILTER_LOCK          # Lock if rate-limited
+  global AUTO_SET_PILOT            # Set pilot exposure time in user_precount
+  global AUTO_ORIG_EXPTIME         # save the original requested count time
+  global AUTO_DEBUG                # debug flag
 
   # set default values for global variables
-  AUTO_MAC = DOFILE
   AUTO_COUNTER = det
   AUTO_LEVEL = 0
   AUTO_MODE = 0
@@ -316,14 +308,13 @@ TO DO
   AUTO_SET_PILOT = 1
   AUTO_DEBUG = 0
 
-
-###############################################################################
+#==============================================================================
 # Macro command definitions
-###############################################################################
+#==============================================================================
 
 #------------------------------------------------------------------------------
 # allow for misspelled help commands
-#def autohelp '{auto_help}'
+def autohelp 'auto_help'
 
 def auto_help '{
   """
@@ -505,14 +496,13 @@ def auto_off '{
   """
   Turn off any automatic filter and exposure adjustments.
 
-  USAGE::
+  Usage::
 
     > auto_off
 
-  NOTE:
-    This command is equivalent to ``auto_set_level 0``
+  .. note:: This command is equivalent to ``auto_set_level 0``
 
-  SEE ALSO:
+  .. seealso::
      :spec:def:`auto_set_level`,
      :spec:def:`auto_on`
 
@@ -526,12 +516,8 @@ def auto_off '{
 #------------------------------------------------------------------------------
 def auto_on '{
   """
-  Turn on automatic filter and exposure adjustments.
-
-  This macro is identical to :spec:def:`auto_set_level`. Please refer to the
-  :spec:def:`auto_set_level` documentation for more details.
+  See :spec:def:`auto_set_level`
   """
-
 auto_set_level $*
 
 }'
@@ -541,23 +527,27 @@ def auto_set_level '{
   """
   Set the level of automatic filter and exposure adjustments.
 
-  USAGE::
+  Usage::
 
     > auto_set_level [<level>]
     > auto_on [<level>]
+        where <level> can be one of the following:
+          0 - automatic filter and exposure OFF
+          1 - automatic filter ON, automatic exposure OFF
+          2 - automatic filter and exposure ON
+        if <level> is ommitted, the users is asked for input
 
-  If now arguement is given, the user is prompted for input. The argument
-  ``<level>`` can be one of the following:
 
-      =====  =================================================================
-      Level  Description
-      =====  =================================================================
-      ``0``  No automatic adjustments are made
-      ``1``  Only filters are adjusted, no exposure time adjustments
-      ``2``  Both filters and exposure times are automatically adjusted
-      =====  =================================================================
+        ===== =================================================================
+        Level Description
+        ===== =================================================================
+        0     No automatic adjustments are made
+        1     Only filters are adjusted, no exposure time adjustments
+        2     Both filters and exposure times are automatically adjusted
+        ===== =================================================================
 
-  EXAMPLES::
+
+  Examples::
 
     > auto_set_level
         then answer the questions in the dialogue
@@ -565,11 +555,10 @@ def auto_set_level '{
     > auto_on 1
         turns on automatic filter adjustments (level 1)
 
-  NOTE:
-     :spec:def:`auto_set_level` and :spec:def:`auto_on` are equivalent to
-     each other.
+  .. note::
+     ``auto_set_level`` and ``auto_on`` are equivalent to each other
 
-  SEE ALSO:
+  .. seealso::
      :spec:def:`auto_off`
 
   """
@@ -605,26 +594,86 @@ def auto_set_level '{
     eprint ""
   }
 
+  #-------------------------------------------
+  # define necessary chained macro definitions
+
+  #--------------------
+  def auto_prescan_head \'
+  #   =================
+    # if automatic filter setting is active start scan with very low
+    # filter transmission
+    if(AUTO_LEVEL > 0){
+      AUTO_ORIG_EXPTIME = COUNT_TIME
+      filter_trans 1e-8
+      if(AUTO_LEVEL > 1){
+        # start with low exposure times
+        COUNT_TIME = AUTO_EXP_LOW
+        _ctime = COUNT_TIME
+      }
+    }
+    # add auto_cleanup to cleanup_once
+    cdef("cleanup_once","auto_cleanup; ", "auto_cleanup_once_key",0x20)
+  \'
+
+  #-----------------------
+  def auto_user_chk_counts \'
+  #   ====================
+    if(AUTO_LEVEL > 0){
+      # automatic filter and exposure setting (if activated)
+      success = _auto_adjust_redo()
+    }
+  \'
+
+  #----------------
+  def auto_precount \'
+  #   =============
+    if(AUTO_LEVEL > 0){
+      if(AUTO_MODE == 1 & AUTO_SET_PILOT == 1){
+        # remember the original exposure time
+        AUTO_ORIG_EXPTIME = COUNT_TIME
+        # set the pilot exposure time
+        COUNT_TIME = AUTO_PILOT_EXPTIME
+        _ctime = COUNT_TIME
+        AUTO_SET_PILOT = 0
+      }
+    }
+  \'
+
+  #---------------
+  def auto_cleanup \'
+  #   ============
+    # drop in filters after finishing, since we do not know where we end up
+    # (center of a peak for dscan?)
+    AUTO_SET_PILOT = 1
+    AUTO_FILTER_LOCK = 0
+    if(AUTO_LEVEL > 0){
+      filter_trans 1e-8
+    }
+    cdef("cleanup_once", "", "auto_cleanup_once_key", "delete")
+  \'
+
+
   #--------------------------------------------
   # include necessary chained macro definitions
   # depending on the current auto-level
 
   if (AUTO_LEVEL > 0){
 
-    #: add _auto_prescan_head to user_prescan_head
-    cdef("user_prescan_head", "{_auto_prescan_head}; ", \
-         "auto_prescan_head_key", 0x10)
+    # add auto_prescan_head to user_prescan_head
+    cdef("user_prescan_head", "auto_prescan_head; ", "auto_prescan_head_key",\
+         0x10)
 
-    #: add _auto_user_chk_counts to user_chk_counts
-    cdef("user_chk_counts", "{_auto_user_chk_counts}; ", \
+    # add auto_user_chk_counts to user_chk_counts
+    cdef("user_chk_counts", "auto_user_chk_counts; ", \
          "auto_user_chk_counts_key")
 
-    #: add _auto_precount to user_precount
-    cdef("user_precount", "{_auto_precount}; ", "auto_precount_key", 0x10)
+    # add auto_precount to user_precount
+    cdef("user_precount", "auto_precount; ", "auto_precount_key", 0x10)
 
-    #: add _auto_cleanup to the end of user_scan_tail
-    cdef("user_scan_tail","{_auto_cleanup}; ", \
+    # add auto_cleanup to the end of user_scan_tail
+    cdef("user_scan_tail","auto_cleanup; ", \
          "auto_user_scan_tail_key",0x20)
+
   }
 
   #---------------------------------------------
@@ -636,18 +685,17 @@ def auto_set_level '{
 
   if (AUTO_LEVEL < 1) {
 
-    #: remove _auto_prescan_head from user_prescan_head
+    # remove auto_prescan_head from user_prescan_head
     cdef("user_prescan_head", "", "auto_prescan_head_key", "delete")
 
-    #: remove _auto_user_chk_counts from user_chk_counts
+    # remove auto_user_chk_counts from user_chk_counts
     cdef("user_chk_counts", "", "auto_user_chk_counts_key", "delete")
 
-    #: remove _auto_precount from user_precount
+    # remove auto_precount from user_precount
     cdef("user_precount", "", "auto_precount_key", "delete")
 
-    #: remove _auto_cleanup from user_scan_tail
+    # remove auto_cleanup from user_scan_tail and cleanup_once
     cdef("user_scan_tail", "", "auto_user_scan_tail_key", "delete")
-    #: remove _auto_cleanup from cleanup_once
     cdef("cleanup_once", "", "auto_cleanup_once_key", "delete")
   }
 
@@ -661,10 +709,12 @@ def auto_set_mode '{
   Set the acquisition mode to be used for the automatic filter and
   exposure time adjustments.
 
-  DESCRIPTION:
+  Description:
+
     Need some more details here...
 
-  USAGE::
+
+  Usage::
 
     > auto_set_mode [<mode>]
         where <mode> must be one of the following:
@@ -672,12 +722,13 @@ def auto_set_mode '{
           1 - pilot exposure mode
         when called with no arguments, the user is prompted
 
-  EXAMPLE::
+  Example::
 
     > auto_set_mode 1
         use the pilot exposure mode for automatic adjustments.
 
-  SEE ALSO:
+  .. seealso::
+
     :spec:def:`auto_setup`
 
   """
@@ -715,16 +766,22 @@ def auto_set_exposure '{
   Set the maximum and minimum exposure times used for automatic exposure
   adjustments.
 
-  USAGE::
+  Usage::
 
     > auto_set_exposure [<min> <max>]
         where <min> is the minimum and <max> the maximum exposure time [s]
         when called with no arguments, the user is prompted
 
-  EXAMPLE::
+  Arguments:
+
+  :param float min_exptime: minimum exposure time [s]
+  :param float max_exptime: maximum exposure time [s]
+
+  Example:
+
+    * set the minimum exposure time to 1 sec and the maximum to 10 sec::
 
       > auto_set_exposure 1 10
-          set the minimum exposure time to 1 sec and the maximum to 10 sec
 
   """
 
@@ -753,7 +810,7 @@ def auto_show '{
   """
   Display the current auto settings.
 
-  USAGE::
+  Usage::
 
     > auto_show
 
@@ -799,7 +856,7 @@ def auto_show_exposure '{
   """
   Display the current auto-level exposure settings.
 
-  USAGE::
+  Usage::
 
     > auto_show_exposure
 
@@ -811,91 +868,18 @@ def auto_show_exposure '{
 }'
 
 
-###############################################################################
+#==============================================================================
 # Internal macros
-###############################################################################
-
-#------------------------------------------------------------------------------
-def _auto_cleanup '{
-  """
-  Cleanup routine for automatic filter/exposure control
-  """
-
-  # drop in filters after finishing, since we do not know where we end up
-  # (center of a peak for dscan?)
-  AUTO_SET_PILOT = 1
-  AUTO_FILTER_LOCK = 0
-  if(AUTO_LEVEL > 0){
-    filter_trans 1e-10
-  }
-  #: remove _auto_cleanup_once from cleanup_once
-  cdef("cleanup_once", "", "auto_cleanup_once_key", "delete")
-}'
-
-
-#------------------------------------------------------------------------------
-def _auto_prescan_head '{
-  """
-  Prepare for automatic filter/exposure control before the start of a scan
-
-  This inserts filters with a transmission of 1e-10, sets some values in
-  the global variables and adds a cleanup routine to ``cleanup_once``.
-  """
-
-  # if automatic filter setting is active start scan with very low
-  # filter transmission
-  if(AUTO_LEVEL > 0){
-    AUTO_ORIG_EXPTIME = COUNT_TIME
-    filter_trans 1e-10
-    if(AUTO_LEVEL > 1){
-      # start with low exposure times
-      COUNT_TIME = AUTO_EXP_LOW
-      _ctime = COUNT_TIME
-    }
-  }
-  #: add _auto_cleanup to cleanup_once
-  cdef("cleanup_once","{_auto_cleanup}; ", "auto_cleanup_once_key",0x20)
-}'
-
-
-#------------------------------------------------------------------------------
-def _auto_user_chk_counts '{
-  """
-  Check if counts are valid and retake exposure if necessary.
-  """
-
-  if(AUTO_LEVEL > 0){
-    # automatic filter and exposure setting (if activated)
-    success = _auto_adjust_redo()
-  }
-}'
-
-
-#------------------------------------------------------------------------------
-def _auto_precount '{
-  """
-  Prepare for automatic filter/exposure control at beginning of count command.
-  """
-
-  if(AUTO_LEVEL > 0){
-    if(AUTO_MODE == 1 & AUTO_SET_PILOT == 1){
-      # remember the original exposure time
-      AUTO_ORIG_EXPTIME = COUNT_TIME
-      # set the pilot exposure time
-      COUNT_TIME = AUTO_PILOT_EXPTIME
-      _ctime = COUNT_TIME
-      AUTO_SET_PILOT = 0
-    }
-  }
-}'
-
+#==============================================================================
 
 #------------------------------------------------------------------------------
 def _auto_print_setup '{
   """
-  Print the configuration options and current values to screen
+  Summary
+  -------
+  Prints the configuration options and current values to screen
 
-  NOTE:
+  .. note::
      The option numbers must be kept in sync between
      :spec:def:`_auto_set_option` and
      :spec:def:`_auto_print_setup`.
@@ -934,16 +918,17 @@ def _auto_print_setup '{
 #------------------------------------------------------------------------------
 def _auto_set_option '{
   """
-  Sets a new value for a given option.
+  Sets a new value for a given option
 
-  DESCRIPTION:
+  Description:
+
     Sets a new value for a given option from the options menu that was created
     with the :spec:def:`_auto_print_setup` command.
 
-  NOTE:
-    The option numbers must be kept in sync between
-    :spec:def:`_auto_set_option` and
-    :spec:def:`_auto_print_setup`.
+  .. note::
+     The option numbers must be kept in sync between
+     :spec:def:`_auto_set_option` and
+     :spec:def:`_auto_print_setup`.
 
   """
 
@@ -1177,7 +1162,8 @@ def _auto_analyze_exposure '{
   """
   Analyze the previous exposure
 
-  DESCRIPTION:
+  Description:
+
     This macro retrieves the necessary information to analyze the last exposure
     and to initiate adjustments, if necessary. Usually, this step consists only
     of retrieving the count value from the monitored SPEC counter, but for more
@@ -1185,7 +1171,7 @@ def _auto_analyze_exposure '{
     include non-standard procedures, such as retrieving counts from EPICS PVs,
     etc.
 
-  USAGE::
+  Usage::
 
     > _auto_analyze_exposure
 
@@ -1201,13 +1187,10 @@ def _auto_adjust() '{
   """
   Calculate and apply necessary exposure time and filter adjustments.
 
-  DESCRIPTION:
+  Description:
 
-    The function returns 1 if transmission or exposure time have been changed,
-    0 otherwise.
-
-  USAGE::
-    > changed = _auto_adjust()
+    The function returns 1 if transmission or exposure time are changed, 0
+    otherwise.
 
   """
 
@@ -1423,7 +1406,7 @@ def _auto_check_exposure '{
   """
   Make sure the user-entered exposure times are consistent
 
-  USAGE::
+  Usage::
 
     > _auto_check_exposure
 
@@ -1445,7 +1428,7 @@ def _auto_check_levels '{
   """
   Make sure the user-entered count levels are consistent
 
-  USAGE::
+  Usage::
 
     > _auto_check_levels
 
@@ -1475,7 +1458,7 @@ def _auto_calc_exposure(t) '{
   Make sure the requested exposure time is between the min and max values and
   round it to the given count time precision.
 
-  USAGE::
+  Usage::
 
     > adjusted_time = _auto_calc_exposure(requested_time)
 
@@ -1502,20 +1485,20 @@ def _auto_adjust_redo() '{
   """
   Determines whether the auto-adjusting has been successful.
 
-  DESCRIPTION:
+  Description:
 
     If the current exposure does not meet the required criteria, counting
     is repeated until the best possible filter and exposure settings have been
     obtained, or a maximum number of retry counts has been reached.
     The function returns 1 in case of success, 0 otherwise.
 
-  USAGE::
+  Usage::
 
     > success = _auto_adjust_redo()
 
-  NOTE:
-    This macro makes use of the :spec:def:`recount` macro, which has to be
-    added to SPEC during the startup procedure.
+  .. note::
+     This macro makes use of the :spec:def:`recount` macro, which has to be
+     added to SPEC during the startup procedure.
 
   """
 
@@ -1562,13 +1545,14 @@ if (!(whatis("_clear_screen") & 0x2)){
     """
     Clears the terminal screen
 
-    DESCRIPTION:
+    Description:
+
       Clears the screen without losing the screen history or messing up the
       scrolling capabilities (this has been a problem for certain terminals)
       by blanking out the entire height of the screen with newlines and
       returning the cursor to the top left corner.
 
-    USAGE::
+    Usage::
 
       > _clear_screen
 
@@ -1591,6 +1575,6 @@ if (!(whatis("_clear_screen") & 0x2)){
   }'
 }
 
-###############################################################################
+#==============================================================================
 # End of $Id: $
-###############################################################################
+#==============================================================================
