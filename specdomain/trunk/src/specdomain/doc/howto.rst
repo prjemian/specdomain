@@ -10,3 +10,4 @@ How to use Sphinx to Document SPEC Macro Source Code Files
    howto-install
    howto-configure
    howto-build
+   howto-markup
