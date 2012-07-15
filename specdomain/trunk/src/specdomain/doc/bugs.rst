@@ -8,7 +8,7 @@ Known bugs
 * roles should link to directives, see *example.mac* to illustrate the problem
 * fix the signature recognition for roles
 * fix the signature handling for roles and directives
-* grep detection of macros fails for def declarations in extended comments::
+* grep detection of macros fails for def declarations in extended comments (TRAC ticket #11)::
 
 	> I found the cause of the processing error. It must have something to do
 	> the the regex you use to identify definitions. Line 65 in the header
@@ -18,5 +18,5 @@ Known bugs
 	> I temporarily fixed the problem by moving the word "defined" to the end of
 	> the previous line, but this fluke could potentially arise again. Is there
 	> a way of not searching for any of the function declarations (def, cdef,
-	> rdef, global, Š) inside a doctoring? Otherwise, you may have to improve
+	> rdef, global, ...) inside a docstring? Otherwise, you may have to improve
 	> the regex.
