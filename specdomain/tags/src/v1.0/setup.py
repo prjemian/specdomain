@@ -28,10 +28,10 @@ setup(
     long_description=long_desc,
     zip_safe=False,
     classifiers=[
-        'Development Status :: 4 - Beta',
+	'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Environment :: Web Environment',
-        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
         'License :: Free To Use But Restricted',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
