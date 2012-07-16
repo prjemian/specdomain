@@ -16,7 +16,7 @@ Exposure optimization modes
 Two different modes of operation are available to optimize the count levels
 for each exposure:
 
-- Post-exposure adjustments: Each new exposures is taken with settings that
+- Post-exposure adjustments: Each new exposure is taken with settings that
   are based on the feedback obtained from the previous one. This mode is
   based on the assumption that the measured intensity profiles are only
   gradually changing, and that a satisfactory prediction of the change in
@@ -58,11 +58,11 @@ precedence over any other adjustment. Once the rate has been optimized
 (keeping it within a given band below the saturation threshold), the
 exposure times may be adjusted. See the next sections below for details.
 
-Filter tramsmission adjustments (RATE)
+Filter transmission adjustments (RATE)
 ----------------------------------------
 The filter adjustment assures a high incident photon rate within a band
-just below the rate limit of the detector. The width of the band is 
-defined by the step size in transmission, defined in AUTO_FILTER_FACTOR,
+just below the rate limit of the detector. The width of the band is defined
+by the step size in transmission, defined in AUTO_FILTER_FACTOR,
 which is used for each correction. If the count rate is higher than
 AUTO_RATE_LIMIT, the transmission is immediately reduced by
 AUTO_FILTER_FACTOR and the exposure is retaken. If the count rate is
@@ -162,37 +162,35 @@ The following chained macro definitions are affected by this macro:
 File information
 ================
 
-Authors
--------
-* C.M. Schlepuetz (CS, cschlep),
-  Argonne National Laboratory, cschlep@aps.anl.gov
-* Y. Yang (YY, ysyang),
-  University of Michigan, ysyang@umich.edu
+AUTHORS:
 
-Creation date
--------------
-2011/02/25
+  * C.M. Schlepuetz (CS, cschlep),
+    Argonne National Laboratory, cschlep@aps.anl.gov
+  * Y. Yang (YY, ysyang),
+    University of Michigan, ysyang@umich.edu
 
-Copyright
----------
-Copyright 2010 by the above authors (see AUTHOR/AUTHORS)
+CREATION DATE:
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  2011/02/25
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+COPYRIGHT:
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/.
+  Copyright 2010-2012 by the above authors (see AUTHOR/AUTHORS)
 
-Version
--------
-::
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/.
+
+VERSION::
 
   $Date: 2011-04-11 13:17:13 -0400 (Mon, 11 Apr 2011) $
   $Author: cschlep $
@@ -200,75 +198,74 @@ Version
   $Revision: 25 $
 
 
-Change log
-----------
-2011/02/25 (CS, YY):
+CHANGE LOG:
 
-- completely reworked previous versions of ``auto.mac`` to produce this new
-  version:
+  2011/02/25 (CS, YY):
 
-  * improved efficiency
-  * simplified code
-  * new method of scaling the count times (see description above)
+  - completely reworked previous versions of ``auto.mac`` to produce this new
+    version:
 
-2011/04/04 (CS):
+    * improved efficiency
+    * simplified code
+    * new method of scaling the count times (see description above)
 
-- cleaned up code further
-- added and updated documentation
-- added ``auto_setup`` macro
-- added AUTO_AREADETECTOR_VERSION global to track which version of
-  areaDetector is used in ``auto_init_analysis``.
-- added ``auto_on`` and ``auto_off``
-- changed all macro names to lower case and underscore naming convention
-- changed all calls to macros from ``filter.mac`` to lower case and underscore
-  naming conventions.
+  2011/04/04 (CS):
 
-2011/04/11 (CS):
+  - cleaned up code further.
+  - added and updated documentation.
+  - added ``auto_setup`` macro.
+  - added AUTO_AREADETECTOR_VERSION global to track which version of
+    areaDetector is used in ``auto_init_analysis``.
+  - added ``auto_on`` and ``auto_off``.
+  - changed all macro names to lower case and underscore naming convention.
+  - changed all calls to macros from ``filter.mac`` to lower case and
+    underscore naming conventions.
 
-- changed ``auto_prescan_header``: if AUTO_LEVEL > 1, set the exposure times to
-  the minimum exposure time to start with.
+  2011/04/11 (CS):
 
-2012/03/29 (CS):
+  - changed ``auto_prescan_header``: if AUTO_LEVEL > 1, set the exposure times
+    to the minimum exposure time to start with.
 
-- modified code documentation to be compatible with the ROBODoc
-  documentation generation software.
-- monitor a configurable SPEC counter rather than an EPICS channel for the
-  adjustments. This allows for the monitoring of any arbitrary counter in
-  SPEC, but requires that whatever signal is to be monitored is captured in
-  a SPEC counter during the count process.
-- reworked the setup routines for easier use.
-- removed unnecessary ``auto_init_analysis``
-- removed unnecessary AUTO_AREADETECTOR_VERSION global variable
-- renamed many variables for improved consistency
+  2012/03/29 (CS):
 
-2012/04/23 (CS):
+  - modified code documentation to be compatible with the ROBODoc
+    documentation generation software.
+  - monitor a configurable SPEC counter rather than an EPICS channel for the
+    adjustments. This allows for the monitoring of any arbitrary counter in
+    SPEC, but requires that whatever signal is to be monitored is captured in
+    a SPEC counter during the count process.
+  - reworked the setup routines for easier use.
+  - removed unnecessary ``auto_init_analysis``.
+  - removed unnecessary AUTO_AREADETECTOR_VERSION global variable.
+  - renamed many variables for improved consistency.
 
-- fixed a bug where long exposures with valid rate but saturating the
-  counter would result in an infinite loop.
+  2012/04/23 (CS):
 
-2012/07/06 (CS):
+  - fixed a bug where long exposures with valid rate but saturating the
+    counter would result in an infinite loop.
 
-- changed code documentation to be compatible with the new SPEC domain for the
-  SPHINX code documentation suite.
+  2012/07/06 (CS):
 
-2012/07/13 (CS):
+  - changed code documentation to be compatible with the new SPEC domain for
+    the SPHINX code documentation suite.
 
-- renamed some private macros to start with underscores::
+  2012/07/13 (CS):
 
-    auto_precount        --> _auto_precount
-    auto_prescan_head    --> _auto_prescan_head
-    auto_user_chk_counts --> _auto_user_chk_counts
+  - moved the macro definitions for the above macros out of the
+    :spec:def:`auto_set_level` macro to avoid unnecessary nested definitions.
+  - Changed default value of ``AUTO_RETRY_MAX`` to 10 instead of 20.
+  - Changed default value of ``AUTO_COUNTER`` to ``DET`` instead of ``det``.
+  - renamed some private macros to start with underscores::
 
-- moved the macro definitions for the above macros out of the
-  :spec:def:`auto_set_level` macro to avoid unnecessary nested definitions.
+      auto_precount        --> _auto_precount
+      auto_prescan_head    --> _auto_prescan_head
+      auto_user_chk_counts --> _auto_user_chk_counts
 
+TO DO:
 
-TO DO
------
-
-- Extensive testing of the pilot exposure mode
-- complete documentation
-- insert hyperlinks into documentation
+  - Extensive testing of the pilot exposure mode
+  - complete documentation
+  - insert hyperlinks into documentation
 
 """
 
@@ -298,19 +295,19 @@ TO DO
 
   # set default values for global variables
   AUTO_MAC = DOFILE
-  AUTO_COUNTER = det
+  AUTO_COUNTER = DET
   AUTO_LEVEL = 0
   AUTO_MODE = 0
-  AUTO_RETRY_MAX = 20
+  AUTO_RETRY_MAX = 10
   AUTO_COUNT_HIGH = 5e5
   AUTO_RATE_LIMIT =2e5
   AUTO_COUNT_RBV = 1e6
   AUTO_COUNT_TARGET = 1e4
   AUTO_COUNT_LOW = 0.5 * AUTO_COUNT_TARGET
   AUTO_PILOT_EXPTIME = 0.05
-  AUTO_EXP_LOW = 1
-  AUTO_EXP_HIGH = 10
-  AUTO_FILTER_FACTOR = 5
+  AUTO_EXP_LOW = 1.0
+  AUTO_EXP_HIGH = 10.0
+  AUTO_FILTER_FACTOR = 5.0
   AUTO_COUNT_PREC = 0.01
   AUTO_FILTER_LOCK = 0
   AUTO_SET_PILOT = 1
@@ -329,14 +326,15 @@ def auto_help '{
   """
   Displays the auto help text.
 
-  Usage::
+  USAGE::
 
      > auto_help
 
-  .. note:: The help text is generated by simply displaying the text file
-     ``auto_mac.txt``, which should reside in the same directory as
-     ``auto.mac``. If the file does not exist, a generic help text defined in
-     ``auto_help`` is shown.
+  NOTE:
+    The help text is generated by simply displaying the text file
+    ``auto_mac.txt``, which should reside in the same directory as
+    ``auto.mac``. If the file does not exist, a generic help text defined in
+    ``auto_help`` is shown.
   """
 
   unix (sprintf ("dirname %s", AUTO_MAC), _1)
@@ -371,96 +369,95 @@ def auto_setup '{
   Set up the control parameters for the automatic filter and exposure
   adjustments.
 
-  Description:
-
+  DESCRIPTION:
     The following parameters can be adjusted to fit the particular needs of an
     experiment or detector type (global variables holding these parameters and
     default values are given in brackets):
 
-    * Auto level: the level of automatic adjustments to be performed. Three
+    :Auto level: The level of automatic adjustments to be performed. Three
       levels are currently available [AUTO_LEVEL = 0]:
 
-        ===== =================================================================
-        Level Description
-        ===== =================================================================
-        0     No automatic adjustments are made
-        1     Only filters are adjusted, no exposure time adjustments
-        2     Both filters and exposure times are automatically adjusted
-        ===== =================================================================
+        =====  ================================================================
+        Level  Description
+        =====  ================================================================
+        ``0``  No automatic adjustments are made
+        ``1``  Only filters are adjusted, no exposure time adjustments
+        ``2``  Both filters and exposure times are automatically adjusted
+        =====  ================================================================
 
-    * Auto mode: the mode used to calculate/apply the adjustments. Two modes
+    :Auto mode: The mode used to calculate/apply the adjustments. Two modes
       are available [AUTO_MODE = 0]:
 
-        ==== ==================================================================
-        Mode Description
-        ==== ==================================================================
-        0    Post-exposure analysis: exposures are taken at normal settings and
-             analyzed in retrospect. The exposure is only retaken if it is
-             deemed unacceptable. Otherwise, the calculated adjustments are
-             applied only to the next exposure. This mode is faster, but
-             riskier in terms of over-exposing the detector for potentially
-             much longer times.
-        1    Pilot exposure mode: A short pilot exposure is taken before each
-             exposure to determine the correct filter and exposure time
-             settings. This is safer in terms of identifying over-exposures
-             quickly and provides optimized settings for each exposure, but
-             comes at a considerable cost in additional dead time. The pilot
-             exposure time is specified in AUTO_PILOT_EXPTIME.
-        ==== ==================================================================
+        =====  ================================================================
+        Mode   Description
+        =====  ================================================================
+        ``0``  Post-exposure analysis: exposures are taken at normal settings
+               and analyzed in retrospect. The exposure is only retaken if it
+               is deemed unacceptable. Otherwise, the calculated adjustments
+               are applied only to the next exposure. This mode is faster, but
+               riskier in terms of over-exposing the detector for potentially
+               much longer times.
+        ``1``  Pilot exposure mode: A short pilot exposure is taken before each
+               exposure to determine the correct filter and exposure time
+               settings. This is safer in terms of identifying over-exposures
+               quickly and provides optimized settings for each exposure, but
+               comes at a considerable cost in additional dead time. The pilot
+               exposure time is specified in AUTO_PILOT_EXPTIME.
+        =====  ================================================================
 
-    * Counter to monitor: the SPEC counter mnemonic or number of the counter
+    :Counter to monitor: The SPEC counter mnemonic or number of the counter
       used to assess the validity of the exposure. Note that when using area
       detectors, it is necessary to monitor the count levels per pixel, as this
       the saturation conditions. In this case, there needs to be a counter
       configured that is monitoring the maximum count rate of all pixels within
-      the relevant region of interest. [AUTO_COUNTER = det]
+      the relevant region of interest. [AUTO_COUNTER = DET]
 
-    * Count RATE high limit: the maximum count rate (counts per second) on
+    :Count RATE high limit: The maximum count rate (counts per second) on
       the detector that is acceptable for the experiment. If the measured count
       rate is higher than this limit, filters will be inserted to lower the
       rate. [AUTO_RATE_LIMIT = 2.0e5]
 
-    * Target count level: the desired count level for a "perfect" exposure.
+    :Target count level: The desired count level for a "perfect" exposure.
       All adjustments applied to filter and/or count times aim to achieve this
       level. [AUTO_COUNT_TARGET = 1.0e4]
 
-    * Count level low limit: The lower count limit for an acceptable exposure.
+    :Count level low limit: The lower count limit for an acceptable exposure.
       If the measured level is below this, filters and exposure times will be
       adjusted (if possible) and the exposure retaken.
       [AUTO_COUNT_LOW = 5000]
 
-    * Counter saturation limit: The upper count limit for an acceptable
+    :Counter saturation limit: The upper count limit for an acceptable
       exposure. This should be chosen below the actual saturation level of the
       detector. If the measured level exceeds the saturation limit, filters and
       exposure times will be adjusted (if possible) and the exposure is
       repeated.
       [AUTO_COUNT_HIGH = 5.0e5]
 
-    * Transmission step: The step in filter transmission to be taken when
+    :Transmission step: The step in filter transmission to be taken when
       adjusting the filters. The specified step must be larger than the
       largest available incremet in transmission values of the experimental
       setup to ensure that the adjustments can be successful. Ideally, this
       number is chosen anywhere between 2 and 10, but may need to be higher
       depending on the available filters. [AUTO_FILTER_FACTOR = 5]
 
-    * Minimum exposure time: Minimum allowable exposure time to be used whith
+    :Minimum exposure time: Minimum allowable exposure time to be used whith
       automatic exposure time adjustments. [AUTO_EXP_LOW = 1]
 
-    * Maximum exposure time: Maximum allowable exposure time to be used whith
+    :Maximum exposure time: Maximum allowable exposure time to be used whith
       automatic exposure time adjustments. [AUTO_EXP_HIGH = 10]
 
-    * Pilot exposure time: Exposure time for the pilot exposure used in pilot
+    :Pilot exposure time: Exposure time for the pilot exposure used in pilot
       mode. [AUTO_PILOT_EXPTIME = 0.05]
 
-    * Count time precision: Automatically calculated count times will be
+    :Count time precision: Automatically calculated count times will be
       rounded to this precision. Typically, a value of 0.01 or 0.001 seconds is
       recommended. [AUTO_COUNT_PREC = 0.01]
 
-    * Maximum number of retries: The maximum number of retries to adjust
+    :Maximum number of retries: The maximum number of retries to adjust
       exposure and filter settings before giving up. This avoids infinite loops
-      due to inconsistent choices of control parameters. [AUTO_RETRY_MAX = 20]
+      due to inconsistent choices of control parameters. [AUTO_RETRY_MAX = 10]
 
-  Usage::
+  USAGE::
 
     > auto_setup
         then answer the questions
@@ -513,8 +510,8 @@ def auto_off '{
     This command is equivalent to ``auto_set_level 0``
 
   SEE ALSO:
-     :spec:def:`auto_set_level`,
-     :spec:def:`auto_on`
+    :spec:def:`auto_set_level`,
+    :spec:def:`auto_on`
 
   """
 
@@ -546,31 +543,33 @@ def auto_set_level '{
     > auto_set_level [<level>]
     > auto_on [<level>]
 
-  If now arguement is given, the user is prompted for input. The argument
-  ``<level>`` can be one of the following:
+  ARGUMENTS:
+    If no input argument is given, the user is prompted for input.
+    The optional input argument ``level`` can be one of the following:
 
-      =====  =================================================================
-      Level  Description
-      =====  =================================================================
-      ``0``  No automatic adjustments are made
-      ``1``  Only filters are adjusted, no exposure time adjustments
-      ``2``  Both filters and exposure times are automatically adjusted
-      =====  =================================================================
+      =========  ==========================================================
+      ``level``  Description
+      =========  ==========================================================
+      ``0``      No automatic adjustments are made
+      ``1``      Only filters are adjusted, no exposure time adjustments
+      ``2``      Both filters and exposure times are automatically adjusted
+      =========  ==========================================================
 
   EXAMPLES::
 
     > auto_set_level
-        then answer the questions in the dialogue
+        # then answer the questions in the dialogue
 
     > auto_on 1
-        turns on automatic filter adjustments (level 1)
+        # turns on automatic filter adjustments (level 1)
 
   NOTE:
-     :spec:def:`auto_set_level` and :spec:def:`auto_on` are equivalent to
-     each other.
+    :spec:def:`auto_set_level` and :spec:def:`auto_on` are equivalent to
+    each other.
 
   SEE ALSO:
-     :spec:def:`auto_off`
+    :spec:def:`auto_off`
+    :spec:def:`auto_setup`
 
   """
 
@@ -661,21 +660,35 @@ def auto_set_mode '{
   Set the acquisition mode to be used for the automatic filter and
   exposure time adjustments.
 
-  DESCRIPTION:
-    Need some more details here...
-
   USAGE::
 
     > auto_set_mode [<mode>]
-        where <mode> must be one of the following:
-          0 - post-exposure analysis
-          1 - pilot exposure mode
-        when called with no arguments, the user is prompted
+
+  ARGUMENTS:
+    If no input argument is given, the user is prompted for input.
+    The optional input argument ``mode`` can be one of the following:
+
+      ======== ================================================================
+      ``mode`` Description
+      ======== ================================================================
+      ``0``    Post-exposure analysis: exposures are taken at normal settings
+               and analyzed in retrospect. The exposure is only retaken if it
+               is deemed unacceptable. Otherwise, the calculated adjustments
+               are applied only to the next exposure. This mode is faster, but
+               riskier in terms of over-exposing the detector for potentially
+               much longer times.
+      ``1``    Pilot exposure mode: A short pilot exposure is taken before each
+               exposure to determine the correct filter and exposure time
+               settings. This is safer in terms of identifying over-exposures
+               quickly and provides optimized settings for each exposure, but
+               comes at a considerable cost in additional dead time. The pilot
+               exposure time is specified in AUTO_PILOT_EXPTIME.
+      ======== ================================================================
 
   EXAMPLE::
 
     > auto_set_mode 1
-        use the pilot exposure mode for automatic adjustments.
+        # use the pilot exposure mode for automatic adjustments.
 
   SEE ALSO:
     :spec:def:`auto_setup`
@@ -717,14 +730,20 @@ def auto_set_exposure '{
 
   USAGE::
 
-    > auto_set_exposure [<min> <max>]
-        where <min> is the minimum and <max> the maximum exposure time [s]
-        when called with no arguments, the user is prompted
+    > auto_set_exposure [<min_exptime> <max_exptime>]
+
+  ARGUMENTS:
+    The following arguments are optional:
+
+    :min_exptime: Shortest allowable exposure time [s]
+    :max_exptime: Longest allowable exposure time [s]
+
+    When called with no arguments, the user is prompted for input.
 
   EXAMPLE::
 
-      > auto_set_exposure 1 10
-          set the minimum exposure time to 1 sec and the maximum to 10 sec
+    > auto_set_exposure 1 10
+        # set the minimum exposure time to 1 sec and the maximum to 10 sec
 
   """
 
@@ -802,6 +821,9 @@ def auto_show_exposure '{
   USAGE::
 
     > auto_show_exposure
+
+  SEE ALSO:
+    :spec:def:`auto_show`
 
   """
 
@@ -977,7 +999,7 @@ def _auto_set_option '{
   } else if ($1==4){
     _valid = 0
     while(!(_valid)){
-      _input= getval("Upper limit for the counte RATE [cts/sec]", \
+      _input= getval("Upper limit for the count RATE [cts/sec]", \
         AUTO_RATE_LIMIT)
       _numitems = sscanf(_input, "%f", _input)
       if(_numitems == 1){
@@ -1202,12 +1224,27 @@ def _auto_adjust() '{
   Calculate and apply necessary exposure time and filter adjustments.
 
   DESCRIPTION:
+    This function determines whether a filter and/or exposure time adjustment
+    is necessary and applies the corresponding adjustments. Note that it does
+    *not* repeat the exposure, this has to be done separately, usually in some
+    sort of for-loop, which terminates once no more adjustmens were necessary.
 
-    The function returns 1 if transmission or exposure time have been changed,
-    0 otherwise.
+  RETURNS:
+    The function returns
 
-  USAGE::
-    > changed = _auto_adjust()
+    * 1 if an immediate re-exposure is necessary.
+    * 0 otherwise.
+
+  USAGE:
+    * check the status of the adjustment::
+
+        > retake = _auto_adjust()
+
+    * or inside a for-loop::
+
+        > while(_auto_adjust()){
+            --> keep taking exposures
+          }
 
   """
 
@@ -1443,7 +1480,13 @@ def _auto_check_exposure '{
 #------------------------------------------------------------------------------
 def _auto_check_levels '{
   """
-  Make sure the user-entered count levels are consistent
+  Make sure the user-entered count levels are valid.
+
+  DECRIPTION:
+    Checks the user-entered count levels for consistency, ensuring that:
+
+    * ``AUTO_COUNT_TARGET < AUTO_COUNT_HIGH``
+    * ``AUTO_COUNT_LOW < AUTO_COUNT_TARGET``
 
   USAGE::
 
@@ -1507,11 +1550,15 @@ def _auto_adjust_redo() '{
     If the current exposure does not meet the required criteria, counting
     is repeated until the best possible filter and exposure settings have been
     obtained, or a maximum number of retry counts has been reached.
-    The function returns 1 in case of success, 0 otherwise.
 
   USAGE::
 
     > success = _auto_adjust_redo()
+
+  RETURNS:
+
+    * 1 if adjustment has been successful
+    * 0 otherwise (e.g.: after maximum number or unsuccessful retries)
 
   NOTE:
     This macro makes use of the :spec:def:`recount` macro, which has to be
