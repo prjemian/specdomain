@@ -24,7 +24,7 @@ macro files, provides its documentation in SPEC comments, and has not been
 marked up previously for documentation with Sphinx.  Here is the file 
 *hkl_ioc.mac* in its entirety.
 
-.. literalinclude:: ex_markup/hkl_ioc.mac.original
+.. literalinclude:: ../markup_example/hkl_ioc.mac.original
     :tab-width: 4
     :linenos:
     :language: guess
@@ -90,7 +90,7 @@ change                                                directions
 ``extensions.append( 'sphinxcontrib.specdomain' )``   insert *after* line 28
 ===================================================   ==============================
 
-The result should look like this file: :download:`ex_markup/conf.py`.
+The result should look like this file: :download:`../markup_example/conf.py`.
 
 Apply Markup
 ==============================
@@ -418,7 +418,7 @@ Do the same thing for the *ioc_put_HKL* macro definition.
 .. [#] a SPEC :ref:`extended comment <spec-extended-comments>` is text that is surrounded by three 
        double-quote characters (``"""``), such as:
        
-       		"""this is triple-quoted text is a docstring"""
+       		"""this triple-quoted text is a docstring"""
        
        In the Python language, this is known as a docstring.
        But, **unlike Python**, SPEC does not recognize single quotes
