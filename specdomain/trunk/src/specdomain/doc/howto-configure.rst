@@ -4,6 +4,9 @@
 How to Create and Configure a Sphinx project to Document SPEC Macros
 ====================================================================
 
+.. tip:: for more information on this topic, refer to the SPhinx tutorial:
+			http://sphinx.pocoo.org/tutorial.html
+
 Decide which configuration
 =================================
 
@@ -14,9 +17,9 @@ Decide which configuration
 			files in a separate directory from the SPEC macros.  
 			Then again, maybe not.
 
---tba--
 
 .. index:: ! in-source configuration
+.. _in-source configuration:
 
 In-source configuration
 ---------------------------------
