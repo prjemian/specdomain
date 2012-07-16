@@ -48,8 +48,7 @@ cdef("calcHKL","calc(2); user_save_HKL;","ioc_HKL")
 # global variables defined here
 #===============================================================================
 if( unset("SIOC_PV") ) {
-#: soft IOC PV prefix
-global SIOC_PV
+global SIOC_PV             ;#: soft IOC PV name
 local foo tmp[]
 SIOC_PREFIX="4id"
 unix("hostname | cut -f1 -d.",foo)
@@ -69,12 +68,12 @@ def ioc_HKL '{
     
     
     if(("$1" == "on")) {
-       cdef("user_save_HKL","ioc_put_HKL","ioc_HKL","0x20")
+       cdef("user_save_HKL","ioc_put_HKL","ioc_HKL","0x20")		;#: turn on the save to shared memory
        print "Now put HKL to softioc."
        exit
     }
     if(("$1" == "off")) {
-       cdef("user_save_HKL","","ioc_HKL","delete")
+       cdef("user_save_HKL","","ioc_HKL","delete")		;#: turn off the save to shared memory
        print "Stop put HKL to softioc."
        exit
     }

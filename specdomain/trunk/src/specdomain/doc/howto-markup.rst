@@ -38,6 +38,7 @@ Create a Sphinx Project
 .. tip:: Use an :ref:`in-source configuration`
 
 Make a project directory and change directory into it.  
+(On my development system, this directory is called ``../markup_example``.)
 Copy the file above into this directory with the name *hkl_ioc.mac*.
 Then run::
 
@@ -82,15 +83,29 @@ Edit the document ``index.rst`` so it looks like this::
 	* :ref:`modindex`
 	* :ref:`search`
 	
-Edit *conf.py* and make this change:
+Edit *conf.py* and make these changes:
 
 ===================================================   ==============================
 change                                                directions
 ===================================================   ==============================
+``sys.path.insert(0, os.path.abspath('..'))``         *replace* line 19
 ``extensions.append( 'sphinxcontrib.specdomain' )``   insert *after* line 28
 ===================================================   ==============================
 
-The result should look like this file: :download:`../markup_example/conf.py`.
+The revised file should look like this file: :download:`../markup_example/conf.py`.
+
+Now, build the documentation by typing::
+
+    make html
+    firefox _build/html/index.html &
+
+You should expect a page that looks like this figure:
+
+.. figure:: example1.png
+    :alt: view of original hkl_ioc.mac HTML documentation
+
+    Documentation of the original **hkl_ioc.mac** file.
+
 
 Apply Markup
 ==============================
@@ -408,8 +423,55 @@ We'll apply that as the docstring:
 
 Do the same thing for the *ioc_put_HKL* macro definition.
 
+Document the global variable
+----------------------------------
 
+On line 45 (in the original file), there is a global variable declaration: ``global SIOC_PV``.
+The description for this variable has been deduced from its usage in this file with EPICS.  [#]_
+It is possible to document :spec:global:`SIOC_PV` using a :ref:`descriptive comment`.
+Insert the line containing ``global SIOC_PV`` with this one::
 
+	global SIOC_PV             ;#: soft IOC PV name
+
+The semicolon is used to ensure that the spec command is finished.  It might be unnecessary.
+The descriptive comment can be used *in-line* to define the item on that line.
+
+Similarly, add another :ref:`descriptive comment` to document line 38 (original file) by inserting this
+line *before* the line that reads ``cdef("user_save_HKL","","ioc_HKL")``::
+
+	#: preload check/setting here
+	
+Here the descriptive comment appearing on one line will provide a summary
+for the item defined on the next line only.
+
+Final Results
+=================
+
+Rebuild the completed :download:`../markup_example/hkl_ioc.mac` documentation with::
+
+	make html
+
+.. note:: Don't be concerned about the warnings of
+	``SEVERE: Duplicate ID: "cdef-user_save_HKL".``
+	These messages are only informative.  
+	This :ref:`bug <bugs>` should be resolved in a future version of ``specdomain``.
+
+After refreshing the page in the WWW browser, it should like this:
+
+.. figure:: example2.png
+    :alt: view of marked-up hkl_ioc.mac HTML documentation
+
+    Documentation of the marked-up **hkl_ioc.mac** file.
+
+and the index will look like:
+
+.. figure:: example3.png
+    :alt: index of marked-up hkl_ioc.mac HTML documentation
+
+    Index of the marked-up **hkl_ioc.mac** file.
+
+.. note::  It is :ref:`planned for the future <todo>` to provide options for sorting the output alphabetically
+	and to provide other features.
 
 -----------------
 
@@ -425,3 +487,4 @@ Do the same thing for the *ioc_put_HKL* macro definition.
        to mark extended comments.  Only use the double quote character.
 .. [#] definition list: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#definition-lists
 .. [#] table: http://sphinx.pocoo.org/rest.html#tables
+.. [#] EPICS: http://www.aps.anl.gov/epics
