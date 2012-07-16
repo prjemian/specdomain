@@ -1,0 +1,260 @@
+"""
+###############################################################################
+       User macros to configure spec with the Image Server program
+###############################################################################
+
+* $Id$
+* sample file to test sphinx documentation of SPEC macro files
+
+This file contains SPEC macro fragments to test various 
+parts of the SPHINX documentation builder.
+"""
+
+def ccdhelp '
+    printf("\nUser macros for the BCDA ccd package\n")
+    printf("\t%c%sccdsetup\n",27,"[1m")
+    # ...
+'
+
+local A2Rp0
+      A2Rp0 = 15.759			;#  A2Rp center
+
+
+#==============================================================================
+"""
+common/shutter
+==============
+ 
+NAME
+   shutter.mac
+ 
+SUMMARY
+   Commands to control a fast photon shutter.
+ 
+DESCRIPTION
+   The macro causes the fast photon shutter to be opened immediately prior to
+   any count command, and closed again upon its completion. A configurable
+   delay time assures that the shutter is fully open before issuing the
+   count command.
+ 
+   The photon shutter is controlled via an EPICS binary output channel, and
+   the shutter status is optionally monitored via a binary input channel (in
+   which case the delay time is not used, but the monitor signal is used to
+   check for completion of the opening process).
+ 
+AUTHOR
+   Christian M. Schlepuetz (CS, cschlep)
+ 
+CREATION DATE
+   2004/11/06
+ 
+COPYRIGHT
+   Copyright 2006-2011 by the above authors (see AUTHOR/AUTHORS)
+ 
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+ 
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see http://www.gnu.org/licenses/.
+ 
+VERSION::
+ 
+   $. Date: 2010-11-04 19:06:06 -0400 (Thu, 04 Nov 2010) $
+   $. Author: cschlep $
+   $. URL: file:///data/svn/software/spec/trunk/common/shutter.mac $
+   $. Revision: 17 $
+ 
+DEPENDENCIES
+   Chained macro definitions affected by this macro:
+   
+   - user_precount
+   - user_getcounts
+   - cleanup_always
+ 
+HISTORY
+   2004/11/06 (CS):
+   
+	   - modified the first original version to comply with naming and format 
+	     conventions
+	   - implemented help-file support and wrote help texts.
+	     2010/03/30 (CS):
+	   - added the following global variables to make macro more easily portable::
+	 
+	 	    SHUTTER_CONTROL_PV      # EPICS PV name for the shutter control (bo)
+	 	    SHUTTER_CONTROL_OPEN    # EPICS control value for open shutter
+	 	    SHUTTER_CONTROL_CLOSED  # EPICS control value for closed shutter
+	 	    SHUTTER_STATUS_PV       # EPICE PV name for the shutter status (bi)
+	 	    SHUTTER_STATUS_OPEN     # EPICS status value for open shutter
+	 	    SHUTTER_STATUS_CLOSED   # EPICS status value for closed shutter
+	 	    SHUTTER_IS_ON           # flag for automatic shutter control
+	 	    SHUTTER_SLEEP_TIME      # SPEC sleep time after opening shutter
+ 
+   2010/07/23 (CS):
+	   - added SVN keywords (replacing CVS keywords)
+ 
+   2011/12/19 (CS):
+	   - reformatted code documentation to work with ROBODoc
+	   - added shutter_setup with following internal macros:
+	 
+	     * _shutter_print_setup
+	     * _shutter_set_option
+	     * _clear_screen
+	 
+	   - replaced SHUTTER_STATUS* with SHUTTER_MONITOR*
+	   - replaced global variables _OPEN with _OPEN_VAL and
+	     _CLOSED with _CLOSED_VAL
+"""
+#==============================================================================
+
+#==============================================================================
+# Define some global variables
+# ----------------------------
+
+    global SHUTTER_MAC
+           SHUTTER_MAC = DOFILE
+
+    # EPICS PV of the binary output which controls the shutter
+    
+    global SHUTTER_CONTROL_PV
+           SHUTTER_CONTROL_PV = "X04SA-ES3-SC:FPS"
+
+    global SHUTTER_CONTROL_OPEN_VAL
+           SHUTTER_CONTROL_OPEN_VAL = "On"
+
+    global SHUTTER_CONTROL_CLOSED_VAL
+           SHUTTER_CONTROL_CLOSED_VAL = "Off"
+
+    # EPICS PV of the binary input which monitors the state of the shutter
+    # if SHUTTER_MONITOR_PV = "", no monitoring is performed
+    
+    global SHUTTER_MONITOR_PV
+           SHUTTER_MONITOR_PV = ""
+
+    global SHUTTER_MONITOR_OPEN_VAL
+           SHUTTER_MONITOR_OPEN_VAL = "open"
+
+    global SHUTTER_MONITOR_CLOSED_VAL
+           SHUTTER_MONITOR_CLOSED_VAL = "closed"
+
+    global SHUTTER_IS_ON
+           SHUTTER_IS_ON = 0
+
+    global SHUTTER_SLEEP_TIME
+           SHUTTER_SLEEP_TIME = 0.1
+
+
+#==============================================================================
+# This macro file contains the following commands:
+#==============================================================================
+
+#------------------------------------------------------------------------------
+
+def shutter_help 'sh_help'
+
+def sh_help '{
+	"""
+	sh_help, shutter_help: Displays the shutter help text.
+	
+	usage::
+	
+	   > sh_help
+	
+	.. note::
+	   The help text is generated by simply displaying the text file
+	   ``shutter_mac.txt``, which should reside in the same directory as ``shutter.mac``.
+	   If the file does not exist, a generic help text is shown.
+	"""
+
+  unix (sprintf ("dirname %s", SHUTTER_MAC), _1)
+  ll = length (_1)
+  if (substr (_1, ll, 1) == "\n") _1 = substr (_1, 1, (ll - 1))
+  file = sprintf ("%s/shutter_mac.txt", _1)
+  if (file_info (file, "-e")) {
+    unix (sprintf ("cat %s", file))
+  } else {
+    printf("\n  Macros available in file shutter.mac:\n")
+    printf(  "                           ===========\n")
+    printf("\n")
+    printf("  sh_help      - creates this help text\n")
+    printf("  shop         - opens the fast shutter\n")
+    printf("\n")
+  }
+}'
+
+""".. note:: there is much more content in ``shutter.mac``"""
+
+#==============================================================================
+
+def _ascan ''
+
+kohzuMove_PV = "32ida:KohzuPutBO"
+Und_Delay = 0.1
+
+def kohzuE_cmd(mne,key,p1) '{
+     if (key == "set_position") {
+      return
+     }
+}'
+
+def show_und'
+   printf("\n%40.40s","Current Undulator Status")
+'
+
+  # cleanup macro for ^C usage
+  rdef _cleanup3 \'resetUSAXS\'
+  rdef _cleanup3 \'\'
+     cdef("Fheader", fheader,  "UCOL", 0x20)
+     rdef Flabel \'""\'
+
+#==============================================================================
+
+global kohzu_PV kohzuMV_PV UND_PV Und_Off UNDE_TRACK_ON
+global       kohzuStop_PV kohzuMode_PV      kohzuMove_PV
+global CCD_PREFIX            #: EPICS PV for CCD server
+global CCD_OVERHEAD_SECS        #: readout time
+global CCD_OVERHEAD_SECS_MEASURED   #: measured readout time
+
+    global @A_name[] @B_name[]
+       unglobal @A_name
+       unglobal @B_name
+global CCD_DARK_NUM CCDDARK CCD_THROW
+global MULTI_IMGS # useful 8-ID's IMM fileformat; currently not used
+
+#: twice the ratio of a circle's circumference to its diameter    
+constant TWO_PI 6.283
+local _newspaper	#: don't expect to see new ones
+
+#==============================================================================
+
+"""
+TODO: need some good test cases for arrays.
+But this is not the highest priority.
+
+[[extern] shared] [type] array var[cols]
+    Declares a one-dimensional data array.
+
+[[extern] shared] [type] array var[rows][cols]
+    Declares a two-dimensional data array.
+"""
+
+#==============================================================================
+
+"""    # This is the start of an extended comment
+
+this is located within an extended comment
+
+"""    # this is a normal comment after the extended comment
+
+
+a = 42.0    #  """ this is not an extended comment"""
+#==============================================================================
+
+
+"""End of $Id$"""

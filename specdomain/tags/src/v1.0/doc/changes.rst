@@ -1,0 +1,7 @@
+.. $Id$
+
+#########
+Changelog
+#########
+
+.. include:: ../CHANGES
