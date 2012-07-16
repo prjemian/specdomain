@@ -31,7 +31,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Environment :: Web Environment',
-        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
         'License :: Free To Use But Restricted',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
