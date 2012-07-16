@@ -47,8 +47,10 @@ def inc1scan '{
 
 def CheckSaveToFile '{
   """
+  Helps prevent user from writing data to */dev/null* by accident.
+  
   This macro will run when SPEC starts and checks
-  if the output is directed into a file or might be ignored.
+  if the output is directed into a file or might be ignored (written to */dev/null*).
   It runs :spec:def:`newsample` if the output might be ignored.
   """
   if (unset("DATAFILE") || (DATAFILE == "/dev/null") || (DATAFILE == "null")) {

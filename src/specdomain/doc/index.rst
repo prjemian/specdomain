@@ -16,11 +16,9 @@ Contents
    :maxdepth: 2
 
    howto
+   examples
    conventions
    spec
-   example
-   bpm
-   aalength
 
 Other matters
 ==================

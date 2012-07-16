@@ -68,6 +68,12 @@ Documenting SPEC Files
 SPEC Extended Comments
 --------------------------------
 
+.. sidebar:: Do not use the single-quote character to mark an extended comment.
+
+	In the Python language, a triple-quoted string is known as a docstring.
+	But, **unlike Python**, SPEC does not recognize single quotes
+	to mark extended comments.  Only use the double quote character for SPEC files.
+
 Since 2002, SPEC has provided an *extended comment* block. [#]_
 Such a block begins and ends
 with three double-quotes, such as::
@@ -75,7 +81,10 @@ with three double-quotes, such as::
 	"""This is an extended comment"""
 
 Here, the extended comment block should be formatted according to the conventions of 
-restructured text [#]_.
+restructured text [#]_.  There is also a 
+:ref:`recommended convention <convention for extended comment>` 
+for using extended comments in SPEC macro files.
+
 
 
 Describing SPEC objects
