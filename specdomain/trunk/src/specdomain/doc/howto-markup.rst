@@ -360,16 +360,18 @@ Test
 
 Be sure to test your changes as you progress, until you are confident with reST markup.
 The *make* process is efficient, only rebuilding the documentation from affected
-.rst souce file changes.  However, you might need to make sure changes in the .mac files
-cause documentation to be rebuilt.  It might be easier, although less efficient,
-to rebuild your documentation each time.  
+.rst souce file changes.  Usually, this also considers changes in the .mac files.
+This command is usually all it takes to rebuild the HTML documentation::
 
-::
+	make html
+
+However, you might wish to make sure changes in the .mac files
+cause documentation to be rebuilt.  It might be easier, although less efficient,
+to rebuild your HTML documentation each time using this command::
 	
 	make clean html
 
-
-This is usually very fast (seconds).
+The builds are usually very fast (seconds).
 
 
 Docstring markup in each macro definition
@@ -405,6 +407,8 @@ We'll apply that as the docstring:
 	}'
 
 Do the same thing for the *ioc_put_HKL* macro definition.
+
+
 
 
 -----------------
