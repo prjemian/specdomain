@@ -9,7 +9,9 @@ for documenting SPEC macro source Codefiles
 to help provide consistency.
 These are not requirements.
 
-extended comments
+.. index:: ! extended comment
+
+extended comment
 -----------------
 
 Only the first extended comment in a "section" should be documented.
@@ -24,6 +26,9 @@ macro definition is the macro documentation).
 The first paragraph should be very short, preferably one line.
 It is assumed to be the summary.
 If the first paragraph starts with a ":", no summary text will be assumed.
+
+.. index:: ! descriptive comment
+.. _descriptive comment:
 
 descriptive comment
 ---------------------
@@ -48,6 +53,9 @@ Descriptive comment example that documents *ccdset_shutter*, a *rdef* declaratio
     rdef ccdset_shutter ''
 
 .. spec:global:: tth    #: two-theta, the scattering angle
+
+
+.. index:: ! hidden object
 
 hidden objects
 ----------------

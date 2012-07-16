@@ -440,10 +440,6 @@ class SpecMacrofileParser:
     
     #------------------------ reporting section below ----------------------------------
 
-    def ReST(self):
-        """create the ReStructured Text from what has been found"""
-        return self._simple_ReST_renderer()
-
     def _simple_ReST_renderer(self):
         """create a simple ReStructured Text rendition of the findings"""
         declarations = []       # variables and constants
@@ -451,6 +447,11 @@ class SpecMacrofileParser:
         functions = []          # def and rdef function macros
         s = []
         for r in self.findings:
+            # TODO: need to define subsections such as these:
+            #    Summary (if present)
+            #    Documentation (if present)
+            #    Declarations
+            #    Tables
             if r['objtype'] == 'extended comment':
                 # TODO: apply rules to suppress reporting under certain circumstances
                 s.append( '' )
@@ -461,6 +462,8 @@ class SpecMacrofileParser:
                 s.append( '' )
                 s.append(r['text'])
                 s.append( '' )
+#                s.append( '-'*10 )
+#                s.append( '' )
             elif r['objtype'] in ('def', 'rdef', 'cdef', ):
                 # TODO: apply rules to suppress reporting under certain circumstances
                 macros.append(r)
@@ -517,6 +520,9 @@ class SpecMacrofileParser:
                             s.append(' '*4 + line)
                     s.append( '' )
 
+#        s.append( '-'*10 )
+#        s.append( '' )
+
         s += _report_table('Variable Declarations (%s)' % self.filename, declarations, 
                           ('objtype', 'name', 'start_line', 'summary', ))
         s += _report_table('Macro Declarations (%s)' % self.filename, macros, 
@@ -526,6 +532,15 @@ class SpecMacrofileParser:
         #s += _report_table('Findings from .mac File', self.findings, ('start_line', 'objtype', 'line', 'summary', ))
 
         return '\n'.join(s)
+
+    def ReST(self, style = 'simple'):
+        """create the ReStructured Text from what has been found"""
+    
+        # allow for additional renderers, selectable by options
+        renderer_dict =  {'simple': self._simple_ReST_renderer,}
+        if style not in renderer_dict:
+            raise RuntimeWarning, "%s renderer not found, using `simple`" % style
+        return renderer_dict[style]()
 
 
 def _report_table(title, itemlist, col_keys = ('objtype', 'start_line', 'end_line', )):
