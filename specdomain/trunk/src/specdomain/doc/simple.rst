@@ -1,11 +1,11 @@
 .. $Id$
 
 ====================================================================
-Example SPEC Macro Source Code File Documentation
+Simple Example to Document a SPEC Macro File
 ====================================================================
 
 This example demonstrates how a file with simple reST markup will be documented.::
 
-	.. autospecmacro:: example.mac
+	.. autospecmacro:: simple.mac
 
-.. autospecmacro:: example.mac
+.. autospecmacro:: simple.mac

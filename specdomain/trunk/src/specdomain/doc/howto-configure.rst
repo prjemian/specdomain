@@ -27,7 +27,12 @@ In-source configuration
 An *in-source* configuration is where the Sphinx ``.rst`` 
 files are in **the same directory** as the SPEC macro files.
 
-Here is a graphical example:  --tba--
+Here is a graphical example:
+
+.. figure:: in-source.png
+    :alt: example directory of an in-source configuration
+
+    Example directory of an in-source configuration
 
 .. index:: ! out-of-source configuration
 
@@ -37,7 +42,25 @@ Out-of-source configuration
 An *out-of-source* configuration is where the Sphinx ``.rst`` 
 files are in **a separate directory** from the SPEC macro files.
 
-Here is a graphical example:  --tba--
+Here is a graphical example: [#]_
+
+.. figure:: out-of-source1.png
+    :alt: example build directory of an out-of-source configuration
+
+    Example build directory of an out-of-source configuration
+
+The source files are located in the *source* directory (child of the build directory):
+
+.. figure:: out-of-source2.png
+    :alt: example *source* directory of an out-of-source configuration
+
+    Example *source* directory of an out-of-source configuration
+
+
+.. caution::  FIXME: these are Python files and project directories.
+	The figure *should* be shown with SPEC macro files out-of-source.
+
+
 
 Create the Sphinx documentation tree
 =====================================
@@ -53,7 +76,13 @@ Make a new sandbox directory to try this out::
 	mkdir /tmp/sandbox
 	cd /tmp/sandbox
 
-Create a Sphinx configuration in this directory by running ``sphinx-quickstart``:
+.. index:: sphinx-quickstart
+
+Create a Sphinx configuration in this directory by running::
+
+	sphinx-quickstart
+
+Here's the full session:
 
 .. code-block:: text
     :linenos:
@@ -133,6 +162,18 @@ Create a Sphinx configuration in this directory by running ``sphinx-quickstart``
 	
 	jemian@como-ubuntu64:/tmp/sandbox$  
 
+In case you missed them, these are the non-default answers supplied:
+
+=========================================================================================  ===============
+prompt                                                                                     response
+=========================================================================================  ===============
+``> Project name:``                                                                        *sandbox*
+``> Author name(s):``                                                                      *sandy*
+``> Project version:``                                                                     *test*
+``> autodoc: automatically insert docstrings from modules (y/N) [n]:``                     *y*
+``> viewcode: include links to the source code of documented Python objects (y/N) [n]:``   *y*
+=========================================================================================  ===============
+
 
 Configure: Changes to ``conf.py``
 =====================================
@@ -152,3 +193,10 @@ the theme, look on line 97 (or thereabouts) and change::
 to::
 
 	html_theme = 'sphinxdoc'
+
+
+----------------------------------
+
+.. rubric:: Footnotes
+
+.. [#] The green check boxes correspond to the status of each item in the version control system.

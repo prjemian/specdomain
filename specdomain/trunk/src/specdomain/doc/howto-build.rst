@@ -5,9 +5,7 @@
 How to Build the Documentation from a Sphinx project
 ====================================================================
 
---tba--
-
-::
+Briefly::
 
 	make html
 

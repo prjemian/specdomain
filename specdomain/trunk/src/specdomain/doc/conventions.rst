@@ -1,15 +1,21 @@
 .. $Id$
 
+.. index::  ! SPEC conventions
+	see: conventions; SPEC conventions
+
 ====================================================================
 Common Conventions
 ====================================================================
 
 There are several conventions 
-for documenting SPEC macro source Codefiles
+for documenting SPEC macro source code files
 to help provide consistency.
 These are not requirements.
 
-.. index:: ! extended comment
+.. index:: 
+	pair:	SPEC conventions; extended comments
+
+.. _convention for extended comment:
 
 extended comment
 -----------------
@@ -17,7 +23,7 @@ extended comment
 Only the first extended comment in a "section" should be documented.
 (This setting could be changed with an optional switch.)
 
-A "section" might be the global scope of a .mac file or a macro definition block.
+A *section* might be the global scope of a .mac file or a macro definition block.
 
 As much as possible, use the python documentation style (that is, 
 first comment is module documentation, first comment inside 
@@ -27,7 +33,11 @@ The first paragraph should be very short, preferably one line.
 It is assumed to be the summary.
 If the first paragraph starts with a ":", no summary text will be assumed.
 
-.. index:: ! descriptive comment
+
+
+.. index:: ! descriptive comments
+	pair:	SPEC conventions; descriptive comments
+
 .. _descriptive comment:
 
 descriptive comment
@@ -55,7 +65,10 @@ Descriptive comment example that documents *ccdset_shutter*, a *rdef* declaratio
 .. spec:global:: tth    #: two-theta, the scattering angle
 
 
-.. index:: ! hidden object
+
+
+.. index:: ! hidden objects
+	pair:	SPEC conventions; hidden objects
 
 hidden objects
 ----------------

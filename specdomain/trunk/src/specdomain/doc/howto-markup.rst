@@ -50,11 +50,11 @@ These are the non-defaults for the example project:
 ========================================================================================  ================================
 prompt                                                                                    response
 ========================================================================================  ================================
-``> Project name:``                                                                       **example**
-``> Author name(s):``                                                                     **SPEC Macro Writer**
-``> Project version:``                                                                    **1**
-``> autodoc: automatically insert docstrings from modules (y/N) [n]:``                    **y**
-``> viewcode: include links to the source code of documented Python objects (y/N) [n]:``  **y**
+``> Project name:``                                                                       *example*
+``> Author name(s):``                                                                     *SPEC Macro Writer*
+``> Project version:``                                                                    *1*
+``> autodoc: automatically insert docstrings from modules (y/N) [n]:``                    *y*
+``> viewcode: include links to the source code of documented Python objects (y/N) [n]:``  *y*
 ========================================================================================  ================================
 
 Edit the document ``index.rst`` so it looks like this::
@@ -204,7 +204,7 @@ which looks like:
 
 Note that the two colons indicate literal text follows.  
 Both the blank line after the colons and the final blank line are required to avoid warnings.
-And, the entire comment must be indented at least one column to the right of the two colons.
+And, the entire comment *must be indented* at least one column to the right of the two colons.
 
 reST markup
 +++++++++++++
@@ -239,8 +239,8 @@ which looks like:
 
 This markup does not look too complicated until we reach the *Modification history* 
 starting at line 23.  The content here might be coded as either literal text (above)
-or a reST table.  Since the table is easy *and* CVS is no longer used, we'll 
-format it as a table.
+or a reST table.  Since the table is easy *and* CVS is no longer used to build the 
+revision history, we'll format it as a table.
 
 Consider this SPEC comment:
 
@@ -353,7 +353,7 @@ Modified by:
 
 User macros
 	ioc_HKL -> to turn on/off the feature of putting HKL to shared
-                           memory.
+	memory.
 
 Internal macros
 	ioc_put_HKL -> write HKL to the soft IOC
