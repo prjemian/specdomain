@@ -1,5 +1,0 @@
-.. $Id$
-
-.. autospecdir:: ../macros/
-
-.. end
