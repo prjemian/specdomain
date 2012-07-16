@@ -21,7 +21,7 @@ Modified by:
 
 User macros
 	ioc_HKL -> to turn on/off the feature of putting HKL to shared
-                           memory.
+	memory.
 
 Internal macros
 	ioc_put_HKL -> write HKL to the soft IOC
@@ -40,6 +40,7 @@ Revision   date/time            author   remarks
 # preload check/setting here
 #===============================================================================
 
+#: preload check/setting here
 cdef("user_save_HKL","","ioc_HKL")
 cdef("calcHKL","calc(2); user_save_HKL;","ioc_HKL")
 
@@ -47,6 +48,7 @@ cdef("calcHKL","calc(2); user_save_HKL;","ioc_HKL")
 # global variables defined here
 #===============================================================================
 if( unset("SIOC_PV") ) {
+#: soft IOC PV prefix
 global SIOC_PV
 local foo tmp[]
 SIOC_PREFIX="4id"

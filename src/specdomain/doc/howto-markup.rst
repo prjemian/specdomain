@@ -46,15 +46,15 @@ Then run::
 Take most of the defaults.  
 These are the non-defaults for the example project:
 
-========================================================================================  ========================
+========================================================================================  ================================
 prompt                                                                                    response
-========================================================================================  ========================
+========================================================================================  ================================
 ``> Project name:``                                                                       **example**
 ``> Author name(s):``                                                                     **SPEC Macro Writer**
 ``> Project version:``                                                                    **1**
 ``> autodoc: automatically insert docstrings from modules (y/N) [n]:``                    **y**
 ``> viewcode: include links to the source code of documented Python objects (y/N) [n]:``  **y**
-========================================================================================  ========================
+========================================================================================  ================================
 
 Edit the document ``index.rst`` so it looks like this::
 
@@ -82,10 +82,10 @@ Edit the document ``index.rst`` so it looks like this::
 	* :ref:`modindex`
 	* :ref:`search`
 	
-Edit *conf.py* and make these changes (in order):
+Edit *conf.py* and make this change:
 
 ===================================================   ==============================
-change                                                location
+change                                                directions
 ===================================================   ==============================
 ``extensions.append( 'sphinxcontrib.specdomain' )``   insert *after* line 28
 ===================================================   ==============================
