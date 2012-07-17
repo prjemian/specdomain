@@ -33,7 +33,7 @@ Provides:
 global example_global  #: this is an example of a global variable
 local  example_local   #: a local variable is unusual at the global level
 
-#: Conversion constant between wavelength (A) and photon energy (keV)
+#: Conversion constant between wavelength (A) and photon energy (keV) (:math:`E \lambda = hc`)
 constant  A_keV 12.3984
 
 def inc1scan '{
