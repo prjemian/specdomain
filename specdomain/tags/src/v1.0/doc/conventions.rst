@@ -95,13 +95,13 @@ Use the same syntax as parameter declarations for Python modules.
 Here is an example SPEC macro with reST markup::
 
 	def my_comment '{
-	    '''
+	    """
 	    Make a comment
 	    
 	    **usage**: ``my_comment "AR aligned to 15.14063 degrees"``
 	    
 	    :param str text: message to be printed
-	    '''
+	    """
 	    qcomment "%s" $1
 	}'
 
