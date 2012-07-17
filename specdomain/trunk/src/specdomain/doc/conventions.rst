@@ -4,13 +4,13 @@
 	see: conventions; SPEC conventions
 
 ====================================================================
-Common Conventions
+SPEC Documentation Conventions
 ====================================================================
 
-There are several conventions 
-for documenting SPEC macro source code files
-to help provide consistency.
-These are not requirements.
+This document lays out several conventions for for documenting SPEC
+macro source code files. The aim of these conventions is to to help provide
+consistency for the "look and feel" of the resulting documentation. However,
+these conventions are by no means strict requirements.
 
 .. index:: 
 	pair:	SPEC conventions; extended comments
@@ -48,16 +48,18 @@ descriptive comment
 				It *is* awfully useful!
 .. Is it used to document Python code?
 
-Descriptive comments are used to document items that cannot contain
-extended comments (triple-quoted strings) such as variable declarations
-or *rdef* or *cdef* macro declarations.  They appear either in-line
-with the declaration or on the preceding line.
+Descriptive comments are a new construct which can be used to document items
+that cannot contain extended comments (triple-quoted strings) themselves, 
+such as variable declarations or *rdef* or *cdef* macro declarations.
+They appear either as comments in the same line after the declaration (in-line)
+or as a comment-only line immediately preceding the declaration (one-liner).
 
-Descriptive comment example that documents *tth*, a global variable declaration::
+**Examples**:
+Descriptive comment that documents *tth*, a global variable declaration::
     
     global tth    #: two-theta, the scattering angle
 
-Descriptive comment example that documents *ccdset_shutter*, a *rdef* declaration::
+Descriptive comment that documents *ccdset_shutter*, a *rdef* declaration::
 
     #: clear the ccd shutter handler
     rdef ccdset_shutter ''
