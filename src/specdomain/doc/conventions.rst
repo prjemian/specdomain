@@ -7,7 +7,7 @@
 SPEC Documentation Conventions
 ===============================================================================
 
-This document lays out several conventions for for documenting SPEC
+This document lays out several conventions for documenting SPEC
 macro source code files. The aim of these conventions is to to help provide
 consistency for the "look and feel" of the resulting documentation. However,
 these conventions are by no means strict requirements.
