@@ -25,6 +25,7 @@ Contents
    howto
    examples
    conventions
+   style_guide
    spec
    other
    
