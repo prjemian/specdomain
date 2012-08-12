@@ -194,6 +194,7 @@ class SpecDirDocumenter(Documenter):
         specdir = self.name
 #        self.add_line(u'', '<autodoc>')
 #        self.add_line(u'directory:\n   ``%s``' % specdir, '<autodoc>')
+        macrofiles = []
         if os.path.exists(specdir):
             for f in sorted(os.listdir(specdir)):
                 filename = os.path.join(specdir, f)
@@ -201,16 +202,24 @@ class SpecDirDocumenter(Documenter):
                     # TODO: support a user choice for pattern match to the file name (glob v. re)
                     # TODO: support the option to include subdirectories (include_subdirs)
                     # TODO: do not add the same SPEC macro file more than once
-                    self.add_line(u'', '<autodoc>')
-                    self.add_line(u'.. autospecmacro:: %s' % filename, '<autodoc>')
-                    # TODO: any options?
-                    self.add_line(u'', '<autodoc>')
-                    # TODO: suppress delimiter after last file
-                    self.add_line(u'-'*15, '<autodoc>')         # delimiter between files
+                    macrofiles.append(filename)
         else:
             self.add_line(u'', '<autodoc>')
             self.add_line(u'Could not find directory: ``%s``' % specdir, '<autodoc>')
-
+        if len(macrofiles) > 0:
+            self.add_line(u'', '<autodoc>')
+            self.add_line(u'.. rubric:: List of SPEC Macro Files in *%s*' % specdir, '<autodoc>')
+            for filename in macrofiles:
+                self.add_line(u'* :ref:`%s <%s>`' % (filename, filename), '<autodoc>')
+            self.add_line(u'-'*15, '<autodoc>')         # delimiter
+            for filename in macrofiles:
+                self.add_line(u'', '<autodoc>')
+                self.add_line(u'.. _%s:' % filename, '<autodoc>')
+                self.add_line(u'.. autospecmacro:: %s' % filename, '<autodoc>')
+                # TODO: any options?
+                self.add_line(u'', '<autodoc>')
+                # TODO: suppress delimiter after last file
+                self.add_line(u'-'*15, '<autodoc>')         # delimiter between files
 
 
 class SpecMacroObject(ObjectDescription):
