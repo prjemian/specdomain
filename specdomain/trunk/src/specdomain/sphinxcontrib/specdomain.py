@@ -209,9 +209,14 @@ class SpecDirDocumenter(Documenter):
         if len(macrofiles) > 0:
             self.add_line(u'', '<autodoc>')
             self.add_line(u'.. rubric:: List of SPEC Macro Files in *%s*' % specdir, '<autodoc>')
+            self.add_line(u'', '<autodoc>')
             for filename in macrofiles:
+                # Show a bullet list at the top of the page
+                # This is an alternative to separate pages for each macro file
                 self.add_line(u'* :ref:`%s <%s>`' % (filename, filename), '<autodoc>')
+            self.add_line(u'', '<autodoc>')
             self.add_line(u'-'*15, '<autodoc>')         # delimiter
+            self.add_line(u'', '<autodoc>')
             for filename in macrofiles:
                 self.add_line(u'', '<autodoc>')
                 self.add_line(u'.. _%s:' % filename, '<autodoc>')
@@ -240,7 +245,7 @@ class SpecMacroObject(ObjectDescription):
     ]
 
     def add_target_and_index(self, name, sig, signode):
-        targetname = '%s-%s' % (self.objtype, name)
+        targetname = 'macro:%s:%s:%s:%s' % (self.objtype, name, signode.source, str(signode.line))
         signode['ids'].append(targetname)
         self.state.document.note_explicit_target(signode)
         indextext = self._get_index_text(name)
@@ -315,7 +320,7 @@ class SpecVariableObject(ObjectDescription):
     def add_target_and_index(self, name, sig, signode):
         #text = u'! ' + sig      # TODO: How to use emphasized index entry in this context?
         text = name.split()[0]   # when sig = "tth    #: scattering angle"
-        targetname = '%s-%s' % (self.objtype, text)
+        targetname = 'var:%s:%s:%s:%s' % (self.objtype, text, signode.source, str(signode.line))
         signode['ids'].append(targetname)
         # TODO: role does not point back to it yet
         # http://sphinx.pocoo.org/markup/misc.html#directive-index
