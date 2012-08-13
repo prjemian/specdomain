@@ -1,14 +1,17 @@
 .. -*- restructuredtext -*-
 
 This file describes user-visible changes between the extension versions.
-
-Version 1.0 (2012-07-16)
-------------------------
-
-* Initial release.
+Refer to the TRAC site for details on these tickets noting *specdomain* in the title.
+(https://subversion.xor.aps.anl.gov/trac/bcdaext/report/1?sort=ticket&asc=1)
 
 
 Version 1.01 (started 2012-07-16)
 -----------------------------------
 
-* -tba-
+* refs #13: show a bullet list at the top of the page (alternative to separate pages for each macro file) 
+* fixed #14: "duplicate ID warnings" resolved
+
+Version 1.0 (2012-07-16)
+------------------------
+
+* Initial release.
