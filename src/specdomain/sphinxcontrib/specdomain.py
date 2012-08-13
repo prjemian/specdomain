@@ -338,7 +338,8 @@ class SpecXRefRole(XRefRole):
         tuple.
         """
         key = ":".join((refnode['refdomain'], refnode['reftype']))
-        refnode[key] = env.temp_data.get(key)        # key was 'spec:def'
+        value = env.temp_data.get(key)
+        refnode[key] = value
         if not has_explicit_title:
             title = title.lstrip(':')   # only has a meaning for the target
             target = target.lstrip('~') # only has a meaning for the title
@@ -367,7 +368,7 @@ class SpecXRefRole(XRefRole):
             ('single', varname, tgtid, ''),
             #('single', _('environment variable; %s') % varname, tgtid, ''),
         ]
-        targetnode = nodes.target('', '', ids=[tgtid])
+        targetnode = nodes.target(node.rawsource, '', ids=[tgtid])
         document.note_explicit_target(targetnode)
         return [indexnode, targetnode, node], []
 
