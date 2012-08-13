@@ -329,9 +329,14 @@ class SpecVariableObject(ObjectDescription):
         self.indexnode['entries'].append(('single', text, targetname, ''))
 
 class SpecXRefRole(XRefRole):
-    """ """
+    """ Cross-reference the roles in specdomain """
     
     def process_link(self, env, refnode, has_explicit_title, title, target):
+        """Called after parsing title and target text, and creating the
+        reference node (given in *refnode*).  This method can alter the
+        reference node and must return a new (or the same) ``(title, target)``
+        tuple.
+        """
         key = ":".join((refnode['refdomain'], refnode['reftype']))
         refnode[key] = env.temp_data.get(key)        # key was 'spec:def'
         if not has_explicit_title:
@@ -347,6 +352,11 @@ class SpecXRefRole(XRefRole):
         return title, target
 
     def result_nodes(self, document, env, node, is_ref):
+        """Called before returning the finished nodes.  *node* is the reference
+        node if one was created (*is_ref* is then true), else the content node.
+        This method can add other nodes and must return a ``(nodes, messages)``
+        tuple (the usual return value of a role function).
+        """
         # this code adds index entries for each role instance
         if not is_ref:
             return [node], []
