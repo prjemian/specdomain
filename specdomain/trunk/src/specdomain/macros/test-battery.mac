@@ -201,7 +201,9 @@ def _ascan ''	#: makes ``_ascan`` a no-op
 kohzuMove_PV = "32ida:KohzuPutBO"
 Und_Delay = 0.1
 
+#: supports Kohzu Energy pseudomotor
 def kohzuE_cmd(mne,key,p1) '{
+     """for pseudomotor kohzuE"""
      if (key == "set_position") {
       return
      }
