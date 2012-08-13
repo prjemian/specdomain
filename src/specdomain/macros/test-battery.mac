@@ -156,6 +156,7 @@ HISTORY
 
 #------------------------------------------------------------------------------
 
+#: alias for ``sh_help``
 def shutter_help 'sh_help'
 
 def sh_help '{
@@ -192,7 +193,10 @@ def sh_help '{
 
 #==============================================================================
 
-def _ascan ''
+def ascanSomething 'something'    #: makes ``ascanSomething`` do ``something``
+def ascanNoop ''    #: makes ``ascanNoop`` a no-op
+
+def _ascan ''	#: makes ``_ascan`` a no-op
 
 kohzuMove_PV = "32ida:KohzuPutBO"
 Und_Delay = 0.1
