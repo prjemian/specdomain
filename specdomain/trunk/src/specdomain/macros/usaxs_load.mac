@@ -101,6 +101,7 @@ qdo   usaxs_flowcell.mac
 ###############################################
 ###############################################
 
+#: convenience to reload this macro file
 def reload_usaxs_macros 'qdo   usaxs_load.mac'
 
 ###############################################
