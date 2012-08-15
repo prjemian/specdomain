@@ -1,5 +1,0 @@
-$Id$
-
-> su svnbcext
-> cd /home/joule/SVN/subversion/bcdaext/projects/specdomain
-> publish.sh
