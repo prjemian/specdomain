@@ -9,11 +9,11 @@ Documenting SPEC Macro Source Code with Sphinx
 .. note:: 
 	This project is available online.  See :ref:`downloads`.
 	
-	documentation: 
-		http://subversion.xray.aps.anl.gov/admin_bcdaext/specdomain
-	
-	svn:
-		https://subversion.xray.aps.anl.gov/bcdaext/specdomain/trunk/src/specdomain/
+		documentation: 
+			http://subversion.xray.aps.anl.gov/admin_bcdaext/specdomain
+		
+		svn:
+			https://subversion.xray.aps.anl.gov/bcdaext/specdomain/trunk/src/specdomain/
 
 
 Contents
