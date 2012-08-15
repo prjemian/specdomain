@@ -1,0 +1,288 @@
+
+# $Id$
+# from 8ID
+
+###############################################################################
+#
+#       Macros for using epics mca. Alows the user to do the following things:
+#
+#           1)  Aquire and store an mca spectra as a scan in the current spec 
+#               data file.  This can be done automatically at the end of a
+#               scan also. 
+#           2)  Store the epics mca ROIs as detectors in a spec scan.
+#           3)  Store an mca spectra for each point in a scan.  For this option
+#               all the spectra are saved a seperate file named DATAFILE+
+#               ".scan#.mca".  
+#
+#              When aquiring mca spectra for a specified time, the time will 
+#           be written to the preset real time of the mca.  When aquiring mca 
+#           for monitor counts, the mca will be turned on first then the 
+#           scaler will be started.  Once the scaler reaches the specified
+#           monitor counts the mca will be turned off.  Therefore the actual 
+#           mca aquisition may vary some due network overhead and mca readout
+#           time.  If exact spectra vs. monitor is required connect the gate on
+#           the mca to the ARM out connection on the scaler.
+#
+#-----------------------------------------------------------------------------
+printf("\nepics_mca.mac Version 3.3  June 2003\n")
+#-----------------------------------------------------------------------------
+#
+#    User Macros:
+#
+#        MCAscanpt - Save an mca spectra at each point in a scan.
+#		Usage:  MCAscanpt ascan th 1 2 20 1 (any scan command OK)
+# 
+#        MCAscanend - Save an mca spectra at the end of a scan.      
+#		Usage:  MCAscanend ascan th 1 2 20 1 (any scan command OK)
+#
+#        getandsave_mca - Aquires and mca spectra and saves it to the datafile.
+#		Usage:  getandsave_mca time (or monitor counts)
+# 
+#        mca_setup - Configures which mca to aquire and save.
+# 
+#    Internal Macros:
+#
+#        mca_on - turns on mca data aquisition
+#
+#        mca_off - turns off mca data aquisition
+#
+#        aq_mca - Triggers mca and scaler.
+#
+#        get_mca - Packs mca data in SPEC array.
+#
+#        wait_mca - Waits till MCA is done aquiring.
+#
+#        onmcad - Opens file for mca data.
+#
+#        save_mca - Saves mca to data file.
+#
+#
+#
+#    Written by:   J. Lang   lang@aps.anl.gov                12/1/99
+#                  Based on macros originally writen by P. Jamian UNI-CAT
+#
+#    Modification History:
+#
+#     6/2/00     J. Lang  ->  Added cleanup feature in case an MCAscanpt scan is
+#                             aborted.
+#
+#     3/22/02    J. Lang ->   Fixed several bugs related to the new version of
+#                             EPICS MCA (names of start/stop/busy changed).
+#   
+#     4/23/03    J. Lang ->   Removed all plotting and ROI routines.
+#   
+#
+##############################################################################
+
+#----------------------------------------------------------------------------
+#Global Variables
+#----------------------------------------------------------------------------
+#MCA PV
+global EP_MCA
+EP_MCA = "8ide:mca1"
+
+#File to store mca files when saving at each scan point.
+global MCAFILE
+MCAFILE = "/dev/null"
+#Scan number in this file
+global SCAN_NUM
+
+#Calibration Parameters
+global _oo _ss _qq
+
+#----------------------------------------------------------------------------
+#MCA Setup macros
+#----------------------------------------------------------------------------
+
+#Sets which epics mca to look at,....
+def mca_setup '
+   local _mm NMCApts mca_nuse
+
+   EP_MCA = getval("Epics MCA variable:",EP_MCA)
+
+   #Create array with number of data points
+        NMCApts = epics_par(EP_MCA ".VAL","count")
+ 	printf("Found mca with %i channels\n",NMCApts)
+	mca_use = epics_get(EP_MCA ".NUSE")
+ 	printf("Reading %i channels of MCA\n",mca_use)
+	array mcadat[2][mca_use]
+ 
+'
+
+#----------------------------------------------------------------------------
+#MCA data aquisition Macros
+#----------------------------------------------------------------------------
+
+def getandsave_mca '
+   aq_mca $*;wait_mca;get_mca;save_mca
+'
+
+def aq_mca '
+   {_ctime = $1}
+   mca_on
+   count_em _ctime
+   waitcount
+   get_counts
+   mca_off 
+'
+
+def get_mca '
+   _oo = epics_get(EP_MCA".CALO")
+   _ss = epics_get(EP_MCA".CALS")
+   _qq = epics_get(EP_MCA".CALQ")
+   array_op("fill",mcadat[0],1)
+   mcadat[0] = _oo + mcadat[0] *(_ss + _qq*mcadat[0])
+   
+   mcadat[1] = epics_get(EP_MCA)
+   
+'
+def wait_mca '
+   local mca_busy
+   mca_busy = EP_MCA ".ACQG"
+   sleep(0.1)
+   while (mca_busy == 1 ) sleep(0.1)
+   sleep(1.01)
+'
+
+#----------------------------------------------------------------------------
+#MCA File input output Macros
+#----------------------------------------------------------------------------
+
+def onmcad '
+   if (MCAFILE != "") {
+       if( !index(DATAFILE,"/") && file_info(DATA_DIR, "-d")) {
+          MCAFILE = sprintf("%s%s.scan%i.mca",DATA_DIR,DATAFILE,SCAN_N)
+       } else { MCAFILE = sprintf("%s.scan%i.mca",DATAFILE,SCAN_N) }
+       on(MCAFILE); 
+       }
+'
+def offmcad 'if (MCAFILE != "") { off(MCAFILE); };'
+
+def mca_on '
+
+ #If mca_on is active mca started each time counter is used.  
+   cdef("user_precount","{
+         if (COUNT_TIME) {
+           local prtm mca_strt mca_eras
+           prtm = EP_MCA \".PRTM\"
+           (COUNT_TIME > 0) ? epics_put(prtm,COUNT_TIME):epics_put(prtm,0)
+         mca_eras = EP_MCA \".ERAS\"
+         mca_strt = EP_MCA \".STRT\"
+         epics_put(mca_eras,1)
+         epics_put(mca_strt,1)
+         }
+         }","mca","0x20")
+    cdef("user_getcounts","{
+         local mca_stop
+         mca_stop = EP_MCA \".STOP\"
+         if (COUNT_TIME < 0) epics_put(mca_stop,1)
+         }","mca","0x10")
+            
+'
+
+def mca_off '
+   cdef("user_precount","","mca","delete")
+   cdef("user_getcounts","","mca","delete")
+'
+
+#----------------------------------------------------------------------------
+#MCA macros for saving the data to file
+#----------------------------------------------------------------------------
+def save_mca '
+   ond; offt
+   HEADING = "save_mca"
+   SCAN_N = SCAN_N + 1
+   SCAN_NUM = SCAN_N
+   save_mca_scan
+   ont; offd
+'
+
+def save_mca_scan '
+   waitall; get_angles; calcHKL
+   
+   DATE = date()
+
+   local ssn
+   ssn=SCAN_NUM+1
+
+  #MCA Data File Header
+  printf("\n#S %i %s\n#D %s\n",ssn, HEADING, DATE)
+  printf("#U Epics mca: %s\n",EP_MCA)
+  if (_ctime < 0)
+       printf("#M %g  (%s)\n", -_ctime, cnt_name(MON))
+  else
+      printf("#T %g  (%s)\n", _ctime, cnt_name(sec))
+  printf("#Q %g %g %g\n", H, K, L)
+  printf("#@MCA %25C\n")
+  printf("#@CHANN 4000 0 3999 1\n")
+  mcaRtime = epics_get(EP_MCA".ERTM")
+  mcaLtime = epics_get(EP_MCA".ELTM")
+  printf("#@CTIME %g %g %g\n",S[sec],mcaRtime,mcaLtime)
+   _oo = epics_get(EP_MCA".CALO")
+   _ss = epics_get(EP_MCA".CALS")
+   _qq = epics_get(EP_MCA".CALQ")
+  printf("#@CALIB %g %g %g\n",_oo,_ss,_qq)
+  printf("#N 1\n")
+  printf("#L Epics MCA\n")
+  printf("@A ")
+  array_dump(mcadat[1],"%25C")
+  printf("\n")
+'
+
+def save_mca_point '
+   onmcad; offd; offt
+   if ( NPTS == 0) {
+      constant EPOCH time()
+      printf("#F %s\n", MCAFILE)
+      printf("#E %d\n",EPOCH)
+      printf("#D %s\n",date())
+      printf("#C %s  User = %s\n",TITLE,USER)
+      printf("\n#C Saving MCA data for Scan:%i in Datafile:%s\n",SCAN_N,DATAFILE)
+   }
+   HEADING = sprintf("mca_save_point Point:%i", NPTS)
+   HEADING = HEADING sprintf(" Scan:%i Datafile:%s",SCAN_N,DATAFILE)
+   SCAN_NUM = NPTS
+   save_mca_scan
+   ont; offmcad
+   
+'   
+
+#----------------------------------------------------------------------------
+# MCA Scan macros
+#----------------------------------------------------------------------------
+
+def MCAscanpt '
+
+    mca_on
+    cdef("Fheader","
+        printf(\"#U Saving mca spectra for each scan pt\n\");","mcapt","0x20")
+    cdef("user_getcounts","
+            wait_mca
+            get_mca
+            save_mca_point
+            ","mcapt","0x20")
+    cdef("cleanup_once","mca_cleanup;","mcapt","0x20")
+    $*
+    cdef("Fheader","","mcapt","delete")
+    cdef("user_getcounts","","mcapt","delete")
+    mca_off
+    close(MCAFILE)
+'
+
+def MCAscanend '
+
+   $*
+   printf("\nSaving mca spectra to file.\n")
+   aq_mca _ctime; wait_mca; get_mca; save_mca
+'
+
+#--------------------------------------------------------------------------
+#'mca_cleanup' is called when MCAscanpt is aborted
+#--------------------------------------------------------------------------
+#In case of a scan abort remove hooks to mca .
+def mca_cleanup '
+     print "Cleaning up MCAscanpt stuff\n"
+     cdef("Fheader","","mcapt","delete")
+     cdef("user_getcounts","","mcapt","delete")
+     mca_off
+'
