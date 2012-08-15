@@ -83,21 +83,28 @@ variable_name_re = re.compile(
                         re.IGNORECASE|re.DOTALL|re.MULTILINE
                         )
 
+arg_list_match = r'(\(' + non_greedy_filler + r'\))?'
+
 spec_macro_declaration_match_re = re.compile(
                         string_start
                         + r'\s*?'                           # optional blank space
                         + r'(r?def)\s'                      # 1: def_type (rdef | def)
                         + non_greedy_whitespace
                         + macro_name_match                  # 2: macro_name
-                        + non_greedy_filler_match           # 3: optional arguments
-                        + r'\'\{?'                          # start body section
+                        + arg_list_match                    # 3: optional arguments
+                        + non_greedy_whitespace
+                        + '\''                              # start body section
                         + non_greedy_filler_match           # 4: body
-                        + r'\}?\''                          # end body section
+                        + '\''                              # end body section
+                        + non_greedy_whitespace
                         + r'(#.*?)?'                        # 5: optional comment
-                        + string_end, 
+                        + string_end
+                        , 
                         re.IGNORECASE|re.DOTALL|re.MULTILINE)
-    
-args_match = re.compile(
+
+
+
+args_match_re = re.compile(
                           r'\('
                         + arglist_match                     # 1:  argument list
                         + r'\)', 
@@ -134,6 +141,9 @@ class SpecMacrofileParser:
         self.filename = None
         self.read(macrofile)
         self.parse_macro_file()
+        self.description = ''
+        self.clear_description = False
+        self.found_first_global_extended_comment = False
     
     def read(self, macrofile):
         """
@@ -176,6 +186,48 @@ class SpecMacrofileParser:
             list of dictionaries where each dictionary 
             has the keys: objtype, start_line, end_line, and others
         """
+        db = self._make_db()        # first, the file parsing
+        
+        # Build a dict with objecttype for keys and methods for values
+        # each method handles that particular spec macro file structure
+        handler_method = {
+            'cdef': self.handle_other,
+            'constant': self.handle_other,
+            'def': self.handle_def,
+            'descriptive comment': self.handle_descriptive_comment,
+            'extended comment': self.handle_extended_comment,
+            'function def': self.handle_def,
+            'global': self.handle_other,
+            'local': self.handle_other,
+            'rdef': self.handle_other,
+        }
+        process_first_list = ('descriptive comment', )
+        
+        # then analyze what was found
+        # proceed line-by-line in order
+        # TODO: could override this rule with a sort-order option
+        self.findings = []
+        self.description = ''
+        self.clear_description = False
+        self.found_first_global_extended_comment = False
+        for linenumber in sorted(db.keys()):
+            # Diagnostic line for development only
+            #print linenumber, ':', ' '.join(['<%s>' % d['objtype'] for d in db[linenumber]])
+            
+            # process any descriptive comment first
+            for item in db[linenumber]:
+                if item['objtype'] in process_first_list:
+                    handler_method[item['objtype']](item, db)
+            # now process the others
+            for item in db[linenumber]:
+                if item['objtype'] not in process_first_list:
+                    handler_method[item['objtype']](item, db)
+            
+            if self.clear_description:
+                self.description, self.clear_description = '', False
+    
+    def _make_db(self):
+        """build the db dict by parsing for each type of structure"""
         db = {}
         # first, the file parsing
         for func in (self.list_def_macros, 
@@ -189,61 +241,59 @@ class SpecMacrofileParser:
                 if s not in db.keys():
                     db[s] = []
                 db[s].append(item)
-        
-        # then, the analysis of what was found
-        # proceed line-by-line in order
-        # TODO: could override this rule with an option
-        self.findings = []
-        description = ''
-        clear_description = False
-        found_first_global_extended_comment = False
-        for linenumber in sorted(db.keys()):
-            #print linenumber, ':', ', '.join([d['objtype'] for d in db[linenumber]])
-            
-            line = db[linenumber]
-            item = line[-1]
-            if item['objtype'] in ('def', 'function def'):
-                # identify all the children of this item
-                parent = item['name']
-                found_first_local_extended_comment = False
-                for row in xrange(item['start_line']+1, item['end_line']-1):
-                    if row in db.keys():
-                        for thing in db[row]:
-                            thing['parent'] = parent
-                            if thing['objtype'] == 'extended comment':
-                                if not found_first_local_extended_comment:
-                                    # TODO: could override this rule with an option
-                                    item['description'] = thing['text']
-                                    found_first_local_extended_comment = False
-                if not item['name'].startswith('_'):
-                    # TODO: could override this rule with an option
-                    self.findings.append(item)
-                item['summary'] = self._extract_summary(item.get('description', ''))
-            
-            if item['objtype'] == 'extended comment':
-                start = item['start_line']
-                if item['parent'] == None:
-                    if not found_first_global_extended_comment:
-                        # TODO: could override this rule with an option
-                        self.findings.append(item)
-                        found_first_global_extended_comment = True
+        return db
 
-            if item['objtype'] == 'descriptive comment':
-                description = item['text']
-
-            for item in line:
-                if item['objtype'] in ('local', 'global', 'constant', 'rdef', 'cdef'):
-                    if len(description)>0:
-                        item['description'] = description
-                        item['summary'] = self._extract_summary(description)
-                        clear_description = True
-                    if not item['name'].startswith('_'):
-                        # TODO: could override this rule with an option
-                        self.findings.append(item)
-            
-            if clear_description:
-                description, clear_description = '', False
+    def handle_def(self, node, db):
+        """document SPEC def structures"""
+        # identify all the children of this node
+        parent = node['name']
+        self.found_first_local_extended_comment = False
+        if node.get('comment') is not None:
+            node['description'] = node.get('comment').lstrip('#:').strip()
+        if len(self.description)>0:
+            node['description'] = self.description
+        for row in xrange(node['start_line']+1, node['end_line']-1):
+            if row in db.keys():
+                for item in db[row]:
+                    item['parent'] = parent
+                    if item['objtype'] == 'extended comment':
+                        if not self.found_first_local_extended_comment:
+                            # TODO: could override this rule with an option
+                            node['description'] = item['text']
+                            self.found_first_local_extended_comment = False
+        if not node['name'].startswith('_'):
+            # TODO: could override this rule with an option
+            self.findings.append(node)
+        node['summary'] = self._extract_summary(node.get('description', ''))
+        self.clear_description = True
     
+    def handle_descriptive_comment(self, node, db):
+        """document SPEC descriptive comment structures"""
+        self.description = node['text']
+    
+    def handle_extended_comment(self, node, db):
+        """document SPEC extended comment structures"""
+        #start = node['start_line']
+        if node['parent'] == None:
+            if not self.found_first_global_extended_comment:
+                # TODO: could override this rule with an option
+                self.findings.append(node)
+                self.found_first_global_extended_comment = True
+    
+    def handle_other(self, node, db):
+        """document SPEC cdef, constant, global, local, and rdef structures"""
+        if len(self.description)>0:
+            node['description'] = self.description
+            node['summary'] = self._extract_summary(self.description)
+            self.clear_description = True
+        if not node['name'].startswith('_'):
+            # TODO: could override this rule with an option
+            self.findings.append(node)
+    
+#    def _handle_ignore(self, node, db):
+#        """call this handler to ignore an identified SPEC macro file structure"""
+#        pass
+
     def _extract_summary(self, description):
         """
         return the short summary line from the item description text
@@ -366,27 +416,29 @@ class SpecMacrofileParser:
             start = self.find_pos_in_line_number(mo.start(1))
             end = self.find_pos_in_line_number(mo.end(4))
             args = mo.group(3)
-            if len(args)>2:
-                m = args_match.search(args)
-                if m is not None:
-                    objtype = 'function ' + objtype
-                    args = m.group(1)
             # TODO: What if args is multi-line?  flatten.  What if really long?
-            items.append({
-                            'start_line': start, 
-                            'end_line':   end, 
-                            'objtype':    objtype,
-                            'name':       mo.group(2),
-                            'args':       args,
-                            'body':       mo.group(4),
-                            'comment':    mo.group(5),
-                            'parent':     None,
-                          })
+            if args is not None:
+                if len(args)>2:
+                    m = args_match_re.search(args)
+                    if m is not None:
+                        objtype = 'function ' + objtype
+                        args = m.group(1)
+            d = {
+                'start_line': start, 
+                'end_line':   end, 
+                'objtype':    objtype,
+                'name':       mo.group(2),
+                'args':       str(args),
+                'body':       mo.group(4),
+                'comment':    mo.group(5),
+                'parent':     None,
+            }
+            items.append(d)
         return items
 
     def list_cdef_macros(self):
         """
-        parse the internal buffer for def and rdef macro declarations
+        parse the internal buffer for cdef macro declarations
         """
         # too complicated for a regular expression, just look for the initial part
         items = []
