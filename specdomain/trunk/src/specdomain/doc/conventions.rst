@@ -126,21 +126,22 @@ preceding each line with the ``#``-sign::
 Descriptive comments
 --------------------
 
-.. caution::  This is not a confirmed convention yet, 
-				but it does not violate any SPEC rules.
+.. caution::  This is new convention, 
+				yet it does not violate any SPEC rules.
 				It *is* awfully useful!
 .. Is it used to document Python code?
 
 Descriptive comments are a new construct which can be used to document items
 that cannot contain extended comments (triple-quoted strings) themselves, 
 such as variable declarations or *rdef* or *cdef* macro declarations.
+(They can also be used to document one-line *def* macros!)
 They appear either as comments in the same line after the declaration (in-line)
 or as a comment-only line immediately preceding the declaration (one-liner).
 Descriptive comments are marked by a preceding ``#:``, which lets them appear
 like normal SPEC comments, but the colon triggers the parser to process the
 docstring.
 
-Like the summary lines in exteded docstrings, these descriptive comments are 
+Like the summary lines in extended comments, these descriptive comments are 
 used as descriptions in summary tables, etc.
 
 **Examples**:
@@ -154,7 +155,9 @@ Descriptive comment that documents **ccdset_shutter**, an *rdef* declaration::
     #: clear the ccd shutter handler
     rdef ccdset_shutter ''
 
-.. spec:global:: TTH    #: two-theta, the scattering angle
+Descriptive comment that documents **do_nothing()**, a *function def* declaration::
+
+    def do_nothing() ''      #: this macro does do anything
 
 
 
