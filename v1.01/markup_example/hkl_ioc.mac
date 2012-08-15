@@ -1,0 +1,96 @@
+"""
+SPEC macros for the Advanced Photon Source
+
+Beamline/Sector
+	4ID
+
+Macro Package
+	hkl_ioc.mac
+
+Version
+	1.0 (August,2005)
+
+Description
+	A user defined calcHKL to write the current HKL postion to a
+	soft IOC. It requires spec softioc running.
+
+Written by
+	X. Jiao 08/08/2005
+ 
+Modified by: 
+
+User macros
+	ioc_HKL -> to turn on/off the feature of putting HKL to shared
+	memory.
+
+Internal macros
+	ioc_put_HKL -> write HKL to the soft IOC
+
+Modification history:
+ 
+========   ===================  =======  =====================================
+Revision   date/time            author   remarks
+========   ===================  =======  =====================================
+1.3        2006/05/22 20:34:35  jiaox    removed unsed lines in ioc_HKL.
+1.2        2006/05/11 17:46:31  jiaox    Added CVS Log entry.
+========   ===================  =======  =====================================
+"""
+
+#===============================================================================
+# preload check/setting here
+#===============================================================================
+
+#: preload check/setting here
+cdef("user_save_HKL","","ioc_HKL")
+cdef("calcHKL","calc(2); user_save_HKL;","ioc_HKL")
+
+#===============================================================================
+# global variables defined here
+#===============================================================================
+if( unset("SIOC_PV") ) {
+global SIOC_PV             ;#: soft IOC PV name
+local foo tmp[]
+SIOC_PREFIX="4id"
+unix("hostname | cut -f1 -d.",foo)
+split(foo,tmp,"\n")
+foo=tmp[0]
+SIOC_PV = sprintf("%s:%s:spec",SIOC_PREFIX,foo)
+printf("Spec soft IOC PV(SIOC_PV): %s",SIOC_PV)
+}
+
+#===============================================================================
+# user macros defined here
+#===============================================================================
+def ioc_HKL '{
+    """to turn on/off the feature of putting HKL to shared memory."""
+     
+    if($# != 1) { eprint "Usage: ioc_HKL on/off ";exit}
+    
+    
+    if(("$1" == "on")) {
+       cdef("user_save_HKL","ioc_put_HKL","ioc_HKL","0x20")		;#: turn on the save to shared memory
+       print "Now put HKL to softioc."
+       exit
+    }
+    if(("$1" == "off")) {
+       cdef("user_save_HKL","","ioc_HKL","delete")		;#: turn off the save to shared memory
+       print "Stop put HKL to softioc."
+       exit
+    }
+    eprint "Usage: ioc_HKL on/off "
+}'
+
+
+#===============================================================================
+# internal macros defined here
+#===============================================================================
+def ioc_put_HKL '
+    """write HKL to the soft IOC"""
+    
+    epics_put(sprintf("%s:H",SIOC_PV),H)
+    epics_put(sprintf("%s:K",SIOC_PV),K)
+    epics_put(sprintf("%s:L",SIOC_PV),L)
+    epics_put(sprintf("%s:NPTS",SIOC_PV),NPTS)
+'       
+     
+  

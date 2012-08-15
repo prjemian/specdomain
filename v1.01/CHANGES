@@ -1,0 +1,19 @@
+.. -*- restructuredtext -*-
+
+This file describes user-visible changes between the extension versions.
+Refer to the TRAC site for details on these tickets noting *specdomain* in the title.
+(https://subversion.xor.aps.anl.gov/trac/bcdaext/report/1?sort=ticket&asc=1)
+
+
+Version 1.01 (2012-08-15)
+-----------------------------------
+
+* refs #13: autospecdir: show a bullet list for each file at the top of the page (alternative to separate pages for each macro file) 
+* fixed #14: "duplicate ID warnings" resolved
+* fixes #31: documentation copyright should match LICENSE file
+* fixed #32: descriptive comments also for *def* definitions
+
+Version 1.0 (2012-07-16)
+------------------------
+
+* Initial release.
