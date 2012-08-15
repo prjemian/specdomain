@@ -43,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'sphinxcontrib-specdomain'
-copyright = u'2012, Pete Jemian'
+copyright = u'2012, BCDA, Advanced Photon Source, Argonne National Laboratory'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -186,7 +186,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'sphinxcontrib-specdomain.tex', u'sphinxcontrib-specdomain Documentation',
-   u'Pete Jemian', 'manual'),
+   u'BCDA, Advanced Photon Source, Argonne National Laboratory', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -216,7 +216,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'sphinxcontrib-specdomain', u'sphinxcontrib-specdomain Documentation',
-     [u'Pete Jemian'], 1)
+     [u'BCDA, Advanced Photon Source, Argonne National Laboratory'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -230,7 +230,9 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'sphinxcontrib-specdomain', u'sphinxcontrib-specdomain Documentation',
-   u'Pete Jemian', 'sphinxcontrib-specdomain', 'One line description of project.',
+   u'BCDA, Advanced Photon Source, Argonne National Laboratory', 
+   'sphinxcontrib-specdomain', 
+   'This code extracts useful documentation from SPEC macro source code files.',
    'Miscellaneous'),
 ]
 

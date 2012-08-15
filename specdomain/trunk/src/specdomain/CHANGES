@@ -10,6 +10,7 @@ Version 1.01 (started 2012-07-16)
 
 * refs #13: show a bullet list at the top of the page (alternative to separate pages for each macro file) 
 * fixed #14: "duplicate ID warnings" resolved
+* fixes #31: documentation copyright should match LICENSE file
 * fixed #32: descriptive comments also for *def* definitions
 
 Version 1.0 (2012-07-16)
