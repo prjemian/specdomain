@@ -8,7 +8,7 @@ export MAKE_DIR="doc"
 export SOURCE_DIR="_build"
 export TARGET_DIR="/home/joule/SVN/subversion/bcdaext/"
 export MAKE_TARGET="html"
-#export PATH="/APSshare/epd/rh5-x86/bin:$PATH"
+export PATH="/APSshare/epd/rh5-x86/bin:$PATH"
 
 echo "Updating from subversion repository"
 svn update
