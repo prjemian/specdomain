@@ -5,5 +5,4 @@ SPEC (http://www.certif.com) is
 control software for X-Ray Diffraction and Data 
 Acquisition of scientific instruments.
 
-This code extracts useful documentation from SPEC macro 
-source code files.
+This code extracts useful documentation from SPEC macro source code files.
