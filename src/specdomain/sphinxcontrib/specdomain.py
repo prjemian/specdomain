@@ -202,6 +202,7 @@ class SpecDirDocumenter(Documenter):
                     # TODO: support a user choice for pattern match to the file name (glob v. re)
                     # TODO: support the option to include subdirectories (include_subdirs)
                     # TODO: do not add the same SPEC macro file more than once
+                    # TODO: implement TRAC #29
                     macrofiles.append(filename)
         else:
             self.add_line(u'', '<autodoc>')
