@@ -28,4 +28,4 @@ Contents
    style_guide
    spec
    other
-   
+   references

@@ -88,7 +88,7 @@ the closing quotes on a line by themselves::
     
     And here is some more elaborate discussion of the functionality, which may
     again extend over several lines or paragraphs, and contain all the required
-    rst and sphinx markup.
+    reST and Sphinx markup.
     
     """
     
@@ -190,25 +190,57 @@ Use the same syntax as parameter declarations for Python modules.
 Here is an example SPEC macro with reST markup::
 
 	def my_comment '{
-	    """
-	    Make a comment
-	    
-	    **usage**: ``my_comment "AR aligned to 15.14063 degrees"``
-	    
-	    :param str text: message to be printed
-	    """
-	    qcomment "%s" $1
+		"""
+		Make a comment
+		
+		USAGE::
+		
+		  > my_comment "AR aligned to 15.14063 degrees"
+		
+		ARGUMENTS:
+		
+		  :param str text: message to be printed
+		  
+		"""
+		
+		qcomment "%s" $1
 	}'
 
 which documentation looks like this:
 
-.. spec:def:: my_comment text
+.. spec:def:: my_comment text x y
 	    
 	    Make a comment
 	    
-	    **usage**: ``my_comment "AR aligned to 15.14063 degrees"``
+	    USAGE::
+	    
+	      > my_comment "AR aligned to 15.14063 degrees"``
+	      
+	    ARGUMENTS:
 	    
 	    :param str text: message to be printed
+	    
+	    
+	    :arg float x: some number to be processed
+	    :arg y: another number (without type)
+	      
+	    RETURNS:
+
+        :returns str comment: the comment
+
+
+.. spec:cdef:: cdef("demo_cdef_more", "spec_code", "key", flags)
+     
+     This is my punch line!
+     
+	 :param str demo_cdef_more: name of chained macro
+	 :param str spec_code: SPEC code to be executed (usually a single macro name)
+	 :param str key: name of this part of the chained macro
+	 :param flags: see **SPEC** documentation for details
+	 :param str not_here: something is missing...
+	 :rtype: none
+	   
+	   
 
 
 ------------
