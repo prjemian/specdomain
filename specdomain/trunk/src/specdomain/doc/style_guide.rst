@@ -416,7 +416,8 @@ ARGUMENTS:
   Note that a number of python projects use a special kind of argument
   definition list which is processed by sphinx to include more information,
   for example, the type of an argument. Other projects, however, actively
-  discourage its use. The syntax is as follows::
+  discourage its use or prefer the above style for simplicity.
+  The syntax is as follows::
   
     :param str motor_name: name of motor to use.
   
@@ -427,7 +428,7 @@ ARGUMENTS:
 
 EXAMPLE:
   A short example, illustrating the usage of the macro. As in the case of the
-  USAGE section, the syntax should appear as preformatted text, and each input
+  USAGE section, the syntax should appear as pre-formatted text, and each input
   line should start with the ``>``-symbol to represent the SPEC command line
   prompt. Short explanation lines can be inserted as indented comment lines::
   
@@ -457,22 +458,27 @@ Example of a macro definition docstring
 ::
 
   """
-  Summary line
+  Concise summary line.
   
   USAGE::
     
-    > my_move <motor> <position>
+    > my_move <motor> <position> [<sleep_time>]
     
   ARGUMENTS:
-    :motor:    The motor to be moved.
-    :position: The position to move the motor to.
+    
+    Required arguments:
+      :motor:    The motor to be moved [str].
+      :position: The position to move the motor to [float].
+    
+    Optional arguments:
+      :sleep_time: Settling time after the move has finished [float].
     
   EXAMPLE::
   
-    > my_move del 23.2346
-    
+    > my_move del 23.2346 0.3
+        # move del to 23.2346 and wait for 0.3 seconds after move finishes.
   NOTE: 
-    Indicate any side effects, restrictions or other usage notes here
+    Indicate any side effects, restrictions or other usage notes here.
     
   SEE ALSO:
     * :spec:def:`my_move2`
@@ -480,6 +486,33 @@ Example of a macro definition docstring
     
   """
 
+This results in the following:
+
+	Concise summary line.
+		
+	USAGE::
+		
+		> my_move <motor> <position> [<sleep_time>]
+		
+	ARGUMENTS:
+		
+		Required arguments:
+		  :motor:    The motor to be moved [str].
+		  :position: The position to move the motor to [float].
+		
+		Optional arguments:
+		  :sleep_time: Settling time after the move has finished [float].
+		
+	EXAMPLE::
+	
+		> my_move del 23.2346 0.3
+				# move del to 23.2346 and wait for 0.3 seconds after move finishes.
+	NOTE: 
+		Indicate any side effects, restrictions or other usage notes here.
+		
+	SEE ALSO:
+		* :spec:def:`my_move2`
+		* :spec:global:`MOVE_FLAG`
     
   
 
