@@ -79,12 +79,12 @@ even necessary:
   lets them appear like normal SPEC comments, but the colon triggers the parser
   to process the docstring::
   
-    global TTH            #: The scattering angle two-theta.
+    global TTH            #: The scattering angle two-theta [float].
 
     #: Clear the ccd shutter handler
     rdef ccdset_shutter ''
 
-    def do_nothing() ''   #: This macro does do anything.
+    def do_nothing() ''   #: This macro does not do anything.
 
 
 Multi-line docstrings
@@ -127,7 +127,7 @@ required information is included and will appear in a consistent format.
 File headers
 ------------
 The macro file header docstring provides information about the macro file as a
-whole (in the python world, this might be called a module).
+whole (in the python world, this might be called a *module*).
 
 As with any docstring, the first item should be a concise summary line of what
 the macro file provides and which could be used in summary tables, indexes,
@@ -143,35 +143,35 @@ The following information should be included, and the below layout may aid in
 supplying a complete set of information. Note that this can always be changed
 to meet the particular requirements of individual macro files:
 
-Description (top-level header):
+**Description (top-level header)**:
   A more elaborate description of the functionality provided in the macro file.
   Include any number of subsections and subsubsections.
 
-Notes (top-level header):
+**Notes (top-level header)**:
   Any additional notes or comments about the file or its usage.
   
-Installation (top-level header):
+**Installation (top-level header)**:
   Information on how to set up the macro functionality. This includes,
   if applicable, the following subsections (second level headers):
   
-  Configuration:
+  **Configuration**:
     Prerequisites in the SPEC configuration. For example, the configuration of
     dedicated counters may be necessary in order to use the macros.
 
-  Setup:
+  **Setup**:
     The steps necessary to set up the macro functionality. For example, loading
     the macro file (``qdo``) and running the ``macro_init`` function.
 
-  Dependencies:
+  **Dependencies**:
     List all the dependencies on other macros, hardware, software, EPICS
     channels, etc.
 
-  Impact:
+  **Impact**:
     Describe the impact that the use of the macro may have. For example, list
     all the changes made to other ``cdef`` macro definitions by this macro
     file.
 
-File Information (top-level header):
+**File Information (top-level header)**:
   All the information about the macro file itself, like authors, license,
   version, etc.
   
@@ -385,11 +385,11 @@ DESCRIPTION:
   
 USAGE:
   The syntax for calling the macro. This should contain all possible variants
-  of the macro call. Argument names are enclosed in bras and kets (``<>``) to
+  of the macro call. Argument names are enclosed in angle brackets (``<>``) to
   indicate that they should be replaced by actual values in the macro call.
   Optional arguments are additionally enclosed in square brackets (``[]``).
   The actual USAGE syntax should appear as preformatted text, and each input
-  line should start with the ``>``-symbol to represent the SPEC command line
+  line should start with a "``>``"-symbol to represent the SPEC command line
   prompt::
   
     USAGE::
@@ -414,7 +414,7 @@ ARGUMENTS:
         seconds [float].
   
   Note that a number of python projects use a special kind of argument
-  definition list which is processed by sphinx to include more information,
+  definition list which is processed by Sphinx to include more information,
   for example, the type of an argument. Other projects, however, actively
   discourage its use or prefer the above style for simplicity.
   The syntax is as follows::
@@ -429,7 +429,7 @@ ARGUMENTS:
 EXAMPLE:
   A short example, illustrating the usage of the macro. As in the case of the
   USAGE section, the syntax should appear as pre-formatted text, and each input
-  line should start with the ``>``-symbol to represent the SPEC command line
+  line should start with the "``>``"-symbol to represent the SPEC command line
   prompt. Short explanation lines can be inserted as indented comment lines::
   
     EXAMPLE::
@@ -457,34 +457,36 @@ Example of a macro definition docstring
 
 ::
 
-  """
-  Concise summary line.
-  
-  USAGE::
-    
-    > my_move <motor> <position> [<sleep_time>]
-    
-  ARGUMENTS:
-    
-    Required arguments:
-      :motor:    The motor to be moved [str].
-      :position: The position to move the motor to [float].
-    
-    Optional arguments:
-      :sleep_time: Settling time after the move has finished [float].
-    
-  EXAMPLE::
-  
-    > my_move del 23.2346 0.3
-        # move del to 23.2346 and wait for 0.3 seconds after move finishes.
-  NOTE: 
-    Indicate any side effects, restrictions or other usage notes here.
-    
-  SEE ALSO:
-    * :spec:def:`my_move2`
-    * :spec:global:`MOVE_FLAG`
-    
-  """
+	"""
+	Concise summary line.
+	
+	USAGE::
+		
+		> my_move <motor> <position> [<sleep_time>]
+		
+	ARGUMENTS:
+		
+		Required arguments:
+			:motor:    The motor to be moved [str].
+			:position: The position to move the motor to [float].
+		
+		Optional arguments:
+			:sleep_time: Settling time after the move has finished [float].
+		
+	EXAMPLE::
+	
+		> my_move del 23.2346 0.3
+				# move del to 23.2346 and wait for 0.3 seconds after move finishes.
+				
+	NOTE: 
+		Indicate any side effects, restrictions or other usage notes here.
+		
+	SEE ALSO:
+		* :spec:def:`my_move2`
+		* :spec:global:`MOVE_FLAG`
+		* http://www.certif.com/spec_help/prdef.html
+		
+	"""
 
 This results in the following:
 
@@ -507,20 +509,62 @@ This results in the following:
 	
 		> my_move del 23.2346 0.3
 				# move del to 23.2346 and wait for 0.3 seconds after move finishes.
+				
 	NOTE: 
 		Indicate any side effects, restrictions or other usage notes here.
 		
 	SEE ALSO:
 		* :spec:def:`my_move2`
 		* :spec:global:`MOVE_FLAG`
+		* http://www.certif.com/spec_help/prdef.html
     
+
+One-line docstrings
+-------------------
+
+As mentioned previously, one-line docstrings (also called *descriptive
+comments*) can be used to document code objects that cannot contain extended
+docstrings. 
+
+One-line docstrings begin with a capital letter and end with a period.
+
+Variables
+~~~~~~~~~
+Docstrings for variables provide a short description of the variable. It is
+also recommended to specify the type of the variable in square brackets
+(``[]``). For example::
+
+  global TTH     #: The scattering angle two-theta [float].
+  local _ind     #: List index of the active reflection [int].
   
+  #: Associate array with orientation reflection HKL-indices & angles [float].
+  global ORIENTATION_REFLECTIONS
 
 
+Macro definitions
+~~~~~~~~~~~~~~~~~
+
+One-line docstrings for macro definitions contain a short description of the
+purpose for the (re-)definition. For example::
+
+  #: Define the ccd shutter handler
+  rdef ccdset_shutter '_ccdset_shutter'
+
+  #: remove ccd_getcounts from user_getcounts
+  cdef("user_getcounts", "", "ccd_key", "delete")
 
 
+Macro collection docstrings
+----------------------------
 
+As of now, there is no standard yet for documenting entire collections of
+macros, as, for example, those collected in particular directories of the SVN
+source code repository.
 
-
-
+The documentation for such a collection should be in the form of normal ReST
+files (*.rst), residing in the same directory with the macro collection. There
+is no way of automatically including this information in the global documents
+yet, so it will need to be added manually somewhere in the documentation tree
+(at least in the global ``index.rst`` file or some other file that is included
+from the global scope).
 
