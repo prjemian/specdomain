@@ -29,3 +29,6 @@ Contents
    spec
    other
    
+
+*This documentation was built:* |today| 
+
