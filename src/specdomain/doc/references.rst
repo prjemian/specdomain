@@ -1,4 +1,4 @@
-.. $Id: authors.rst 1041 2012-07-16 18:46:41Z jemian $
+.. $Id$
 
 #######################
 References
