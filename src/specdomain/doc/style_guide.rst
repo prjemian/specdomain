@@ -183,14 +183,14 @@ to meet the particular requirements of individual macro files:
   
   The following items should be included, preferrably in this order:
   
-  * AUTHOR(S):
-  * CREATION DATE:
-  * COPYRIGHT:
-  * LICENSE::
-  * VERSION::
-  * CHANGE LOG:
-  * TO DO:
-  * KNOWN BUGS:
+    AUTHOR(S):
+    CREATION DATE:
+    COPYRIGHT:
+    LICENSE::
+    VERSION::
+    CHANGE LOG:
+    TO DO:
+    KNOWN BUGS:
   
   See the below example for more details on each of these items.
   
@@ -562,7 +562,7 @@ macros, as, for example, those collected in particular directories of the SVN
 source code repository.
 
 The documentation for such a collection should be in the form of normal ReST
-files (*.rst), residing in the same directory with the macro collection. There
+files (``*.rst``), residing in the same directory with the macro collection. There
 is no way of automatically including this information in the global documents
 yet, so it will need to be added manually somewhere in the documentation tree
 (at least in the global ``index.rst`` file or some other file that is included
