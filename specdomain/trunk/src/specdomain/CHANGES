@@ -1,11 +1,15 @@
 .. -*- restructuredtext -*-
+   $Id$
 
 This file describes user-visible changes between the extension versions.
 Refer to the TRAC site for details on the tickets noting *specdomain* in the title.
 (https://subversion.xor.aps.anl.gov/trac/bcdaext/report/1?sort=ticket&asc=1)
 
 
-Version 1.02 (not released)
+Version 1.03 (not released)
+-----------------------------------
+
+Version 1.02 (2012-09-09)
 -----------------------------------
 
 * contributions to documentation by Christian Schlepuetz
