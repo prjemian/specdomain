@@ -1,0 +1,174 @@
+
+# $Id$
+# from 12ID-B
+
+global metafile_ext _SAXSfilename _WAXSfilename
+
+global _scaleWAXS _sSDD _wSDD _sBEAMX _sBEAMY _wBEAMX _wBEAMY _sqSTDpeak _wqSTDpeak _sYaw _wYaw _sampleThickness _absScaleFactor _sPixel _wPixel
+global _IC1AmpSet _IC2AmpSet _phdAmpSet
+
+def init_ID12Bvariable '{
+_sSDD = 2425.56
+_wSDD = 300
+_sBEAMX = 847.73
+_sBEAMY = 153.73
+_wBEAMX = 1
+_wBEAMY = 1
+_sPixel = 0.172
+_wPixel = 0.172
+#_sqSTDpeak = 249.63
+#_wqSTDpeak = 1
+_sYaw = 0
+_wYaw = 0
+_sampleThickness = 1
+_absScaleFactor = 1
+_scaleWAXS = 1;
+_IC1AmpSet = 500E-9
+_IC2AmpSet = 50E-9
+_phdAmpSet = 50E-6
+}'
+
+#global _IC1 _IC2 _phd _IC1AmpSet _IC2AmpSet _phdAmpSet _exptime
+
+
+metafile_ext = ".meta";
+imgfile_ext = ".tif";
+
+def get_ID12B_bodyfilename(fn) '{
+    rtn = substr(fn, 2, index(fn, imgfile_ext)-2);
+}'
+
+def ID12B_metafile (_IC1, _IC2, _phd, _exptime, _exptimeSet, TemporaryOrFinal) '{
+
+	imgfile_bodyname = get_ID12B_bodyfilename(_SAXSfilename);
+	Xeng = epics_get("12ida1:DCM:EnRBV");
+
+	if (TemporaryOrFinal == 0) {
+		_metafilename = sprintf("%s/Log/T%s%s", UserDirName, imgfile_bodyname, metafile_ext);
+	}
+
+	if (TemporaryOrFinal == 1) {
+		_Tmetafilename = sprintf("%s/Log/T%s%s", UserDirName, imgfile_bodyname, metafile_ext);
+		unix(sprintf("rm -rf %s", _Tmetafilename));
+		_metafilename = sprintf("%s/Log/L%s%s", UserDirName, imgfile_bodyname, metafile_ext);
+	}
+
+	read12IDBsetting
+	
+	stringcode = "%";
+
+	fprintf(_metafilename, "%s%s\n",stringcode, "APS ID12-B SAXS/WAXS data meta file :");
+	fprintf(_metafilename, "%s Date: %s\n", stringcode, date());
+	fprintf(_metafilename, "%s Data Directory : %s\n", stringcode,  UserDirName)
+	fprintf(_metafilename, "%s Spec datafile : %s\n", stringcode,  DATAFILE);
+	fprintf(_metafilename, "%s Detector for SAXS : %s\n", stringcode,  "Pilatus2m");
+	fprintf(_metafilename, "%s Detector for WAXS : %s\n", stringcode,  "Pilatus300");
+	fprintf(_metafilename, "%s Original Location of SAXS data : %s\n", stringcode,  "det@Pilatus2m:/ramdisk");
+	fprintf(_metafilename, "%s Original Location of WAXS data : %s\n", stringcode,  "det@Pilatus300:/ramdisk");
+	fprintf(_metafilename, "%s 2D image name for SAXS : %s\n", stringcode,  _SAXSfilename);
+	fprintf(_metafilename, "%s 2D image name for WAXS : %s\n", stringcode,  _WAXSfilename);
+	#fprintf(_metafilename, "% SAXS scp command: %s", _SAXScmd);
+	#fprintf(_metafilename, "% WAXS scp command: %s", _WAXScmd);
+
+	fprintf(_metafilename, "%s%s\n", stringcode, "% Setup information :");
+	fprintf(_metafilename, "%s Standard Sample for q for SAXS: %s\n", stringcode,  "Silver Behenate");
+	fprintf(_metafilename, "%s Standard Sample for q for WAXS: %s\n", stringcode,  "Silver behenate");
+	fprintf(_metafilename, "%s Standard Sample for abs Intensity: %s\n", stringcode,  "Glassy Carbon");
+	fprintf(_metafilename, "%s X-ray Energy : %0.4f\n", stringcode,  Xeng);
+	fprintf(_metafilename, "%s Sample-to-detector distance for SAXS : %0.2f\n", stringcode,  _sSDD);
+	fprintf(_metafilename, "%s Pixel size for SAXS : %0.3f\n", stringcode, _sPixel);
+	fprintf(_metafilename, "%s Beam center [x, y] for SAXS: [%0.2f, %0.2f]\n", stringcode,  _sBEAMX, _sBEAMY);
+	fprintf(_metafilename, "%s Sample-to-detector distance for WAXS : %0.2f\n", stringcode,  _wSDD);
+	fprintf(_metafilename, "%s Pixel size for WAXS : %0.3f\n", stringcode,  _wPixel);
+	fprintf(_metafilename, "%s Beam center [x, y] for WAXS: [%0.2f, %0.2f]\n", stringcode,  _wBEAMX, _wBEAMY);
+	fprintf(_metafilename, "%s Tilt angle of detector for SAXS: %0.3f\n", stringcode,  _sYaw)
+	fprintf(_metafilename, "%s Tilt angle of detector for WAXS: %0.3f\n", stringcode,  _wYaw)
+	fprintf(_metafilename, "%s Sample thickness (mm): %0.2f\n", stringcode,  _sampleThickness);
+	fprintf(_metafilename, "%s Absolute intensity scale factor: %0.8f\n", stringcode,  _absScaleFactor);
+	fprintf(_metafilename, "%s Scale factor for WAXS: %0.8f\n", stringcode,  _scaleWAXS);
+
+	fprintf(_metafilename, "%s%s\n", stringcode,  "% Scaler values :");
+	fprintf(_metafilename, "%s IC1 : %i\n", stringcode,  _IC1);
+	fprintf(_metafilename, "%s IC1 amp set : %0.10f\n", stringcode,  _IC1AmpSet);
+	fprintf(_metafilename, "%s IC2 : %i\n", stringcode,  _IC2);
+	fprintf(_metafilename, "%s IC2 amp set : %0.10f\n", stringcode,  _IC2AmpSet);
+	fprintf(_metafilename, "%s photodiode : %i\n", stringcode,  _phd);
+	fprintf(_metafilename, "%s photodiode amp set : %0.10f\n", stringcode,  _phdAmpSet);
+	fprintf(_metafilename, "%s Exposure time : %0.5f\n", stringcode,  _exptime);
+	fprintf(_metafilename, "%s Set Exposure time : %0.5f\n", stringcode,  _exptimeSet);
+
+	fprintf(_metafilename, "%s%s\n", stringcode,  "% Motor positions: ");
+	fprintf(_metafilename, "%s stv : %0.3f\n", stringcode,  A[stv]);
+	fprintf(_metafilename, "%s sth : %0.3f\n", stringcode,  A[sth]);
+	fprintf(_metafilename, "%s sav : %0.3f\n", stringcode,  A[sav]);
+	fprintf(_metafilename, "%s th : %0.3f\n", stringcode,  A[th]);
+	fprintf(_metafilename, "%s phi : %0.3f\n", stringcode,  A[phi]);
+
+	fprintf(_metafilename, "%s%s\n", stringcode,  "% Sample environment: ")
+	fprintf(_metafilename, "%s Temperature (oC) : %0.3f\n", stringcode,  TEMP_CS);
+	close(_metafilename); 
+	return _metafilename;
+}'
+
+def ID12B_setupinfo '{
+	p "Please provide setup information";
+	p "Standard sample for q calibration for SAXS is Silver Behenate. Otherwise edit ID12Bmetafile.mac"
+	p "Standard sample for q calibration for WAXS is Silver Behenate. Otherwise edit ID12Bmetafile.mac"
+	p "Standard sample for absolute intensity calibration is Glassy Carbon. Otherwise edit ID12Bmetafile.mac"
+	_sSDD = getval("% Sample-to-detector distance for SAXS : ", _sSDD);
+	_sPixel = getval("% Pixel size for SAXS : ", _sPixel);
+	_sBEAMX = getval("% Beam center X for SAXS : ", _sBEAMX);
+	_sBEAMY = getval("% Beam center Y for SAXS : ", _sBEAMY);
+	_sYaw = getval("% Tilt angle of detector for SAXS : ", _sYaw)
+	_wSDD = getval("% Sample-to-detector distance for WAXS  : ", _wSDD);
+	_wPixel = getval("% Pixel size for WAXS  : ", _wPixel);
+	_wBEAMX = getval("% Beam center X for WAXS : ", _wBEAMX);
+	_wBEAMY = getval("% Beam center Y for WAXS : ", _wBEAMY);
+	_wYaw = getval("% Tilt angle of detector for WAXS : ", _wYaw)
+
+	_scaleWAXS = getval("% Scale factor for WAXS to SAXS :", _scaleWAXS);
+	_absScaleFactor = getval("% Absolute intensity scale factor : ", _absScaleFactor);
+	p "Default sample thickness is 1mm. If you like to change use the macro, samthick"
+	_sampleThickness = 1;
+}'
+
+def samthick '{
+	local _samthick
+	if ($# == 0) {
+		_sampleThickness = getval("Thickness of sample [mm]? ", _sampleThickness)
+		exit
+	}
+	if ($# == 1) {
+		_sampleThickness = $1
+	}
+}'
+
+def read12IDBsetting '{
+# matlab save12IDsetup.m will save saxs and waxs info on to ~/.CurrentExpSetup
+# those essential variables in the file will be read into global variables.
+#
+	local fname sa wa ttt tt2
+	fname = "~/.CurrentExpSetup"
+	getline(fname);
+	getline(fname);
+	sa = getline(fname);
+	getline(fname);
+	getline(fname);
+	wa = getline(fname);
+	getline(fname, "close");
+
+   	ttt["0"] = "0"; #ttt["by"] = "0"; ttt["ps"] = "0"; ttt["sdd"] = "0"; ttt["yaw"]="0";
+    	tt2["0"] = "0"; #tt2["by"] = "0"; tt2["ps"] = "0"; tt2["sdd"] = "0"; tt2["yaw"]="0";
+	split(sa, ttt)
+	split(wa, tt2)
+	_sBEAMX = sprintf("%f", ttt["0"]);
+	_sBEAMY = sprintf("%f", ttt["1"]);
+	_sPixel = sprintf("%f", ttt["2"]);
+	_sSDD = sprintf("%f", ttt["3"]);
+	_sYaw = sprintf("%f", ttt["4"]);
+	_wBEAMX = sprintf("%f", tt2["0"]);
+	_wBEAMY = sprintf("%f", tt2["1"]);
+	_wPixel = sprintf("%f", tt2["2"]);
+	_wSDD = sprintf("%f", tt2["3"]);
+	_wYaw = sprintf("%f", tt2["4"]);
+}'
