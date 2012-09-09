@@ -1,0 +1,9 @@
+
+This Python package is an extension for 
+Sphinx (http://sphinx.pocoo.org/), 
+to document SPEC macro source code files. 
+SPEC (http://www.certif.com) is 
+control software for X-Ray Diffraction and Data 
+Acquisition of scientific instruments.
+
+This code extracts useful documentation from SPEC macro source code files.

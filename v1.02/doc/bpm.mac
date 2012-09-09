@@ -1,0 +1,161 @@
+# $Id$
+
+"""
+Macro support for a beam position monitor.
+
+Purpose
+	Macro support for a beam position monitor.
+	The BPM has a serial interface.
+	This support uses the EPICS generic serial record as a communications channel.
+
+Dependencies
+	These macros require:
+		EPICS
+		    Experimental Physics and Industrial Control System, http://www.aps.anl.gov/epics
+		EPICS support for XBPM
+		    The EPICS support for the X-ray Beam Position Monitor (XBPM) is needed to
+		    interface between the RS-232 connection on the XBPM and the EPICS IOC
+		    using an octal232 IP card. The software support consists of an EPICS 
+		    generic serial record, an EPICS database, and a 
+		    state notation language sequence program.
+		EPICS PV support prefix
+			The support prefix is ``ioc:xbpm`` (configurable in :spec:constant:`XBPM_PREFIX`)
+
+
+Usage::
+
+	qdo /epics/clients/spec/macros/bpm.mac
+"""
+
+constant GX_FACTOR "5.93"		;#: X-axis calibration, mm/unit
+constant GY_FACTOR "4.56"		;#: Y-axis calibration, mm/unit
+constant XBPM_PREFIX "ioc:xbpm"  ;#: EPICS support prefix
+
+def BPM_read_diode(chan) '{
+  """
+  read current value from the named BPM channel
+  
+  :param character chan: channel letter (a, b, c, or d)
+  
+  example::
+  
+  	value = BPM_read_diode("b")
+  """
+  
+  return(epics_get(sprintf("%s:current:%s:raw", XBPM_PREFIX, chan)))
+}'
+
+def BPM_set_defaults '{
+  """
+  Set (or reset) proper default values on the XBPM. 
+  
+  Also, measure the dark signals at each amplifier gain scale (*range*) 
+  for each photodiode by calling :spec:def:`BPM_setAllDarkSignals`. 
+  This process takes about one minute. 
+  The software does not check to make sure that the beam is **off** 
+  so you should be sure that the shutter is closed during the time 
+  you run this macro. 
+  When finished, set the amplifier gain back to the value 
+  it had as this macro was started. 
+  """
+  local range factors
+
+  comment "setting BPM software to default values ..."
+  epics_put(sprintf("%s:enable", XBPM_PREFIX), "1")
+  # scaling factor to mm
+  epics_put(sprintf("%s:GY", XBPM_PREFIX), GX_FACTOR)
+  epics_put(sprintf("%s:GX", XBPM_PREFIX), GY_FACTOR)
+
+  if (epics_get(sprintf("%s:current:low:raw", XBPM_PREFIX)) == 0) {
+    epics_put(sprintf("%s:mode", XBPM_PREFIX),   "AVERAGE")
+    epics_put(sprintf("%s:buflen", XBPM_PREFIX), "20")
+    epics_put(sprintf("%s:current:low:raw", XBPM_PREFIX), "5000")
+  }
+
+  # diode gain factors
+  factors[0] =  3.33786010742e-13    ;# 350 nA / 10 VDC / 10 kHz
+  factors[1] =  6.67572021484e-13    ;# 700 nA / 10 VDC / 10 kHz
+  factors[2] =  1.33514404297e-12    ;# 1400 nA / 10 VDC / 10 kHz
+  factors[3] =  6.67572021484e-12    ;# 7 uA / 10 VDC / 10 kHz
+  factors[4] =  6.67572021484e-11    ;# 70 uA / 10 VDC / 10 kHz
+  factors[5] =  6.67572021484e-10    ;# 700 uA / 10 VDC / 10 kHz
+  for (range=0; range<6; range+=1) {
+    epics_put(sprintf("%s:r%d:A1", XBPM_PREFIX, range+1), factors[range])
+    epics_put(sprintf("%s:r%d:B1", XBPM_PREFIX, range+1), factors[range])
+    epics_put(sprintf("%s:r%d:C1", XBPM_PREFIX, range+1), factors[range])
+    epics_put(sprintf("%s:r%d:D1", XBPM_PREFIX, range+1), factors[range])
+  }
+
+  comment "setting BPM dark signals (takes about 1 minute) ..."
+  BPM_setAllDarkSignals
+  comment "BPM_set_defaults is complete"
+}'
+
+def BPM_setDarkSignal(range) '{
+  """
+  measure and set the dark signal on each channel
+  for the given amplifier range
+  
+  :param int range: :math:`0 <= range <= 5`
+  
+  Measure and set the dark signal for each photodiode amplifier 
+  at the selected amplifier gain scale (*range*). 
+  Report the findings as a spec comment. 
+  
+  =====  ===========
+  range	 gain
+  =====  ===========
+  0      350 nA
+  1      700 nA
+  2      1400 nA
+  3      7 uA
+  4      70 uA
+  5      700 uA
+  =====  ===========
+  """
+  local chan_A chan_B chan_C chan_D numObservations str txt
+  if (range <0 || range>5) return
+  #
+  # choose the range
+  epics_put(sprintf("%s:gain", XBPM_PREFIX), range)
+  sleep(5)    ;# diode and amplifier signal settling time
+  if (range == 0) txt = epics_get(sprintf("%s:gain.ZRST", XBPM_PREFIX))
+  if (range == 1) txt = epics_get(sprintf("%s:gain.ONST", XBPM_PREFIX))
+  if (range == 2) txt = epics_get(sprintf("%s:gain.TWST", XBPM_PREFIX))
+  if (range == 3) txt = epics_get(sprintf("%s:gain.THST", XBPM_PREFIX))
+  if (range == 4) txt = epics_get(sprintf("%s:gain.FRST", XBPM_PREFIX))
+  if (range == 5) txt = epics_get(sprintf("%s:gain.FVST", XBPM_PREFIX))
+  
+  #comment "BPM: setting dark signal for range: %d" range
+  #
+  # measure the dark signals
+  numObservations = 10
+  chan_A = chan_B = chan_C = chan_D = 0
+  for (loop=0; loop<numObservations; loop+=1) {
+    chan_A += BPM_read_diode("a")
+    chan_B += BPM_read_diode("b")
+    chan_C += BPM_read_diode("c")
+    chan_D += BPM_read_diode("d")
+    sleep(1)
+  }
+  chan_A /= numObservations
+  chan_B /= numObservations
+  chan_C /= numObservations
+  chan_D /= numObservations
+  epics_put(sprintf("%s:r%d:A2", XBPM_PREFIX, range+1), chan_A)
+  epics_put(sprintf("%s:r%d:B2", XBPM_PREFIX, range+1), chan_B)
+  epics_put(sprintf("%s:r%d:C2", XBPM_PREFIX, range+1), chan_C)
+  epics_put(sprintf("%s:r%d:D2", XBPM_PREFIX, range+1), chan_D)
+  str = sprintf("(%s) [dark] A=%d  B=%d  C=%d  D=%d", txt, chan_A, chan_B, chan_C, chan_D)
+  comment "BPM: %s" str
+}'
+
+def BPM_setAllDarkSignals '{
+  """measure and set the dark current for all amplifier ranges"""
+  local range old_range
+  old_range = epics_get(sprintf("%s:gain", XBPM_PREFIX), "short")
+  for (range=0; range<6; range+=1) {
+    BPM_setDarkSignal(range)
+  }
+  epics_put(sprintf("%s:gain", XBPM_PREFIX), old_range)
+}'
