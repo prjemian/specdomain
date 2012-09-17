@@ -241,6 +241,39 @@ rdef maximum_value(a, b) '{
 cdef("user_precount", "", "shutter_key", "delete")
 
 #==============================================================================
+# Some more nasty tests: Nested macro and funtion definitions
+
+def nested_macros '{
+  """
+  This is to test if the parser works correctly on nested macro definitions.
+
+  """
+
+  #: def macro definition
+  def macro_def1 \'print "Not again1" \'
+
+  #: rdef macro definition
+  rdef macro_def2 \'print "But surely, here it goes again" \'
+
+  #: def macro function
+  def macro_function1() \'{print "hello"}\'
+
+  #: rdef macro function without arguments
+  rdef macro_function2() \'{print "hello2"; ct 1}\'
+
+  #: rdef macro function with arguments
+  rdef macro_function3(x,y) \'{
+    printf("%s, %s\n", x, y)
+  }\'
+
+  #: cdef test case:
+  cdef("user_precount", "{print \"Starting to count now...\"}; ", "test_key")
+
+}'
+
+
+
+#==============================================================================
 
 global kohzu_PV kohzuMV_PV UND_PV Und_Off UNDE_TRACK_ON
 global       kohzuStop_PV kohzuMode_PV      kohzuMove_PV
