@@ -186,8 +186,8 @@ to meet the particular requirements of individual macro files:
   * AUTHOR(S):
   * CREATION DATE:
   * COPYRIGHT:
-  * LICENSE::
-  * VERSION::
+  * LICENSE:
+  * VERSION:
   * CHANGE LOG:
   * TO DO:
   * KNOWN BUGS:
