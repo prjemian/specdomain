@@ -24,8 +24,8 @@ Some interesting and applicable words from the `Google Style Guide
   file looks drastically different from the existing code around it, it 
   throws readers out of their rhythm when they go to read it. Avoid this. 
 
-With these words in mind, this style guides documents the conventions set forth
-to use for SPEC macros at the APS.
+With these words in mind, this SPEC Documentation Style Guide documents 
+the conventions set forth to use for SPEC macros at the APS.
 
 The concept of docstrings
 =========================
@@ -177,11 +177,11 @@ to meet the particular requirements of individual macro files:
   
   It is recommended to build up this section as a definition list. The headings
   for each item are CAPITALIZED and end with a colon. The content under each of
-  these items should be indented one level. This results in a more leightweight
+  these items should be indented one level. This results in a more lightweight
   layout, and prevents cluttering the tables of content with too many
   subsections.
   
-  The following items should be included, preferrably in this order:
+  The following items should be included, preferably in this order:
   
   * AUTHOR(S):
   * CREATION DATE:
@@ -192,7 +192,7 @@ to meet the particular requirements of individual macro files:
   * TO DO:
   * KNOWN BUGS:
   
-  See the below example for more details on each of these items.
+  See the example below for more details on each of these items.
   
 
 Example of a file header docstring
@@ -277,14 +277,10 @@ Example of a file header docstring
 		.. |current_year| date:: %Y
 	
 		Copyright (c) 2010-|current_year|, UChicago Argonne, LLC
-	
+		Operator of Argonne National Laboratory
 		All Rights Reserved
 	
 		APS SPEC macros
-	
-		APS SPEC development team,
-		X-ray Science Division and APS Engineering Support Division,
-		Argonne National Laboratory
 	
 	LICENSE::
 	
@@ -320,7 +316,7 @@ Example of a file header docstring
 		THE SOFTWARE IS SUPPLIED "AS IS" WITHOUT WARRANTY OF ANY KIND.
 	
 		Neither the United States GOVERNMENT, nor the United States Department
-		of Energy, NOR uchicago argonne, LLC, nor any of their employees, makes
+		of Energy, NOR UChicago Argonne, LLC, nor any of their employees, makes
 		any warranty, express or implied, or assumes any legal liability or
 		responsibility for the accuracy, completeness, or usefulness of any
 		information, data, apparatus, product, or process disclosed, or
@@ -388,7 +384,7 @@ USAGE:
   of the macro call. Argument names are enclosed in angle brackets (``<>``) to
   indicate that they should be replaced by actual values in the macro call.
   Optional arguments are additionally enclosed in square brackets (``[]``).
-  The actual USAGE syntax should appear as preformatted text, and each input
+  The actual USAGE syntax should appear as pre-formatted text, and each input
   line should start with a "``>``"-symbol to represent the SPEC command line
   prompt::
   
