@@ -1,0 +1,33 @@
+.. -*- restructuredtext -*-
+   $Id$
+
+This file describes user-visible changes between the extension versions.
+Refer to the TRAC site for details on the tickets noting *specdomain* in the title.
+(https://subversion.xor.aps.anl.gov/trac/bcdaext/report/1?sort=ticket&asc=1)
+
+
+Version 1.03 (2012-10-01)
+-----------------------------------
+
+* fixes #33: style guide has been changed to use the YYYY-MM-DD date format
+* fixes #35: corrected detection of single-line rdef functions
+* fixes #36: updated LICENSE text
+* fixes #37: function rdef with empty arg list classified incorrectly
+
+Version 1.02 (2012-09-09)
+-----------------------------------
+
+* contributions to documentation by Christian Schlepuetz
+
+Version 1.01 (2012-08-15)
+-----------------------------------
+
+* refs #13: autospecdir: show a bullet list for each file at the top of the page (alternative to separate pages for each macro file) 
+* fixed #14: "duplicate ID warnings" resolved
+* fixes #31: documentation copyright should match LICENSE file
+* fixed #32: descriptive comments also for *def* definitions
+
+Version 1.0 (2012-07-16)
+------------------------
+
+* Initial release.
