@@ -36,7 +36,7 @@ non_greedy_whitespace       = r'\s*?'
 #cdef_match                  = r'(cdef)'
 extended_comment_marker     = r'\"{3}'
 extended_comment_match      = r'(' + extended_comment_marker + r')'
-macro_name                  = r'\w+'
+macro_name                  = r'[a-zA-Z_]\w*'
 macro_name_match            = r'(' + macro_name + r')'
 arglist_match               = r'(' + match_all + r')'
 non_greedy_filler_match     = r'(' + non_greedy_filler + r')'
@@ -197,10 +197,10 @@ class SpecMacrofileParser:
             'descriptive comment': self.handle_descriptive_comment,
             'extended comment': self.handle_extended_comment,
             'function def': self.handle_def,
+            'function rdef': self.handle_def,
             'global': self.handle_other,
             'local': self.handle_other,
             'rdef': self.handle_other,
-            'function rdef': self.handle_def,
         }
         process_first_list = ('descriptive comment', )
         
@@ -420,6 +420,8 @@ class SpecMacrofileParser:
             end = self.find_pos_in_line_number(mo.end(4))
             args = mo.group(3)
             # TODO: What if args is multi-line?  flatten.  What if really long?
+            if start == 225 and end == 225:
+                pass
             if args is not None:
                 if len(args)>2:
                     m = args_match_re.search(args)
@@ -428,6 +430,8 @@ class SpecMacrofileParser:
                         if 'function rdef' == objtype:
                             pass  # TODO: Should we do something special here?
                         args = m.group(1)
+                elif args == '()':
+                    objtype = 'function ' + objtype
             d = {
                 'start_line': start, 
                 'end_line':   end, 
