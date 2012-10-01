@@ -36,7 +36,7 @@ non_greedy_whitespace       = r'\s*?'
 #cdef_match                  = r'(cdef)'
 extended_comment_marker     = r'\"{3}'
 extended_comment_match      = r'(' + extended_comment_marker + r')'
-macro_name                  = r'[a-zA-Z_][\w_]*'
+macro_name                  = r'\w+'
 macro_name_match            = r'(' + macro_name + r')'
 arglist_match               = r'(' + match_all + r')'
 non_greedy_filler_match     = r'(' + non_greedy_filler + r')'
@@ -93,9 +93,9 @@ spec_macro_declaration_match_re = re.compile(
                         + macro_name_match                  # 2: macro_name
                         + arg_list_match                    # 3: optional arguments
                         + non_greedy_whitespace
-                        + '\''                              # start body section
+                        + r"[\\']+"                          # start body section
                         + non_greedy_filler_match           # 4: body
-                        + '\''                              # end body section
+                        + r"[\\']+"                          # end body section
                         + non_greedy_whitespace
                         + r'(#.*?)?'                        # 5: optional comment
                         + string_end
@@ -200,6 +200,7 @@ class SpecMacrofileParser:
             'global': self.handle_other,
             'local': self.handle_other,
             'rdef': self.handle_other,
+            'function rdef': self.handle_def,
         }
         process_first_list = ('descriptive comment', )
         
@@ -221,6 +222,8 @@ class SpecMacrofileParser:
             # now process the others
             for item in db[linenumber]:
                 if item['objtype'] not in process_first_list:
+                    if 'function rdef' == item['objtype']:
+                        pass
                     handler_method[item['objtype']](item, db)
             
             if self.clear_description:
@@ -422,6 +425,8 @@ class SpecMacrofileParser:
                     m = args_match_re.search(args)
                     if m is not None:
                         objtype = 'function ' + objtype
+                        if 'function rdef' == objtype:
+                            pass  # TODO: Should we do something special here?
                         args = m.group(1)
             d = {
                 'start_line': start, 
