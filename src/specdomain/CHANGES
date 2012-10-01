@@ -8,6 +8,10 @@ Refer to the TRAC site for details on the tickets noting *specdomain* in the tit
 
 Version 1.03 (not released)
 -----------------------------------
+* fixes #33: style guide has been changed to use the YYYY-MM-DD date format
+* fixes #35: corrected detection of single-line rdef functions
+* fixes #36: updated LICENSE text
+* fixes #37: function rdef with empty arg list classified incorrectly
 
 Version 1.02 (2012-09-09)
 -----------------------------------
