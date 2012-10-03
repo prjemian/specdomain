@@ -250,7 +250,7 @@ def nested_macros '{
   """
 
   #: def macro definition
-  def macro_def1 \'print "Not again1" \'
+  def macro_def1 \'print "Not again" \'
 
   #: rdef macro definition
   rdef macro_def2 \'print "But surely, here it goes again" \'

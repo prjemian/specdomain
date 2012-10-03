@@ -200,7 +200,7 @@ class SpecMacrofileParser:
             'function rdef': self.handle_def,
             'global': self.handle_other,
             'local': self.handle_other,
-            'rdef': self.handle_other,
+            'rdef': self.handle_def,
         }
         process_first_list = ('descriptive comment', )
         
