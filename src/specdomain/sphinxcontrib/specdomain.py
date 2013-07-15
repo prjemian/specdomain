@@ -54,6 +54,15 @@ spec_func_sig_re = re.compile(word_match + r'\('
 spec_cdef_name_sig_re = re.compile(double_quote_string_match, 
                                    re.IGNORECASE|re.DOTALL)
 
+# this tool is valuable:  http://www.pythonregex.com/
+spec_macro_file_re_str = "\w*.mac"  # TRAC #29: can user provide somehow (can't get to it from here if defined in conf.py)?
+spec_macro_file_re = re.compile(spec_macro_file_re_str)
+
+
+def isSpecMacroFile(filename):
+    '''is filename a SPEC macro file?'''
+    return os.path.isfile(filename) and len(spec_macro_file_re.findall(filename)) > 0
+
 
 class SpecMacroDocumenter(Documenter):
     """
@@ -196,13 +205,13 @@ class SpecDirDocumenter(Documenter):
 #        self.add_line(u'directory:\n   ``%s``' % specdir, '<autodoc>')
         macrofiles = []
         if os.path.exists(specdir):
+            # TODO: support a user choice for pattern match to the file name (glob v. re)
+            # see https://subversion.xray.aps.anl.gov/trac/bcdaext/ticket/29
             for f in sorted(os.listdir(specdir)):
                 filename = os.path.join(specdir, f)
-                if os.path.isfile(filename) and filename.endswith('.mac'):
-                    # TODO: support a user choice for pattern match to the file name (glob v. re)
+                if isSpecMacroFile(filename):
                     # TODO: support the option to include subdirectories (include_subdirs)
                     # TODO: do not add the same SPEC macro file more than once
-                    # TODO: implement TRAC #29
                     macrofiles.append(filename)
         else:
             self.add_line(u'', '<autodoc>')
@@ -255,8 +264,7 @@ class SpecMacroObject(ObjectDescription):
             self.indexnode['entries'].append(('single', sig, targetname, ''))
             # TODO: what if there is more than one file, same name, different path?
             filename = os.path.split(signode.document.current_source)[1]
-            if filename.endswith('.mac'):
-                # TODO: change the match pattern with an option
+            if isSpecMacroFile(filename):
                 indextext = '%s; %s' % (filename, sig)
                 self.indexnode['entries'].append(('single', indextext, targetname, ''))
 
