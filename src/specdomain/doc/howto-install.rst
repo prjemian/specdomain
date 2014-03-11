@@ -1,8 +1,21 @@
 .. $Id$
 
-==========================================================
 How to Download and Install the SPEC support into Sphinx
-==========================================================
+########################################################
+
+use package manager
+*******************
+
+Use one of these methods to get specdomain from pypi.python.org::
+
+  pip install -U sphinxcontrib-specdomain
+
+or::
+
+  easy_install -U sphinxcontrib-specdomain
+
+install from source
+*******************
 
 #. download from the subversion repository
 #. install into Python
@@ -13,7 +26,7 @@ Requires [#]_
 	* Sphinx 1.1.1 or greater
 
 Download
-==========
+========
 
 Retrieve the support package from our subversion repository::
 
@@ -24,7 +37,7 @@ Retrieve the support package from our subversion repository::
 .. _Install:
 
 Install
-==========
+=======
 
 Continuing from the download above, use the setup tools 
 to install the package somewhere on your PYTHONPATH

@@ -635,6 +635,8 @@ def make_rest_table(title, labels, rows, titlechar = '='):
     :param str titlechar: character to use when underlining title as reST section heading
     :returns [str]: each list item is reST
     """
+    # could use spec2nexus.rest_table instead, adds a requirement
+    #
     # this is commented out since it causes a warning when building:
     #  specmacrofileparser.py:docstring of sphinxcontrib.specmacrofileparser.make_rest_table:14: WARNING: Block quote ends without a blank line; unexpected unindent.
     # -----
