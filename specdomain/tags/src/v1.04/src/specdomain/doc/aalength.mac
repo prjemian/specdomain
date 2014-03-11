@@ -1,0 +1,27 @@
+#-------------------------------------------------------------------------------
+# file aalength.mac
+# Written by X. Jiao 06/05/2005 Version 1.0
+#
+# Generic SPEC macros
+# 
+#
+# _aa_length -> <generic> return number of elements in an associative array
+# strjoin   -> <generic> eliminate the some characters in the string
+#-------------------------------------------------------------------------------
+def _aa_length(aname) '{
+  local field n
+  if( !( (whatis("aname")>>16)&0x100 ) ) {
+    print "Not an associative array."
+    exit
+  }
+  for(field in aname) n++ 
+  return n
+}'
+
+def strjoin(s,delimiter) '{
+   local tmp[] i new n
+   split(s,tmp,delimiter)
+   n=_aa_length(tmp)
+   for( i=0;i<n;i++) new=sprintf("%s%s",new,tmp[i])
+   return new
+} '
