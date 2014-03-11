@@ -122,6 +122,22 @@ class SpecMacroDocumenter(Documenter):
         """
         # now, parse the SPEC macro file
         macrofile = self.parse_name()
+        
+        # <hack>
+        # SPEC macro files are given by paths relative to documentation tree
+        # What about absolute paths?  How does Sphinx handle that?
+        # macro directory (with the mac file)
+        #mdir = os.path.dirname(os.path.abspath(macrofile))
+        # source directory (with the rst file)
+        sdir = os.path.abspath(os.path.join(self.directive.env.srcdir, self.directive.env.docname))
+        # present directory (where the Makefile started this)
+        pdir = os.path.abspath(os.getcwd())
+        # get the relative path from sdir to pdir (assumes sdir is below pdir)
+        # minus one for the .rst doc at the end
+        dir_levels = len(sdir.split(os.sep))-len(pdir.split(os.sep))-1
+        macrofile_prefix = '../'*dir_levels
+        # </hack>
+
         spec = SpecMacrofileParser(macrofile)
         extended_comment = spec.ReST()
         rest = prepare_docstring(extended_comment)
@@ -141,8 +157,8 @@ class SpecMacroDocumenter(Documenter):
         self.add_line('@'*len(title), '<autodoc>')
         self.add_line(u'', '<autodoc>')
         # TODO: provide links from each to highlighted source code blocks (like Python documenters).
-        # This works for now.
-        line = 'source code:  :download:`%s <%s>`' % (macrofile, macrofile)
+        # This will have to do for now.
+        line = 'source code:  :download:`%s <%s>`' % (os.path.basename(macrofile), macrofile_prefix+macrofile)
         self.add_line(line, macrofile)
 
         self.add_line(u'', '<autodoc>')

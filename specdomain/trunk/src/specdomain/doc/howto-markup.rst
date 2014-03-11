@@ -18,7 +18,7 @@ Basic SPEC Macro file
 ==============================
 
 This example is a SPEC macro file from the APS subversion repository:
-https://subversion.xor.aps.anl.gov/spec/macros/trunk/common/hkl_ioc.mac
+https://subversion.xray.aps.anl.gov/spec/macros/trunk/common/hkl_ioc.mac
 because it is simple, brief, does not contain references to other
 macro files, provides its documentation in SPEC comments, and has not been
 marked up previously for documentation with Sphinx.  Here is the file 

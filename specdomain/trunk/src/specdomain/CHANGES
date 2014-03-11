@@ -3,11 +3,13 @@
 
 This file describes user-visible changes between the extension versions.
 Refer to the TRAC site for details on the tickets noting *specdomain* in the title.
-(https://subversion.xor.aps.anl.gov/trac/bcdaext/report/1?sort=ticket&asc=1)
+(https://subversion.xray.aps.anl.gov/trac/bcdaext/report/1?sort=ticket&asc=1)
 
 
 Version 1.04 (not released)
 -----------------------------------
+
+* refs #63, #66: fixes download role of macro source code, now available on PyPI as **sphinxcontrib-specdomain**
 
 Version 1.03 (2012-10-01)
 -----------------------------------

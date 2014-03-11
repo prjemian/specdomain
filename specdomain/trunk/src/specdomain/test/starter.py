@@ -24,6 +24,10 @@ def force_rebuild_all(parent = '_build'):
 
 
 if __name__ == '__main__':
-    force_rebuild_all()
-    args = [sys.argv[0]] + "-b html -d _build/doctrees . _build/html".split()
+    builddir, sourcedir = '_build', '.'
+#     builddir, sourcedir = 'build', 'source'
+#     os.chdir('/home/prjemian/Documents/eclipse/spec/docs')
+    force_rebuild_all(builddir)
+    opts = "-b html -d %s/doctrees %s %s/html" % (builddir, sourcedir, builddir)
+    args = [sys.argv[0]] + opts.split()
     sphinx.main(args)
