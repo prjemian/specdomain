@@ -1,0 +1,1643 @@
+"""
+Summary
+=======
+This macro provides a set of definitions which allow for automatic filter
+transmission and exposure time adjustments during experiments.
+
+Description
+===========
+After each count command, the obtained counts are evaluated and checked for
+over-/under-exposure. In case of unsatisfactory count levels, filter
+transmissions and optionally exposure times are adjusted and exposures are
+repeated until a valid exposure is obtained.
+
+Exposure optimization modes
+---------------------------
+Two different modes of operation are available to optimize the count levels
+for each exposure:
+
+- Post-exposure adjustments: Each new exposure is taken with settings that
+  are based on the feedback obtained from the previous one. This mode is
+  based on the assumption that the measured intensity profiles are only
+  gradually changing, and that a satisfactory prediction of the change in
+  the count levels can be obtained in most cases to yield a good exposure.
+  In those cases where the predictions fail and the new exposure falls
+  outside the acceptable limits, the settings are adjusted and the exposure
+  is retaken immediately.
+- Pilot exposure: Each exposure is preceeded by a short pilot exposure,
+  which is used to establish the count levels at the current positions.
+
+Both modes have their relative merits and drawbacks. Post-exposure
+adjustments are riskier in terms of overexposing a detector, since the
+feedback is obtained only after potentially very long exposures. On the
+other hand, they are more efficient in terms of dead-time, especially when
+scanning signals that change only gradually. In this case, it is very
+seldomly necessary to repeat exposures. The pilot exposure mode, in
+contrast, is safer, since it detects potentially harmfully strong signals
+much faster. This comes at the cost of significantly increased dead-times,
+particularly for detectors with longer arming or readout times.
+
+Exposure optimization scheme
+----------------------------
+The filter and exposure time adjustments principles are based on the
+following criteria to formulate an adjustment strategy.  Firstly, it is
+important to note that there are two separate effects which may cause an
+over-exposure of the detector:
+
+#. Paralizing the counter as a result of a count RATE which exceeds the
+   ability of the detector to separate individual photons in time (only for
+   single-photon-counting devices, does not apply to charge-integrating).
+#. Saturating the counter as a result of exceeding the maximum NUMBER OF
+   COUNTS that can be stored in the counter.
+
+The incident photon RATE (case 1) can only be adjusted through the use of
+filters (attenuators), while the integrated NUMBER OF COUNTS is affected
+both by the filter transmission and the integration duration (count time).
+In this implementation, ensuring a valid photon RATE always takes
+precedence over any other adjustment. Once the rate has been optimized
+(keeping it within a given band below the saturation threshold), the
+exposure times may be adjusted. See the next sections below for details.
+
+Filter transmission adjustments (RATE)
+----------------------------------------
+The filter adjustment assures a high incident photon rate within a band
+just below the rate limit of the detector. The width of the band is defined
+by the step size in transmission, defined in AUTO_FILTER_FACTOR,
+which is used for each correction. If the count rate is higher than
+AUTO_RATE_LIMIT, the transmission is immediately reduced by
+AUTO_FILTER_FACTOR and the exposure is retaken. If the count rate is
+lower than AUTO_RATE_LIMIT/(2*AUTO_FILTER_FACTOR), the change in
+transmission required to reach a count rate of 0.75*AUTO_RATE_LIMIT is
+calculated, the transmission increased by that factor and the exposure is
+retaken immediately. If the measured count rate falls between these limits,
+no change is applied to the filters. The following scheme illustrates
+this behavior::
+
+  Threshold levels           Actions
+  ----------------           -------
+
+                             - decrease trasmission by AUTO_FILTER_FACTOR
+                             - retake exposure immediately
+  AUTO_RATE_LIMIT---------------------------------------------------------
+   /\
+   || 2*AUTO_FILTER_FACTOR   - leave filters as they are
+   \/
+  ------------------------------------------------------------------------
+                             - calculate change in transmission required to
+                               reach 0.75*AUTO_RATE_LIMIT
+                             - increase trasmission by this factor
+                             - retake exposure immediately
+
+
+Exposure time adjustments (integrated NUMBER OF COUNTS)
+---------------------------------------------------------
+Exposure time adjustments are designed with maximum efficiency in mind.
+The general idea is to attempt to maintain the integrated count level as
+close as possible to the user-defined AUTO_COUNT_TARGET, but to minimize
+the number of re-exposures by accepting exposures which fall into an
+"acceptable" count range, which is defined as any count level between
+the detectors saturation count AUTO_COUNT_HIGH and a user-defined
+lower count level AUTO_COUNT_LOW. If the exposure is within this
+acceptable band, a new count time to reach the target level is
+calculated based on the current exposure, but only applied to the next
+exposure in an attempt to predict a change in the right direction. If the
+current exposure falls outside the acceptable count range, the expsoure
+time is adjusted and the exposure is retaken immediately. Note that
+chosing a small acceptable range will thus result in retaking many
+exposures, hence increasing scan times.
+Count times will be adjusted between user-defined limits AUTO_EXP_LOW and
+AUTO_EXP_HIGH and rounded to a user-defined precision AUTO_COUNT_PREC.
+
+The diagram below outlines the measures taken when the registered maximum
+NUMBER OF COUNTS falls into the various defined ranges::
+
+  Threshold levels           Actions
+  ----------------           -------
+
+                             - reduce exposure time (if > minimum time)
+                             - retake exposure immediately
+  AUTO_COUNT_HIGH---------------------------------------------------------
+                             - reduce exposure time (if > minimum time)
+                             - apply only to next exposure
+  AUTO_COUNT_TARGET-------------------------------------------------------
+                             - increase exposure time (if < maximum time)
+                             - apply only to next exposure
+  AUTO_COUNT_LOW----------------------------------------------------------
+                             - increase exposure time (if < maximum time)
+                             - retake exposure immediately
+
+
+Configuration
+=============
+
+No special configuration is needed to run these macros. Simply load the macro
+file and run :spec:def:`auto_setup`::
+
+  > qdo auto.mac
+  > auto_setup
+
+Dependencies
+------------
+
+Dependencies on other macros:
+
+* ``filter.mac`` (used to control the attenuators):
+
+  - :spec:def:`filter_trans`
+  - :spec:def:`filter_get_trans()`
+  - :spec:def:`filter_get_trans_up()`
+  - :spec:def:`filter_get_mask()`
+  - :spec:def:`filter_max()`
+
+* :spec:def:`recount` (modified count command used to retake an exposure)
+
+Impact
+------
+The following chained macro definitions are affected by this macro:
+
+* :spec:def:`user_prescan_head`
+* :spec:def:`user_chk_counts` (from our modified :spec:def:`count` command)
+* :spec:def:`user_precount`
+
+File information
+================
+
+AUTHORS:
+
+  * C.M. Schlepuetz (CS, cschlep),
+    Argonne National Laboratory, cschlep@aps.anl.gov
+  * Y. Yang (YY, ysyang),
+    University of Michigan, ysyang@umich.edu
+
+CREATION DATE:
+
+  2011/02/25
+
+COPYRIGHT:
+
+  Copyright 2010-2012 by the above authors (see AUTHOR/AUTHORS)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/.
+
+VERSION::
+
+  $Date: 2011-04-11 13:17:13 -0400 (Mon, 11 Apr 2011) $
+  $Author: cschlep $
+  $URL: file:///data/svn/software/spec/trunk/common/auto.mac $
+  $Revision: 25 $
+
+
+CHANGE LOG:
+
+  2011/02/25 (CS, YY):
+
+  - completely reworked previous versions of ``auto.mac`` to produce this new
+    version:
+
+    * improved efficiency
+    * simplified code
+    * new method of scaling the count times (see description above)
+
+  2011/04/04 (CS):
+
+  - cleaned up code further.
+  - added and updated documentation.
+  - added ``auto_setup`` macro.
+  - added AUTO_AREADETECTOR_VERSION global to track which version of
+    areaDetector is used in ``auto_init_analysis``.
+  - added ``auto_on`` and ``auto_off``.
+  - changed all macro names to lower case and underscore naming convention.
+  - changed all calls to macros from ``filter.mac`` to lower case and
+    underscore naming conventions.
+
+  2011/04/11 (CS):
+
+  - changed ``auto_prescan_header``: if AUTO_LEVEL > 1, set the exposure times
+    to the minimum exposure time to start with.
+
+  2012/03/29 (CS):
+
+  - modified code documentation to be compatible with the ROBODoc
+    documentation generation software.
+  - monitor a configurable SPEC counter rather than an EPICS channel for the
+    adjustments. This allows for the monitoring of any arbitrary counter in
+    SPEC, but requires that whatever signal is to be monitored is captured in
+    a SPEC counter during the count process.
+  - reworked the setup routines for easier use.
+  - removed unnecessary ``auto_init_analysis``.
+  - removed unnecessary AUTO_AREADETECTOR_VERSION global variable.
+  - renamed many variables for improved consistency.
+
+  2012/04/23 (CS):
+
+  - fixed a bug where long exposures with valid rate but saturating the
+    counter would result in an infinite loop.
+
+  2012/07/06 (CS):
+
+  - changed code documentation to be compatible with the new SPEC domain for
+    the SPHINX code documentation suite.
+
+  2012/07/13 (CS):
+
+  - moved the macro definitions for the above macros out of the
+    :spec:def:`auto_set_level` macro to avoid unnecessary nested definitions.
+  - Changed default value of ``AUTO_RETRY_MAX`` to 10 instead of 20.
+  - Changed default value of ``AUTO_COUNTER`` to ``DET`` instead of ``det``.
+  - renamed some private macros to start with underscores::
+
+      auto_precount        --> _auto_precount
+      auto_prescan_head    --> _auto_prescan_head
+      auto_user_chk_counts --> _auto_user_chk_counts
+
+TO DO:
+
+  - Extensive testing of the pilot exposure mode
+  - complete documentation
+  - insert hyperlinks into documentation
+
+"""
+
+###############################################################################
+# Global variable definitions
+###############################################################################
+
+  global AUTO_MAC                 #: Save the name of this macro file
+  global AUTO_LEVEL               #: Type of adjustments {0,1,2}
+  global AUTO_MODE                #: Adjustment mode (pilot vs. post-exp) {0,1}
+  global AUTO_COUNTER             #: Counter to monitor
+  global AUTO_COUNT_RBV           #: Counter read back value (measured counts)
+  global AUTO_RETRY_MAX           #: Maximum number of retries
+  global AUTO_EXP_LOW             #: Low exposure time limit
+  global AUTO_EXP_HIGH            #: High exposure time limit
+  global AUTO_PILOT_EXPTIME       #: Exposure time for pilot exposures
+  global AUTO_RATE_LIMIT          #: High rate limit
+  global AUTO_COUNT_HIGH          #: High count limit
+  global AUTO_COUNT_TARGET        #: Target count level
+  global AUTO_COUNT_LOW           #: Low count limit
+  global AUTO_FILTER_FACTOR       #: Filter transmission factor for adjustments
+  global AUTO_COUNT_PREC          #: Count time precision (rounding)
+  global AUTO_FILTER_LOCK         #: Lock if rate-limited
+  global AUTO_SET_PILOT           #: Set pilot exposure time in user_precount
+  global AUTO_ORIG_EXPTIME        #: Save the original requested count time
+  global AUTO_DEBUG               #: Debug flag
+
+  # set default values for global variables
+  AUTO_MAC = DOFILE
+  AUTO_COUNTER = DET
+  AUTO_LEVEL = 0
+  AUTO_MODE = 0
+  AUTO_RETRY_MAX = 10
+  AUTO_COUNT_HIGH = 5e5
+  AUTO_RATE_LIMIT =2e5
+  AUTO_COUNT_RBV = 1e6
+  AUTO_COUNT_TARGET = 1e4
+  AUTO_COUNT_LOW = 0.5 * AUTO_COUNT_TARGET
+  AUTO_PILOT_EXPTIME = 0.05
+  AUTO_EXP_LOW = 1.0
+  AUTO_EXP_HIGH = 10.0
+  AUTO_FILTER_FACTOR = 5.0
+  AUTO_COUNT_PREC = 0.01
+  AUTO_FILTER_LOCK = 0
+  AUTO_SET_PILOT = 1
+  AUTO_DEBUG = 0
+
+
+###############################################################################
+# Macro command definitions
+###############################################################################
+
+#------------------------------------------------------------------------------
+# allow for misspelled help commands
+#def autohelp '{auto_help}'
+
+def auto_help '{
+  """
+  Displays the auto help text.
+
+  USAGE::
+
+     > auto_help
+
+  NOTE:
+    The help text is generated by simply displaying the text file
+    ``auto_mac.txt``, which should reside in the same directory as
+    ``auto.mac``. If the file does not exist, a generic help text defined in
+    ``auto_help`` is shown.
+  """
+
+  unix (sprintf ("dirname %s", AUTO_MAC), _1)
+  ll = length (_1)
+  if (substr (_1, ll, 1) == "\n") _1 = substr (_1, 1, (ll - 1))
+  file = sprintf ("%s/auto_mac.txt", _1)
+  if (file_info (file, "-e")) {
+    unix (sprintf ("cat %s", file))
+  } else {
+    printf("\nMacros available in file auto.mac ($Revision: 25 $):\n")
+    printf("                           ========"\n)
+    printf("\n")
+    printf("  auto_help          - creates this help text\n")
+    printf("  auto_setup         - setup automatic exposure control\n")
+    printf("  auto_set_mode      - set the auto-adjustment mode\n")
+    printf("  auto_set_level     - activate or deactivate automatic filter\n")
+    printf("                       and exposure setting\n")
+    printf("  auto_on            - turn auto exposure control ON (dialog)\n")
+    printf("  auto_off           - turn auto exposure control OFF\n")
+    printf("  auto_set_exposure  - define the shortest and longest exposure\n")
+    printf("                       time used in case of automatic exposure\n")
+    printf("                       setting\n")
+    printf("  auto_show          - display current auto exposure settings\n")
+    printf("  auto_show_exposure - display current exposure time settings\n")
+  }
+}'
+
+
+#------------------------------------------------------------------------------
+def auto_setup '{
+  """
+  Set up the control parameters for the automatic filter and exposure
+  adjustments.
+
+  DESCRIPTION:
+    The following parameters can be adjusted to fit the particular needs of an
+    experiment or detector type (global variables holding these parameters and
+    default values are given in brackets):
+
+    :Auto level: The level of automatic adjustments to be performed. Three
+      levels are currently available [AUTO_LEVEL = 0]:
+
+        =====  ================================================================
+        Level  Description
+        =====  ================================================================
+        ``0``  No automatic adjustments are made
+        ``1``  Only filters are adjusted, no exposure time adjustments
+        ``2``  Both filters and exposure times are automatically adjusted
+        =====  ================================================================
+
+    :Auto mode: The mode used to calculate/apply the adjustments. Two modes
+      are available [AUTO_MODE = 0]:
+
+        =====  ================================================================
+        Mode   Description
+        =====  ================================================================
+        ``0``  Post-exposure analysis: exposures are taken at normal settings
+               and analyzed in retrospect. The exposure is only retaken if it
+               is deemed unacceptable. Otherwise, the calculated adjustments
+               are applied only to the next exposure. This mode is faster, but
+               riskier in terms of over-exposing the detector for potentially
+               much longer times.
+        ``1``  Pilot exposure mode: A short pilot exposure is taken before each
+               exposure to determine the correct filter and exposure time
+               settings. This is safer in terms of identifying over-exposures
+               quickly and provides optimized settings for each exposure, but
+               comes at a considerable cost in additional dead time. The pilot
+               exposure time is specified in AUTO_PILOT_EXPTIME.
+        =====  ================================================================
+
+    :Counter to monitor: The SPEC counter mnemonic or number of the counter
+      used to assess the validity of the exposure. Note that when using area
+      detectors, it is necessary to monitor the count levels per pixel, as this
+      the saturation conditions. In this case, there needs to be a counter
+      configured that is monitoring the maximum count rate of all pixels within
+      the relevant region of interest. [AUTO_COUNTER = DET]
+
+    :Count RATE high limit: The maximum count rate (counts per second) on
+      the detector that is acceptable for the experiment. If the measured count
+      rate is higher than this limit, filters will be inserted to lower the
+      rate. [AUTO_RATE_LIMIT = 2.0e5]
+
+    :Target count level: The desired count level for a "perfect" exposure.
+      All adjustments applied to filter and/or count times aim to achieve this
+      level. [AUTO_COUNT_TARGET = 1.0e4]
+
+    :Count level low limit: The lower count limit for an acceptable exposure.
+      If the measured level is below this, filters and exposure times will be
+      adjusted (if possible) and the exposure retaken.
+      [AUTO_COUNT_LOW = 5000]
+
+    :Counter saturation limit: The upper count limit for an acceptable
+      exposure. This should be chosen below the actual saturation level of the
+      detector. If the measured level exceeds the saturation limit, filters and
+      exposure times will be adjusted (if possible) and the exposure is
+      repeated.
+      [AUTO_COUNT_HIGH = 5.0e5]
+
+    :Transmission step: The step in filter transmission to be taken when
+      adjusting the filters. The specified step must be larger than the
+      largest available incremet in transmission values of the experimental
+      setup to ensure that the adjustments can be successful. Ideally, this
+      number is chosen anywhere between 2 and 10, but may need to be higher
+      depending on the available filters. [AUTO_FILTER_FACTOR = 5]
+
+    :Minimum exposure time: Minimum allowable exposure time to be used whith
+      automatic exposure time adjustments. [AUTO_EXP_LOW = 1]
+
+    :Maximum exposure time: Maximum allowable exposure time to be used whith
+      automatic exposure time adjustments. [AUTO_EXP_HIGH = 10]
+
+    :Pilot exposure time: Exposure time for the pilot exposure used in pilot
+      mode. [AUTO_PILOT_EXPTIME = 0.05]
+
+    :Count time precision: Automatically calculated count times will be
+      rounded to this precision. Typically, a value of 0.01 or 0.001 seconds is
+      recommended. [AUTO_COUNT_PREC = 0.01]
+
+    :Maximum number of retries: The maximum number of retries to adjust
+      exposure and filter settings before giving up. This avoids infinite loops
+      due to inconsistent choices of control parameters. [AUTO_RETRY_MAX = 10]
+
+  USAGE::
+
+    > auto_setup
+        then answer the questions
+
+  """
+
+  local _setup_numitems, _setup_option, _tmp_option, _str1
+
+  # total number of setup items
+  _setup_numitems = 13
+
+  _clear_screen
+
+  _setup_option = 0
+  _tmp_option = -1
+  while (_tmp_option) {
+      _tmp_option = -1
+      while (_tmp_option < 0 || _tmp_option > _setup_numitems){
+          _auto_print_setup
+          _str1 = sprintf("Enter 1-%d to change the parameters, 0 to quit",\
+            _setup_numitems)
+          _tmp_option = getval(_str1, _setup_option)
+          if(index(_tmp_option, "q") == 1 || index(_tmp_option, "Q") == 1){
+            _tmp_option = 0
+          }
+      }
+      _setup_option = _tmp_option
+      if (_setup_option != 0){
+          _auto_set_option _setup_option
+      }
+      _setup_option = (_tmp_option + 1)%(_setup_numitems + 1)
+  }
+
+  _auto_check_levels
+  _auto_check_exposure
+
+}'
+
+
+#------------------------------------------------------------------------------
+def auto_off '{
+  """
+  Turn off any automatic filter and exposure adjustments.
+
+  USAGE::
+
+    > auto_off
+
+  NOTE:
+    This command is equivalent to ``auto_set_level 0``
+
+  SEE ALSO:
+    :spec:def:`auto_set_level`,
+    :spec:def:`auto_on`
+
+  """
+
+  auto_set_level 0
+
+}'
+
+
+#------------------------------------------------------------------------------
+def auto_on '{
+  """
+  Turn on automatic filter and exposure adjustments.
+
+  This macro is identical to :spec:def:`auto_set_level`. Please refer to the
+  :spec:def:`auto_set_level` documentation for more details.
+  """
+
+auto_set_level $*
+
+}'
+
+#------------------------------------------------------------------------------
+def auto_set_level '{
+  """
+  Set the level of automatic filter and exposure adjustments.
+
+  USAGE::
+
+    > auto_set_level [<level>]
+    > auto_on [<level>]
+
+  ARGUMENTS:
+    If no input argument is given, the user is prompted for input.
+    The optional input argument ``level`` can be one of the following:
+
+      =========  ==========================================================
+      ``level``  Description
+      =========  ==========================================================
+      ``0``      No automatic adjustments are made
+      ``1``      Only filters are adjusted, no exposure time adjustments
+      ``2``      Both filters and exposure times are automatically adjusted
+      =========  ==========================================================
+
+  EXAMPLES::
+
+    > auto_set_level
+        # then answer the questions in the dialogue
+
+    > auto_on 1
+        # turns on automatic filter adjustments (level 1)
+
+  NOTE:
+    :spec:def:`auto_set_level` and :spec:def:`auto_on` are equivalent to
+    each other.
+
+  SEE ALSO:
+    :spec:def:`auto_off`
+    :spec:def:`auto_setup`
+
+  """
+
+  if ($#>1){
+    eprint "Wrong number or illegal arguments in \'auto_set_level\'"
+    eprint "Usage:"
+    eprint "  auto_set_level <level>"
+    eprint ""
+    eprint "<level> can be:"
+    eprint "0 - OFF"
+    eprint "1 - only automatic filter ON, automatic exposure OFF"
+    eprint "2 - automatic filter and exposure ON"
+    eprint ""
+    exit
+  } else if ($#>0){
+    AUTO_LEVEL = $1
+  } else {
+    printf("Choose auto level:\n")
+    printf("  0 - automatic filter and exposure OFF\n")
+    printf("  1 - only automatic filter ON, automatic exposure OFF\n")
+    printf("  2 - automatic filter and exposure ON\n")
+    AUTO_LEVEL = getval("Auto level", AUTO_LEVEL)
+  }
+
+  # check validity of AUTO_LEVEL
+  if (!((AUTO_LEVEL==0) || (AUTO_LEVEL==1) || (AUTO_LEVEL==2))){
+    eprint "Illegal auto level in \'auto_set_level\'"
+    eprint "Valid levels are:"
+    eprint "  0 - OFF"
+    eprint "  1 - only automatic filter ON, automatic exposure OFF"
+    eprint "  2 - automatic filter and exposure ON"
+    eprint ""
+  }
+
+  #--------------------------------------------
+  # include necessary chained macro definitions
+  # depending on the current auto-level
+
+  if (AUTO_LEVEL > 0){
+
+    #: add _auto_prescan_head to user_prescan_head
+    cdef("user_prescan_head", "{_auto_prescan_head}; ", \
+         "auto_prescan_head_key", 0x10)
+
+    #: add _auto_user_chk_counts to user_chk_counts
+    cdef("user_chk_counts", "{_auto_user_chk_counts}; ", \
+         "auto_user_chk_counts_key")
+
+    #: add _auto_precount to user_precount
+    cdef("user_precount", "{_auto_precount}; ", "auto_precount_key", 0x10)
+
+    #: add _auto_cleanup to the end of user_scan_tail
+    cdef("user_scan_tail","{_auto_cleanup}; ", \
+         "auto_user_scan_tail_key",0x20)
+  }
+
+  #---------------------------------------------
+  # remove unnecessary chained macro definitions
+  # depending on the current auto-level
+
+  # Note: chained macro definitions which are not currently defined
+  #       can be deleted without producing an error.
+
+  if (AUTO_LEVEL < 1) {
+
+    #: remove _auto_prescan_head from user_prescan_head
+    cdef("user_prescan_head", "", "auto_prescan_head_key", "delete")
+
+    #: remove _auto_user_chk_counts from user_chk_counts
+    cdef("user_chk_counts", "", "auto_user_chk_counts_key", "delete")
+
+    #: remove _auto_precount from user_precount
+    cdef("user_precount", "", "auto_precount_key", "delete")
+
+    #: remove _auto_cleanup from user_scan_tail
+    cdef("user_scan_tail", "", "auto_user_scan_tail_key", "delete")
+    #: remove _auto_cleanup from cleanup_once
+    cdef("cleanup_once", "", "auto_cleanup_once_key", "delete")
+  }
+
+  auto_show
+
+}'
+
+#------------------------------------------------------------------------------
+def auto_set_mode '{
+  """
+  Set the acquisition mode to be used for the automatic filter and
+  exposure time adjustments.
+
+  USAGE::
+
+    > auto_set_mode [<mode>]
+
+  ARGUMENTS:
+    If no input argument is given, the user is prompted for input.
+    The optional input argument ``mode`` can be one of the following:
+
+      ======== ================================================================
+      ``mode`` Description
+      ======== ================================================================
+      ``0``    Post-exposure analysis: exposures are taken at normal settings
+               and analyzed in retrospect. The exposure is only retaken if it
+               is deemed unacceptable. Otherwise, the calculated adjustments
+               are applied only to the next exposure. This mode is faster, but
+               riskier in terms of over-exposing the detector for potentially
+               much longer times.
+      ``1``    Pilot exposure mode: A short pilot exposure is taken before each
+               exposure to determine the correct filter and exposure time
+               settings. This is safer in terms of identifying over-exposures
+               quickly and provides optimized settings for each exposure, but
+               comes at a considerable cost in additional dead time. The pilot
+               exposure time is specified in AUTO_PILOT_EXPTIME.
+      ======== ================================================================
+
+  EXAMPLE::
+
+    > auto_set_mode 1
+        # use the pilot exposure mode for automatic adjustments.
+
+  SEE ALSO:
+    :spec:def:`auto_setup`
+
+  """
+
+  local _mode
+
+  if ( ($# != 1) && ($# != 0 )) {
+    eprint "Wrong number or illegal arguments in \'auto_set_mode\'"
+    eprint "Usage:"
+    eprint "  auto_set_mode <mode>"
+    exit
+  } else if ($# == 1){
+    _mode = $1
+  } else {
+    _mode = getval("Enter the new auto mode", AUTO_MODE)
+  }
+
+  # check validity of mode
+  if((AUTO_MODE != 0) & (AUTO_MODE !=1)){
+    eprint "ERROR: Illegal value for auto mode (%g)!"
+    printf("  Auto mode is still %d\n", AUTO_MODE)
+    exit
+  } else {
+    AUTO_MODE = _mode
+  }
+
+  auto_show
+
+}'
+
+
+#------------------------------------------------------------------------------
+def auto_set_exposure '{
+  """
+  Set the maximum and minimum exposure times used for automatic exposure
+  adjustments.
+
+  USAGE::
+
+    > auto_set_exposure [<min_exptime> <max_exptime>]
+
+  ARGUMENTS:
+    The following arguments are optional:
+
+    :min_exptime: Shortest allowable exposure time [s]
+    :max_exptime: Longest allowable exposure time [s]
+
+    When called with no arguments, the user is prompted for input.
+
+  EXAMPLE::
+
+    > auto_set_exposure 1 10
+        # set the minimum exposure time to 1 sec and the maximum to 10 sec
+
+  """
+
+  if ( ($# != 2) && ($# != 0 )) {
+    eprint "Wrong number or illegal arguments in \'auto_set_exposure\'"
+    eprint "Usage:"
+    eprint "auto_set_exposure [<min> <max>]"
+    eprint "defines the minimum and maximum exposure times in seconds"
+    eprint "(used if auto-level is set to 2  with \'auto_set_level\')"
+  } else if ($# == 2){
+    AUTO_EXP_LOW = $1
+    AUTO_EXP_HIGH = $2
+  } else {
+    AUTO_EXP_LOW = getval("Minimum exposure time [s]", AUTO_EXP_LOW)
+    AUTO_EXP_HIGH = getval("Maximum exposure time [s]", AUTO_EXP_HIGH)
+  }
+
+  _auto_check_exposure
+  auto_show_exposure
+
+}'
+
+
+#------------------------------------------------------------------------------
+def auto_show '{
+  """
+  Display the current auto settings.
+
+  USAGE::
+
+    > auto_show
+
+  """
+
+  if (AUTO_LEVEL == 0) {
+    printf("Auto-level has been set to %d.\n", AUTO_LEVEL)
+    printf("Automatic filter setting is OFF.\n")
+    printf("Automatic exposure setting is OFF.\n")
+  } else if (AUTO_LEVEL == 1) {
+    printf("Auto-level has been set to %d.\n", AUTO_LEVEL)
+    printf("Automatic filter setting is ON.\n")
+    printf("Automatic exposure setting is OFF.\n")
+  } else  if (AUTO_LEVEL == 2) {
+    printf("Auto-level has been set to %d.\n", AUTO_LEVEL)
+    printf("Automatic filter setting is ON.\n")
+    printf("Automatic exposure setting is ON.\n")
+  } else {
+    AUTO_LEVEL = 0
+    printf("ERROR: Unknown auto-level - resetting to %d", AUTO_LEVEL)
+    printf("Automatic filter setting is OFF.\n")
+    printf("Automatic exposure setting is OFF.\n")
+  }
+
+  if(AUTO_MODE == 0){
+    printf("Auto mode is 0 (post-exposure adjustments)\n")
+  } else if (AUTO_MODE == 1){
+    printf("Auto mode is 1 (pilot exposure)\n")
+  } else {
+    AUTO_MODE = 0
+    printf("ERROR: Unknown auto mode - resetting to %d", AUTO_MODE)
+  }
+
+  if(AUTO_LEVEL>1){
+    auto_show_exposure
+  }
+
+}'
+
+
+#------------------------------------------------------------------------------
+def auto_show_exposure '{
+  """
+  Display the current auto-level exposure settings.
+
+  USAGE::
+
+    > auto_show_exposure
+
+  SEE ALSO:
+    :spec:def:`auto_show`
+
+  """
+
+  printf("Exposure times: minimum = %g s, maximum = %g s\n",\
+         AUTO_EXP_LOW, AUTO_EXP_HIGH)
+
+}'
+
+
+###############################################################################
+# Internal macros
+###############################################################################
+
+#------------------------------------------------------------------------------
+def _auto_cleanup '{
+  """
+  Cleanup routine for automatic filter/exposure control
+  """
+
+  # drop in filters after finishing, since we do not know where we end up
+  # (center of a peak for dscan?)
+  AUTO_SET_PILOT = 1
+  AUTO_FILTER_LOCK = 0
+  if(AUTO_LEVEL > 0){
+    filter_trans 1e-10
+  }
+  #: remove _auto_cleanup_once from cleanup_once
+  cdef("cleanup_once", "", "auto_cleanup_once_key", "delete")
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_prescan_head '{
+  """
+  Prepare for automatic filter/exposure control before the start of a scan
+
+  This inserts filters with a transmission of 1e-10, sets some values in
+  the global variables and adds a cleanup routine to ``cleanup_once``.
+  """
+
+  # if automatic filter setting is active start scan with very low
+  # filter transmission
+  if(AUTO_LEVEL > 0){
+    AUTO_ORIG_EXPTIME = COUNT_TIME
+    filter_trans 1e-10
+    if(AUTO_LEVEL > 1){
+      # start with low exposure times
+      COUNT_TIME = AUTO_EXP_LOW
+      _ctime = COUNT_TIME
+    }
+  }
+  #: add _auto_cleanup to cleanup_once
+  cdef("cleanup_once","{_auto_cleanup}; ", "auto_cleanup_once_key",0x20)
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_user_chk_counts '{
+  """
+  Check if counts are valid and retake exposure if necessary.
+  """
+
+  if(AUTO_LEVEL > 0){
+    # automatic filter and exposure setting (if activated)
+    success = _auto_adjust_redo()
+  }
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_precount '{
+  """
+  Prepare for automatic filter/exposure control at beginning of count command.
+  """
+
+  if(AUTO_LEVEL > 0){
+    if(AUTO_MODE == 1 & AUTO_SET_PILOT == 1){
+      # remember the original exposure time
+      AUTO_ORIG_EXPTIME = COUNT_TIME
+      # set the pilot exposure time
+      COUNT_TIME = AUTO_PILOT_EXPTIME
+      _ctime = COUNT_TIME
+      AUTO_SET_PILOT = 0
+    }
+  }
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_print_setup '{
+  """
+  Print the configuration options and current values to screen
+
+  NOTE:
+     The option numbers must be kept in sync between
+     :spec:def:`_auto_set_option` and
+     :spec:def:`_auto_print_setup`.
+  """
+
+  tty_cntl("ho")  # home cursor on left upper corner of screen
+  tty_cntl("cd")  # clear the rest of the screen
+
+  tty_cntl("so")  # highlight font
+  printf("Auto setup:\n")
+  tty_cntl("se")  # turn off font highlighting
+
+  printf("\n 1)  %40s: %s", "Auto level {0,1,2}", AUTO_LEVEL)
+  if(AUTO_LEVEL == 0) printf(" (no automatic adjustments)")
+  if(AUTO_LEVEL == 1) printf(" (automatic filter adjustments)")
+  if(AUTO_LEVEL == 2) printf(" (automatic filter and exptime adjustments)")
+  printf("\n 2)  %40s: %s", "Auto mode {0,1}", AUTO_MODE)
+  if(AUTO_MODE == 0) printf(" (post-exposure adjustments)")
+  if(AUTO_MODE == 1) printf(" (pilot pre-exposure)")
+  printf("\n 3)  %40s: %s", "Counter to monitor", AUTO_COUNTER)
+  printf("\n 4)  %40s: %s", "Count RATE high limit [cts/s]", AUTO_RATE_LIMIT)
+  printf("\n 5)  %40s: %s", "Target count level [cts]", AUTO_COUNT_TARGET)
+  printf("\n 6)  %40s: %s", "Count level low limit [cts]", AUTO_COUNT_LOW)
+  printf("\n 7)  %40s: %s", "Counter saturation (high) limit [cts]", \
+    AUTO_COUNT_HIGH)
+  printf("\n 8)  %40s: %s", "Transmission step", AUTO_FILTER_FACTOR)
+  printf("\n 9)  %40s: %s", "Minimum exposure time [s]", AUTO_EXP_LOW)
+  printf("\n 10) %40s: %s", "Maximum exposure time [s]", AUTO_EXP_HIGH)
+  printf("\n 11) %40s: %s", "Pilot exposure time [s]", AUTO_PILOT_EXPTIME)
+  printf("\n 12) %40s: %s", "Count time precision [s]", AUTO_COUNT_PREC)
+  printf("\n 13) %40s: %s", "Maximum number of retries", AUTO_RETRY_MAX)
+  printf("\n\n")
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_set_option '{
+  """
+  Sets a new value for a given option.
+
+  DESCRIPTION:
+    Sets a new value for a given option from the options menu that was created
+    with the :spec:def:`_auto_print_setup` command.
+
+  NOTE:
+    The option numbers must be kept in sync between
+    :spec:def:`_auto_set_option` and
+    :spec:def:`_auto_print_setup`.
+
+  """
+
+  local _input, _dummy, _valid, _numitems
+
+  #----------
+  if ($1==1){
+    auto_set_level
+
+  #----------------
+  } else if ($1==2){
+    auto_set_mode
+
+  #----------------
+  } else if ($1==3){
+
+    show_counters()
+
+    _valid = 0
+    while(!(_valid)){
+      _input = getval("Pleae enter the counter to monitor", AUTO_COUNTER)
+      if(cnt_num(_input)<0){
+        printf("ERROR: Invalid counter (%s)\n", _input)
+      } else {
+        AUTO_COUNTER = cnt_num(_input)
+        _valid = 1
+      }
+    }
+
+  #----------------
+  } else if ($1==4){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Upper limit for the count RATE [cts/sec]", \
+        AUTO_RATE_LIMIT)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(_input > 0) {
+          AUTO_RATE_LIMIT = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid input for rate limit (%s)\n", _input)
+      }
+    }
+
+  #----------------
+  } else if ($1==5){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Target count level [cts]", AUTO_COUNT_TARGET)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(_input > 0) {
+          AUTO_COUNT_TARGET = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid target count level (%s)\n", _input)
+      }
+    }
+
+  #----------------
+  } else if ($1==6){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Count level low limit [cts]", AUTO_COUNT_LOW)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(_input > 0) {
+          AUTO_COUNT_LOW = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid count level low limit (%s)\n", _input)
+      }
+    }
+
+  #----------------
+  } else if ($1==7){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Counter saturation (high) limit [cts]", AUTO_COUNT_HIGH)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(_input > 0) {
+          AUTO_COUNT_HIGH = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid counter saturation limit (%s)\n", _input)
+      }
+    }
+
+  #----------------
+  } else if ($1==8){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Transmission step used to adjust filters", \
+        AUTO_FILTER_FACTOR)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(AUTO_FILTER_FACTOR <= 1.2){
+          printf("Error: Transmission step factor must be >1.2 !\n")
+          printf("  (recommended: 4 - 100, must match available filters)\n")
+        } else if (AUTO_FILTER_FACTOR >= AUTO_RATE_LIMIT){
+          printf("Error: Transmission step factor must be smaller than\n")
+          printf("  the maximum count rate (%g)\n", AUTO_RATE_LIMIT)
+        } else if (AUTO_FILTER_FACTOR >= AUTO_COUNT_HIGH){
+          printf("Error: Transmission step factor must be smaller than\n")
+          printf("  the counter saturation limit (%g)\n", AUTO_COUNT_HIGH)
+        } else {
+          AUTO_FILTER_FACTOR = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid transmission step (%s)\n", _input)
+      }
+    }
+
+  #----------------
+  } else if ($1==9){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Minimum exposure time [s]", AUTO_EXP_LOW)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(_input > 0) {
+          AUTO_EXP_LOW = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid minimum exposure time (%s)\n", _input)
+      }
+    }
+
+  #-----------------
+  } else if ($1==10){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Maximum exposure time [s]", AUTO_EXP_HIGH)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(_input > 0) {
+          AUTO_EXP_HIGH = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid maximum exposure time (%s)\n", _input)
+      }
+    }
+
+
+  #-----------------
+  } else if ($1==11){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Pilot exposure time [s]", AUTO_PILOT_EXPTIME)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(_input > 0) {
+          AUTO_PILOT_EXPTIME = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid pilot exposure time (%s)\n", _input)
+      }
+    }
+
+  #-----------------
+  } else if ($1==12){
+    local _str
+
+    _valid = 0
+    while(!(_valid)){
+      _str = "Count time rounding precision [s] (e.g.: 0.01; 0=no rounding)"
+      _input= getval(_str, AUTO_COUNT_PREC)
+      _numitems = sscanf(_input, "%f", _input)
+      if(_numitems == 1){
+        if(_input < 0) {
+          printf("Count time precision must be >=0 \n")
+        } else if(_input > 10){
+          printf("Count time precision must be smaller than 10 sec\n")
+        } else {
+          AUTO_COUNT_PREC = _input
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid count time precision (%s)\n", _input)
+      }
+    }
+
+  #-----------------
+  } else if ($1==13){
+    _valid = 0
+    while(!(_valid)){
+      _input= getval("Maximum number of retries", AUTO_RETRY_MAX)
+      _numitems = sscanf(_input, "%d", _input)
+      if(_numitems == 1){
+        if(_input > 100) {
+          printf("Maximum number of retries must be < 100 !\n")
+          printf("  (recommended: <30 and >10)\n")
+        } else if(_input <2) {
+          printf("Maximum number of retries must be > 2 !\n")
+          printf("  (recommended: <30 and >10)\n")
+        } else {
+          AUTO_RETRY_MAX = int(_input)
+          _valid = 1
+        }
+      }
+      if(!(_valid)){
+        printf("ERROR: Invalid pilot exposure time (%s)\n", _input)
+      }
+    }
+  }
+}'
+
+
+
+#------------------------------------------------------------------------------
+def _auto_analyze_exposure '{
+  """
+  Analyze the previous exposure
+
+  DESCRIPTION:
+    This macro retrieves the necessary information to analyze the last exposure
+    and to initiate adjustments, if necessary. Usually, this step consists only
+    of retrieving the count value from the monitored SPEC counter, but for more
+    sophisticated experimental setups, this definition could be overwritten to
+    include non-standard procedures, such as retrieving counts from EPICS PVs,
+    etc.
+
+  USAGE::
+
+    > _auto_analyze_exposure
+
+  """
+
+  AUTO_COUNT_RBV = S[AUTO_COUNTER]
+
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_adjust() '{
+  """
+  Calculate and apply necessary exposure time and filter adjustments.
+
+  DESCRIPTION:
+    This function determines whether a filter and/or exposure time adjustment
+    is necessary and applies the corresponding adjustments. Note that it does
+    *not* repeat the exposure, this has to be done separately, usually in some
+    sort of for-loop, which terminates once no more adjustmens were necessary.
+
+  RETURNS:
+    The function returns
+
+    * 1 if an immediate re-exposure is necessary.
+    * 0 otherwise.
+
+  USAGE:
+    * check the status of the adjustment::
+
+        > retake = _auto_adjust()
+
+    * or inside a for-loop::
+
+        > while(_auto_adjust()){
+            --> keep taking exposures
+          }
+
+  """
+
+  local _auto_adjusted, _count_time, _factor, _transm, _transm_up, _new_transm
+
+  # do nothing when auto-level is zero
+  if (AUTO_LEVEL < 1) {
+    return(0)
+  }
+
+  # set exposure times to default if they are not defined yet
+  if (AUTO_EXP_LOW < 0.0000001) {
+    AUTO_EXP_LOW  =  1
+  }
+  if (AUTO_EXP_HIGH < 0.0000001) {
+    AUTO_EXP_HIGH = 10
+  }
+
+  _auto_adjusted = 0
+
+  # record last count time
+  _count_time = COUNT_TIME
+
+  # analyze the exposure in terms of the threshold values
+  _auto_analyze_exposure
+
+  if(AUTO_DEBUG && 0x1){
+    printf("\n%s\n", date())
+    printf("Analyzing exposure with exposure time %f s\n", COUNT_TIME)
+    printf("Obtained count RATE: %f cts/s (saturation limit = %f cts/s)\n",\
+            AUTO_COUNT_RBV/_count_time, AUTO_RATE_LIMIT)
+    printf("Obtained count level: %f counts\n", AUTO_COUNT_RBV)
+    printf("(Target = %f, Hi limit = %f, low limit = %f\n", \
+            AUTO_COUNT_TARGET, AUTO_COUNT_HIGH, AUTO_COUNT_LOW)
+  }
+
+  #-----------------------------------------
+  # 1.) filter adjustments if AUTO_LEVEL > 0
+
+  if(AUTO_DEBUG && 0x1){
+    printf("Filter lock is: %d\n", AUTO_FILTER_LOCK)
+  }
+
+  # check if filters are already locked (rate has been adjusted)
+  if (!(AUTO_FILTER_LOCK)){
+
+    # reduce filter transmission if rate is too high
+    if ( ((AUTO_COUNT_RBV/_count_time) > AUTO_RATE_LIMIT) &\
+         (filter_get_mask() < filter_max()) ){
+
+      if(AUTO_DEBUG && 0x1){
+        printf("Rate is too high: %f > %f\n", AUTO_COUNT_RBV/_count_time,\
+                AUTO_RATE_LIMIT)
+      }
+
+      _new_transm = filter_get_trans()/ AUTO_FILTER_FACTOR
+      filter_trans _new_transm
+      _auto_adjusted = 1
+      return(_auto_adjusted)
+    }
+
+    # increase filter transmission if rate is too low
+    if (((AUTO_COUNT_RBV/_count_time) < \
+          0.5*AUTO_RATE_LIMIT/AUTO_FILTER_FACTOR) & \
+          (filter_get_mask() > 0) ){
+
+      if(AUTO_DEBUG && 0x1){
+        printf("Rate is too low: %f < %f\n", AUTO_COUNT_RBV/_count_time, \
+                0.5*AUTO_RATE_LIMIT/AUTO_FILTER_FACTOR)
+      }
+
+      _transm = filter_get_trans()
+      if (AUTO_COUNT_RBV > 0){
+        _factor = (0.75 * AUTO_RATE_LIMIT) / (AUTO_COUNT_RBV/_count_time)
+      } else {
+        _factor = (0.75 * AUTO_RATE_LIMIT)
+      }
+      # make sure that there is actually a better filter setting available for
+      # the requested new transmission
+      _transm_up = filter_get_trans_up()
+      if(_factor > (_transm_up/_transm)){
+        _new_transm = _transm * _factor
+        if(_new_transm > 1){
+          _new_transm = 1
+        }
+        filter_trans _new_transm
+        _auto_adjusted = 1
+        return(_auto_adjusted)
+      } else {
+        # there is nothing we can do with the filters
+        AUTO_FILTER_LOCK = 1
+          if(AUTO_DEBUG && 0x1){
+            printf("No filter adjustments possible\n")
+          }
+      }
+    }
+  }
+
+  # avoid counter saturation of the detector if AUTO_LEVEL < 2 or the exposure
+  # time is at AUTO_EXP_LOW
+  if((AUTO_LEVEL) < 2 | (_count_time <= AUTO_EXP_LOW+1e-7)){
+    if((AUTO_COUNT_RBV > AUTO_COUNT_HIGH) & \
+        (filter_get_mask() < filter_max())){
+
+      if(AUTO_DEBUG && 0x1){
+        printf("Rate is ok (%f), but counter is saturating (%f > %f)\n",\
+                AUTO_COUNT_RBV/_count_time, AUTO_COUNT_RBV, AUTO_COUNT_HIGH)
+      }
+
+      _new_transm = filter_get_trans()/ AUTO_FILTER_FACTOR
+      filter_trans _new_transm
+      AUTO_FILTER_LOCK = 1
+      _auto_adjusted = 1
+      return(_auto_adjusted)
+    }
+  }
+
+
+  #-------------------------------------------------------------------------
+  # 2.) take real exposure with requested exposure time after pilot exposure
+  #     if in pilot mode
+
+  if(AUTO_LEVEL == 1 && AUTO_MODE == 1){
+    if(_count_time != AUTO_ORIG_EXPTIME){
+      if(AUTO_DEBUG && 0x1){
+        printf("Setting exposure time to %f s\n", AUTO_ORIG_EXPTIME)
+      }
+
+      # set exposure time to requested exposure time to retake the exposure after
+      # the pilot exposures
+      AUTO_FILTER_LOCK = 1
+      COUNT_TIME = AUTO_ORIG_EXPTIME
+      _ctime = COUNT_TIME
+      _auto_adjusted = 1
+      return(_auto_adjusted)
+    }
+  }
+
+  #-----------------------------------------
+  # 3.) count time scaling if AUTO_LEVEL > 1
+
+  if(AUTO_LEVEL > 1){
+
+    # calculate exposure time for next exposure
+    if (AUTO_COUNT_RBV > 0){
+      _factor = AUTO_COUNT_TARGET / AUTO_COUNT_RBV
+    } else {
+      _factor = 1e3
+    }
+    COUNT_TIME = _auto_calc_exposure(_count_time * _factor)
+    _ctime = COUNT_TIME
+
+    if(AUTO_DEBUG && 0x1){
+        printf("Adjusting exposure time from %f to %f sec\n", _count_time, \
+                COUNT_TIME)
+    }
+
+    # recount immediately if last exposure time was not within allowed limits
+    if((_count_time < AUTO_EXP_LOW) | (_count_time > AUTO_EXP_HIGH)){
+      if(AUTO_DEBUG && 0x1){
+        printf("Previous exposure outside limits: retake immediately\n")
+      }
+      _auto_adjusted = 1
+      return(_auto_adjusted)
+    }
+
+    # recount immediately if we are saturated or under-exposed
+    # and count times can still be changed
+    if((AUTO_COUNT_RBV > AUTO_COUNT_HIGH) & \
+       (_count_time > AUTO_EXP_LOW)){
+
+      if(AUTO_DEBUG && 0x1){
+        printf("Overexposure: retaking exposure immediately\n")
+      }
+      _auto_adjusted = 1
+      return(_auto_adjusted)
+    }
+    if((AUTO_COUNT_RBV < AUTO_COUNT_LOW) & \
+       (_count_time < AUTO_EXP_HIGH)){
+
+      if(AUTO_DEBUG && 0x1){
+        printf("Underexposure: retaking exposure immediately\n")
+      }
+      _auto_adjusted = 1
+      return(_auto_adjusted)
+    }
+
+    # decrease filter transmission if we are saturated and decreasing the
+    # exposure time is not possible. Recount immediately
+    if((AUTO_COUNT_RBV > AUTO_COUNT_HIGH) & \
+        (_count_time <= AUTO_EXP_LOW+1e-7) & \
+        (filter_get_mask() < filter_max())){
+
+      if(AUTO_DEBUG && 0x1){
+        printf("Overexposure but cannot decrease exposure time")
+        printf(" -> reducing filter transmission\n")
+      }
+
+      _new_transm = filter_get_trans()/ AUTO_FILTER_FACTOR
+      filter_trans _new_transm
+      _auto_adjusted = 1
+      return(_auto_adjusted)
+      AUTO_FILTER_LOCK = 1
+    }
+  }
+
+  return(_auto_adjusted)
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_check_exposure '{
+  """
+  Make sure the user-entered exposure times are consistent
+
+  USAGE::
+
+    > _auto_check_exposure
+
+  """
+
+  if (AUTO_EXP_LOW >= AUTO_EXP_HIGH) {
+    AUTO_EXP_LOW  =  1
+    AUTO_EXP_HIGH = 10
+    eprint "ERROR: Invalid exposure time values!"
+    printf("  Minimum (%f) must be less than maximum (%f) exposure time\n",\
+      AUTO_EXP_LOW, AUTO_EXP_HIGH)
+    printf("  Setting exposure times to default values:\n")
+  }
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_check_levels '{
+  """
+  Make sure the user-entered count levels are valid.
+
+  DECRIPTION:
+    Checks the user-entered count levels for consistency, ensuring that:
+
+    * ``AUTO_COUNT_TARGET < AUTO_COUNT_HIGH``
+    * ``AUTO_COUNT_LOW < AUTO_COUNT_TARGET``
+
+  USAGE::
+
+    > _auto_check_levels
+
+  """
+
+  if(AUTO_COUNT_TARGET >= AUTO_COUNT_HIGH){
+    eprint "ERROR: Invalid count target!"
+    printf("The count target (%f) must be smaller than ", AUTO_COUNT_TARGET)
+    printf("the counter saturation limit (%f).\n", AUTO_COUNT_HIGH)
+    printf("Setting count target to %d counts.\n\n", int(AUTO_COUNT_HIGH/10))
+    AUTO_COUNT_TARGET = int(AUTO_COUNT_HIGH/10)
+  }
+  if(AUTO_COUNT_LOW >= AUTO_COUNT_TARGET) {
+    eprint "ERROR: Invalid low count limit!"
+    printf("Low count limit (%f) must be smaller than count target (%f).\n", \
+      AUTO_COUNT_LOW, AUTO_COUNT_TARGET)
+    printf("Setting low count limit to %d counts.\n\n", \
+      int(AUTO_COUNT_TARGET/10))
+    AUTO_COUNT_LOW = int(AUTO_COUNT_TARGET/10)
+  }
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_calc_exposure(t) '{
+  """
+  Make sure the requested exposure time is between the min and max values and
+  round it to the given count time precision.
+
+  USAGE::
+
+    > adjusted_time = _auto_calc_exposure(requested_time)
+
+  """
+
+  # round to given precision
+  if (AUTO_COUNT_PREC>1e-7){
+    t = (int(t/AUTO_COUNT_PREC))*AUTO_COUNT_PREC
+  }
+
+  # check if we are inside the limits
+  if(t > AUTO_EXP_HIGH){
+    t = AUTO_EXP_HIGH
+  } else if (t < AUTO_EXP_LOW){
+    t = AUTO_EXP_LOW
+  }
+
+  return(t)
+}'
+
+
+#------------------------------------------------------------------------------
+def _auto_adjust_redo() '{
+  """
+  Determines whether the auto-adjusting has been successful.
+
+  DESCRIPTION:
+
+    If the current exposure does not meet the required criteria, counting
+    is repeated until the best possible filter and exposure settings have been
+    obtained, or a maximum number of retry counts has been reached.
+
+  USAGE::
+
+    > success = _auto_adjust_redo()
+
+  RETURNS:
+
+    * 1 if adjustment has been successful
+    * 0 otherwise (e.g.: after maximum number or unsuccessful retries)
+
+  NOTE:
+    This macro makes use of the :spec:def:`recount` macro, which has to be
+    added to SPEC during the startup procedure.
+
+  """
+
+  local retryCount
+  local redo
+  local _success
+
+  _success = 1
+  AUTO_SET_PILOT = 0
+
+  if (AUTO_LEVEL < 1) {
+    return(_success)
+  } else {
+    retryCount = 0
+    redo = 1
+    while (redo != 0) {
+      redo = 0
+      retryCount++
+      if (_auto_adjust() != 0) {
+        if (retryCount <  AUTO_RETRY_MAX) {
+          redo = 1
+        } else {
+          eprint " >> Couldn\'t optimize filter and exposure settings. <<"
+        }
+      }
+      if (redo != 0) {
+        # repeat exposure
+        recount COUNT_TIME
+      } else {
+        _success = 1
+        redo = 0
+      }
+    }
+    AUTO_SET_PILOT = 1
+    AUTO_FILTER_LOCK = 0
+    return (_success)
+  }
+}'
+
+#------------------------------------------------------------------------------
+# define this only if there is no _clear_screen function available yet
+if (!(whatis("_clear_screen") & 0x2)){
+  def _clear_screen '{
+    """
+    Clears the terminal screen
+
+    DESCRIPTION:
+      Clears the screen without losing the screen history or messing up the
+      scrolling capabilities (this has been a problem for certain terminals)
+      by blanking out the entire height of the screen with newlines and
+      returning the cursor to the top left corner.
+
+    USAGE::
+
+      > _clear_screen
+
+    """
+
+    # update the ROWS and COLS variables in case the terminal has been resized
+    tty_cntl("resized?")
+
+    # print as many newlines as there are ROWS in terminal
+    cl_text = ""
+    for (i=0;i<ROWS;i++){
+      cl_text = cl_text "\n"
+    }
+    printf(cl_text)
+
+    # move back to the top of the screen and clear to end of the screen
+    tty_move(0,0)
+    tty_cntl("cd")
+
+  }'
+}
+
+###############################################################################
+# End of $Id: $
+###############################################################################

@@ -1,0 +1,7 @@
+.. $Id$
+
+#########
+Authors
+#########
+
+.. include:: ../AUTHORS
