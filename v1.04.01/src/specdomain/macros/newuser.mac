@@ -1,0 +1,68 @@
+
+# $Id$
+# from 12ID-B
+
+global currentRuncycle UserDirName
+
+def newuser '{
+  local UserDir
+  currentRuncycle = getsval("Current Run Cycle? ", currentRuncycle)
+  UserDir = getsval("Type a name for user\'s directory? (usually user\'s last name) ", "")
+
+  local _dtdir _rtn _tmpstr _newdir
+
+  close(DATAFILE)
+  close(JUNKFILE2)
+  close(JUNKFILE)
+
+  _dtdir = sprintf("/local/data/%s/%s", currentRuncycle, UserDir)
+  _rtn = getsval("If you like the suggest one, press enter. Othewise type full path: ", _dtdir)
+
+  if (length(_rtn) > 1) {
+	_dtdir = _rtn
+
+	 local isDir trialN
+	trialN = 2;
+#	if (_rtn != "n") {
+#		_tmpstr = sprintf("cd %s", _dtdir)
+#		eval(_tmpstr)
+  	    isDir = unix(sprintf("mkdir %s", _dtdir))
+	    _newdir = 1;
+	    while(isDir) {
+		eprintf("The directory %s is already existing.")
+		_dtdir = sprintf("/local/data/%s/%s%i", currentRuncycle, UserDir, trialN)
+		_rtn = getsval("If you like to make new one with the suggested name, press enter. Otherwise, type n", _dtdir)
+		if (_rtn == "n") {
+		     _tmpstr = sprintf("cd %s", _dtdir)
+		     eval(_tmpstr)
+		     isDir = 0;
+		     _newdir = 0;
+		} else {
+		    isDir = unix(sprintf("mkdir %s", _dtdir))
+		    trialN = trialN + 1;
+		    _newdir = 1;
+		}
+	    }
+#	}
+
+	if (_newdir) {
+	 unix(sprintf("mkdir %s/SAXS", _dtdir))
+	 unix(sprintf("mkdir %s/WAXS", _dtdir))
+	 unix(sprintf("mkdir %s/SAXS/Averaged", _dtdir))
+	 unix(sprintf("mkdir %s/WAXS/Averaged", _dtdir))
+	 unix(sprintf("mkdir %s/Log", _dtdir))
+         unix(sprintf("cp /pilatus2m/det/p2_det/correct/goodpix_mask.tif %s/SAXS", _dtdir));
+         unix(sprintf("cp /pilatus300/det/p2_det/correct/goodpix_mask.tif %s/WAXS", _dtdir));
+	 _tmpstr = sprintf("cd %s", _dtdir)
+	 eval(_tmpstr)
+	 unix(sprintf("chmod 777 %s", _dtdir))
+	}
+  }
+
+  UserDirName = _dtdir
+
+  epics_put(sprintf("%sFileNumber",pilatus2mPV), 1)
+  epics_put(sprintf("%sFileNumber",pilatus300PV), 1)
+  newfile
+
+}'

@@ -1,0 +1,64 @@
+
+########### SVN repository information ###################
+# $ Date: 2011-09-16 13:04:57 -0500 (Fri, 16 Sep 2011) $
+# $ Author: jemian $
+# $ Revision: 463 $
+# $ HeadURL: https://subversion.xor.aps.anl.gov/spec/beamline_config/trunk/usaxs/usaxs/usaxs_load.mac $
+# $ Id: usaxs_load.mac 463 2011-09-16 18:04:57Z jemian $
+########### SVN repository information ###################
+
+"""
+Example SPEC Macro Source code file for demonstration purposes only.
+
+::
+
+	$Id$
+
+This file is used to demonstrate how to document SPEC [#]_ macro files 
+using Sphinx [#]_ and restructured text (reST) [#]_ markup.
+
+Provides:
+
+* :spec:def:`inc1scan`
+* :spec:def:`CheckSaveToFile`
+
+.. rubric::  Footnote
+.. [#] SPEC:   http://www.certif.com
+.. [#] Sphinx: http://sphinx.pocoo.org/
+.. [#] reST:   http://docutils.sf.net/rst.html
+
+-------------
+"""
+
+global example_global  #: this is an example of a global variable
+local  example_local   #: a local variable is unusual at the global level
+
+#: Conversion constant between wavelength (A) and photon energy (keV) (:math:`E \lambda = hc`)
+constant  A_keV 12.3984
+
+def inc1scan '{
+	"""specify a single motor scan with interval rather than # of intervals"""
+	if ($# != 5) {
+		print "Usage:  inc1scan  motor start finish increment time"
+		exit
+	} 
+	ascan $1 $2 $3 fabs(($3-$2)/$4)+0.5 $5
+}'
+
+def CheckSaveToFile '{
+  """
+  Helps prevent user from writing data to */dev/null* by accident.
+  
+  This macro will run when SPEC starts and checks
+  if the output is directed into a file or might be ignored (written to */dev/null*).
+  It runs :spec:def:`newsample` if the output might be ignored.
+  """
+  if (unset("DATAFILE") || (DATAFILE == "/dev/null") || (DATAFILE == "null")) {
+    print "!!!You have not started to save your data to a file!!!"
+    print "(newsample)"
+    # prompt the user for a data file
+    newsample
+  }
+}'
+#: register CheckSaveToFile to run on startup
+cdef("begin_mac", "CheckSaveToFile\n", "CheckSaveToFile", 0x20)
