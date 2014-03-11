@@ -14,7 +14,7 @@ Construct a SPEC macro source code file parser for
 use by the specdomain for Sphinx.  This parser locates
 code blocks in the SPEC macro source code file across multiple lines.
 
-:copyright: Copyright 2012 by BCDA, Advanced Photon Source, Argonne National Laboratory
+:copyright: Copyright 2012-2014 by BCDA, Advanced Photon Source, Argonne National Laboratory
 :license: ANL Open Source License, see LICENSE for details.
 """
 

@@ -9,16 +9,14 @@ long_desc = short_desc + '\n'*2 + open('README').read()
 
 version = open('VERSION').read().strip()
 
-requires = ['Sphinx>=0.6']
+requires = ['Sphinx>=1.1.1']
 
 # classifiers: http://pypi.python.org/pypi?%3Aaction=list_classifiers
 
 setup(
     name='sphinxcontrib-specdomain',
     version=version,
-    url='http://subversion.xray.aps.anl.gov/admin_bcdaext/specdomain', 
-    #'http://bitbucket.org/birkenfeld/sphinx-contrib',
-    #download_url='http://pypi.python.org/pypi/sphinxcontrib-specdomain',
+    url='http://specdomain.readthedocs.org', 
     license='Argonne OPEN SOURCE LICENSE, see LICENSE file for details',
     author='Pete Jemian',
     author_email='jemian@anl.gov',

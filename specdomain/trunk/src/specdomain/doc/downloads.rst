@@ -2,12 +2,11 @@
 
 .. _downloads:
 
-===========
+=========
 Downloads
-===========
+=========
 
-:home: 
-    http://subversion.xray.aps.anl.gov/admin_bcdaext/specdomain
+:home:  http://specdomain.readthedocs.org
 
 :svn trunk:
     https://subversion.xray.aps.anl.gov/bcdaext/specdomain/trunk/src/specdomain/
@@ -16,6 +15,4 @@ Downloads
 	
     - https://subversion.xray.aps.anl.gov/bcdaext/specdomain/tags/src/
 
-:svn source tarballs:
-	
-    - https://subversion.xray.aps.anl.gov/bcdaext/specdomain/tags
+:PyPI: http://pypi.python.org/sphinxcontrib-specdomain
