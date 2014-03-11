@@ -2,10 +2,12 @@
 
 .. _todo:
 
-=============
+==========
 TO-DO List
-=============
+==========
 
+* move this list to the **TRAC** site:
+  https://subversion.xray.aps.anl.gov/trac/bcdaext/wiki/SpecDomain
 * add support to document SPEC array declarations
 * improve the display of directives for variables and macros
 * make the Index look better

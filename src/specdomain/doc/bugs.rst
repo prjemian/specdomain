@@ -2,10 +2,12 @@
 
 .. _bugs:
 
-===========
+==========
 Known bugs
-===========
+==========
 
+* move this list to the **TRAC** site:
+  https://subversion.xray.aps.anl.gov/trac/bcdaext/wiki/SpecDomain
 * Duplicate ID warnings, for now, ignore them, the warning will be resolved in a future revision
 * roles should link to directives, see *example.mac* to illustrate the problem
 * fix the signature recognition for roles

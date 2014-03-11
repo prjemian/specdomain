@@ -10,7 +10,7 @@
     the Sphinx doctree, thus avoiding duplication between docstrings and documentation
     for those who like elaborate docstrings.
 
-    :copyright: Copyright 2012 by BCDA, Advanced Photon Source, Argonne National Laboratory
+    :copyright: Copyright 2012-2014 by BCDA, Advanced Photon Source, Argonne National Laboratory
     :license: ANL Open Source License, see LICENSE for details.
 """
 
