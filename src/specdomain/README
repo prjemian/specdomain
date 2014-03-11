@@ -12,4 +12,4 @@ SPEC macro source code files.
 :home: http://specdomain.readthedocs.org
 :svn:  https://subversion.xray.aps.anl.gov/bcdaext/specdomain/trunk/src/specdomain/
 :trac: https://subversion.xray.aps.anl.gov/trac/bcdaext/wiki/SpecDomain
-:PyPI: http://pypi.python.org/sphinxcontrib-specdomain
+:PyPI: https://pypi.python.org/pypi/sphinxcontrib-specdomain
