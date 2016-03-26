@@ -10,6 +10,5 @@ This code extracts useful documentation from
 SPEC macro source code files.
 
 :home: http://specdomain.readthedocs.org
-:svn:  https://subversion.xray.aps.anl.gov/bcdaext/specdomain/trunk/src/specdomain/
-:trac: https://subversion.xray.aps.anl.gov/trac/bcdaext/wiki/SpecDomain
+:git:  https://github.com/prjemian/specdomain
 :PyPI: https://pypi.python.org/pypi/sphinxcontrib-specdomain
